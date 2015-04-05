@@ -5,7 +5,7 @@ from celery import Celery
 app = Celery('crawlclima',
              broker='amqp://',
              backend='amqp://',
-             include=['proj.tasks'])
+             include=['crawlclima.tasks'])
 
 # Optional configuration, see the application user guide.
 app.conf.update(
