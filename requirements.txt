@@ -2,3 +2,6 @@ celery
 pymongo
 requests
 flower
+folium
+bearcart
+bokeh
