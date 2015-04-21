@@ -1,50 +1,71 @@
 from __future__ import absolute_import
 
-from crawlclima.celery import app
+from crawlclima.fetchapp import app
+from celery.utils.log import get_task_logger
 import requests
 from crawlclima.config import cemaden
 import pymongo
 from io import StringIO
-from datetime import datetime
+from datetime import datetime, timedelta
 
 mongo = pymongo.MongoClient()
 
+logger = get_task_logger(__name__)
 
 @app.task
-def pega_dados_por_estacao(codigo, inicio, fim, recapture=False):
+def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
-    :param codigo: Código da estação de coleta do CEMADEN
-    :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
-    :param fim: data-hora (UTC) de fim da captura %Y%m%d%H%M
+    :param codigo: Código da estação de coleta do CEMADEN ou código de duas letras da uf: 'SP' ou 'RJ' ou...
+    :param data: data-hora (UTC) de inicio da captura %Y%m%d%H%M
+    :param by: uf|estacao
     :return: Status code da
     """
+    if len(data) > 8:
+        data = data[:8]
+    data = datetime.strptime(str(data), "%Y%m%d")
+    fim = data + timedelta(days=0, hours=23, minutes=59)
+    if by == 'uf':
+        url = cemaden.url_rede
+        pars = {'chave': cemaden.chave,
+                'inicio': data.strftime("%Y%m%d")+"0000",
+                'fim': fim.strftime("%Y%m%d%H%M"),
+                'uf': codigo}
+    elif by == 'estacao':
+        url = cemaden.url_pcd
+        pars = {'chave': cemaden.chave,
+                'inicio': data.strftime("%Y%m%d")+"0000",
+                'fim': fim.strftime("%Y%m%d%H%M"),
+                'codigo': codigo}
     col = mongo.clima.cemaden
+
     if not recapture:
-        exists = col.find({"cod_estacao": codigo, "datahora": datetime.strptime(str(inicio), "%Y%m%d%H%M")}).count()
+        exists = col.find({"cod_estacao": codigo, "datahora": data}).count()
         if exists:
-            return "skipping {}".format(inicio)
-    #TODO: validar o código de estação
-    results = requests.get(cemaden.url_pcd, params={'chave': cemaden.chave,
-                                        'inicio': inicio,
-                                        'fim': fim,
-                                        'codigo': codigo})
+            logger.info("Registro já baixado. ignorando {}".format(data))
+            return "skipping {}".format(data)
+    try:
+        results = requests.get(url, params=pars)
+    except requests.RequestException as e:
+        logger.error("Request retornou um erro: {}".format(e))
+        print(e, results.url)
+
+
     fp = StringIO(results.text)
     fp.readline()  # Remove o comentário
     vnames = fp.readline().strip().split(';')
     vnames = [v.replace('.', '_') for v in vnames]
+    subs = 0
     for linha in fp:
         doc = dict(zip(vnames, linha.strip().split(';')))
-        col.insert(doc)
-
+        mongo_result = col.replace_one({"cod_estacao": doc['cod_estacao'], "datahora": doc['datahora']}, doc, upsert=True)
+        subs += mongo_result.modified_count
+    logger.info("Registros Substituídos: {}".format(subs))
     return results.status_code
 
 
 @app.task
-def mul(x, y):
-    return x * y
+def pega_dados_wunderground(uf, inicio, fim, recapture=False):
 
+    return
 
-@app.task
-def xsum(numbers):
-    return sum(numbers)
