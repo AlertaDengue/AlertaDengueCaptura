@@ -11,6 +11,6 @@ app.conf.update(CELERY_ALWAYS_EAGER=True)
 
 class TestTasks(unittest.TestCase):
     def test_pega_por_uf_escreve_no_Mongo(self):
-        pega_dados_cemaden('RJ', '201501010000')
+        res = pega_dados_cemaden('RJ', '201501010000')
         col = mongo.clima.cemaden
-        self.assertGreater(col.count(), 0)
+        self.assertEquals(res, 200)

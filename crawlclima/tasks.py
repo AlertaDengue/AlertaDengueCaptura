@@ -40,15 +40,18 @@ def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
     col = mongo.clima.cemaden
 
     if not recapture:
-        exists = col.find({"cod_estacao": codigo, "datahora": data}).count()
-        if exists:
+        exists = col.find_one({"cod_estacao": codigo, "datahora": data})
+        if exists is not None:
             logger.info("Registro já baixado. ignorando {}".format(data))
-            return "skipping {}".format(data)
+            return "Ignorando {}".format(data)
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
-        print(e, results.url)
+        return "falhou"
+    except requests.ConnectionError as e:
+        logger.error("Conexão falhou com erro {}".format(e))
+        raise self.retry(exc=e, countdown=60)
 
 
     fp = StringIO(results.text)
@@ -58,7 +61,11 @@ def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
     subs = 0
     for linha in fp:
         doc = dict(zip(vnames, linha.strip().split(';')))
-        mongo_result = col.replace_one({"cod_estacao": doc['cod_estacao'], "datahora": doc['datahora']}, doc, upsert=True)
+        doc['latitude'] = float(doc['latitude'])
+        doc['longitude'] = float(doc['longitude'])
+        doc['valor'] = float(doc['valor'])
+        doc['datahora'] = datetime.strptime(doc['datahora'], "%Y-%m-%d %H:%M:%S")
+        mongo_result = col.replace_one({"cod_estacao": doc['cod_estacao'], "datahora": doc['datahora'], "nome": doc['nome']}, doc, upsert=True)
         subs += mongo_result.modified_count
     logger.info("Registros Substituídos: {}".format(subs))
     return results.status_code

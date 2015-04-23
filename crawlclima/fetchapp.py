@@ -4,7 +4,7 @@ from celery import Celery
 
 app = Celery('crawlclima',
              broker='amqp://',
-             backend='amqp://',
+             backend='mongodb',
              include=['crawlclima.tasks'])
 
 app.config_from_object('crawlclima.celeryconfig')
