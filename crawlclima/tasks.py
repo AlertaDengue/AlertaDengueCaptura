@@ -19,7 +19,7 @@ def mock(t):
     return "done"
 
 @app.task
-def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
+def pega_dados_cemaden(codigo, data, by='uf'):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
     :param codigo: Código da estação de coleta do CEMADEN ou código de duas letras da uf: 'SP' ou 'RJ' ou...
@@ -44,18 +44,19 @@ def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
                 'fim': fim.strftime("%Y%m%d%H%M"),
                 'codigo': codigo}
     col = mongo.clima.cemaden
+    col.create_index([("nome", pymongo.ASCENDING),
+                    ("cod_estacao", pymongo.ASCENDING),
+                    ("datahora", pymongo.DESCENDING)],
+                    background=True
+                      )
 
-    if not recapture:
-        exists = col.find_one({"cod_estacao": codigo, "datahora": data})
-        if exists is not None:
-            logger.info("Registro já baixado. ignorando {}".format(data))
-            return "Ignorando {}".format(data)
+    except requests.ConnectionError as e:
+
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
-        return "falhou"
-    except requests.ConnectionError as e:
+        raise self.retry(exc=e, countdown=60)
         logger.error("Conexão falhou com erro {}".format(e))
         raise self.retry(exc=e, countdown=60)
 
