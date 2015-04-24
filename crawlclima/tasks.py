@@ -50,13 +50,14 @@ def pega_dados_cemaden(codigo, data, by='uf'):
                     background=True
                       )
 
-    except requests.ConnectionError as e:
+
 
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)
+    except requests.ConnectionError as e:
         logger.error("Conexão falhou com erro {}".format(e))
         raise self.retry(exc=e, countdown=60)
 
