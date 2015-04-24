@@ -7,10 +7,16 @@ from crawlclima.config import cemaden
 import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
+import time
 
 mongo = pymongo.MongoClient()
 
 logger = get_task_logger(__name__)
+
+@app.task
+def mock(t):
+    time.sleep(t)
+    return "done"
 
 @app.task
 def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
@@ -19,7 +25,7 @@ def pega_dados_cemaden(codigo, data, by='uf', recapture=False):
     :param codigo: Código da estação de coleta do CEMADEN ou código de duas letras da uf: 'SP' ou 'RJ' ou...
     :param data: data-hora (UTC) de inicio da captura %Y%m%d%H%M
     :param by: uf|estacao
-    :return: Status code da
+    :return: Status code da tarefa
     """
     if len(data) > 8:
         data = data[:8]
