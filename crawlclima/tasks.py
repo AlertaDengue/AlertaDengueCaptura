@@ -49,9 +49,6 @@ def pega_dados_cemaden(codigo, data, by='uf'):
                     ("datahora", pymongo.DESCENDING)],
                     background=True
                       )
-
-
-
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
