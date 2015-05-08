@@ -8,6 +8,7 @@ import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
 import time
+from crawlclima.config.tweets import base_url, token
 import psycopg2
 
 mongo = pymongo.MongoClient()
@@ -85,6 +86,7 @@ def pega_dados_wunderground(uf, inicio, fim, recapture=False):
 @app.task
 def pega_tweets(inicio, fim, cidades=None):
     """
+    Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
 
     :param inicio: data de início da captura
     :param fim: data do fim da captura
@@ -94,5 +96,5 @@ def pega_tweets(inicio, fim, cidades=None):
     cidades = [str(c) for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     resp = requests.get('?'.join([base_url, params]))
-    return resp
+    return resp.status_code
 
