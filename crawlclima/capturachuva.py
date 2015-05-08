@@ -11,6 +11,6 @@ hoje = datetime.today()
 
 data = inicio
 while data <= hoje:
-    pega_dados_cemaden.delay('RJ', data.strftime("%Y%m%d%H%M"))
+    pega_dados_cemaden.delay('PR', data.strftime("%Y%m%d%H%M"))
     #mock.delay(5)
     data += timedelta(1)
