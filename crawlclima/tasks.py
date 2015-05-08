@@ -8,12 +8,19 @@ import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
 import time
-from crawlclima.config.tweets import base_url, token
+from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user
 import psycopg2
+
+
 
 mongo = pymongo.MongoClient()
 
 logger = get_task_logger(__name__)
+
+try:
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password=''".format(psql_db, psql_user, psql_host))
+except Exception as e:
+    logger.error("Unable to connect to Postgresql: {}".format(e))
 
 @app.task
 def mock(t):
@@ -88,13 +95,30 @@ def pega_tweets(inicio, fim, cidades=None):
     """
     Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
 
-    :param inicio: data de início da captura
-    :param fim: data do fim da captura
-    :param cidades: lista de cidades identificadas pelo geocódico do IBGE
+    :param inicio: data de início da captura: yyyy-mm-dd
+    :param fim: data do fim da captura: yyyy-mm-dd
+    :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
     :return:
     """
+
     cidades = [str(c) for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
-    resp = requests.get('?'.join([base_url, params]))
+    try:
+        resp = requests.get('?'.join([base_url, params]))
+    except requests.RequestException as e:
+        logger.error("Request retornou um erro: {}".format(e))
+        raise self.retry(exc=e, countdown=60)
+    except ConnectionError as e:
+        logger.error("Conexão ao Obs. da Dengue falhou com erro {}".format(e))
+        raise self.retry(exc=e, countdown=60)
+    cur = conn.cursor()
+    for c in cidades:
+        try:
+            cur.execute("""create """)
+    for r in resp.text.split('\n'):
+        row = r.split(',')
+        data = datetime.strptime(row[0],"%Y-%m-%d")
+        cur.execute("""insert into tweets(data, numero) values()""")
+
     return resp.status_code
 
