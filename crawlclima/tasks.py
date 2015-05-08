@@ -8,6 +8,7 @@ import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
 import time
+import psycopg2
 
 mongo = pymongo.MongoClient()
 
@@ -80,4 +81,18 @@ def pega_dados_cemaden(codigo, data, by='uf'):
 def pega_dados_wunderground(uf, inicio, fim, recapture=False):
 
     return
+
+@app.task
+def pega_tweets(inicio, fim, cidades=None):
+    """
+
+    :param inicio: data de início da captura
+    :param fim: data do fim da captura
+    :param cidades: lista de cidades identificadas pelo geocódico do IBGE
+    :return:
+    """
+    cidades = [str(c) for c in cidades]
+    params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
+    resp = requests.get('?'.join([base_url, params]))
+    return resp
 

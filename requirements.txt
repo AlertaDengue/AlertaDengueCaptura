@@ -5,3 +5,5 @@ flower
 folium
 bearcart
 bokeh
+psycopg2
+pgcli
