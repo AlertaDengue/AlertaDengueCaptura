@@ -10,15 +10,16 @@ from datetime import datetime, timedelta
 import time
 from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user
 import psycopg2
+import csv
 
 
 
 mongo = pymongo.MongoClient()
 
-logger = get_task_logger(__name__)
+logger = get_task_logger("alertadengue")
 
 try:
-    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password=''".format(psql_db, psql_user, psql_host))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='alerta'".format(psql_db, psql_user, psql_host))
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
 
@@ -100,7 +101,7 @@ def pega_tweets(inicio, fim, cidades=None):
     :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
     :return:
     """
-
+    #todo: chacar existência no banco para evitar duplicação de dados.
     cidades = [str(c) for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
@@ -111,14 +112,21 @@ def pega_tweets(inicio, fim, cidades=None):
     except ConnectionError as e:
         logger.error("Conexão ao Obs. da Dengue falhou com erro {}".format(e))
         raise self.retry(exc=e, countdown=60)
-    cur = conn.cursor()
-    for c in cidades:
-        try:
-            cur.execute("""create """)
-    for r in resp.text.split('\n'):
-        row = r.split(',')
-        data = datetime.strptime(row[0],"%Y-%m-%d")
-        cur.execute("""insert into tweets(data, numero) values()""")
+    try:
+        cur = conn.cursor()
+    except NameError as e:
+        logger.error("Not saving data because connection to database has not been established.")
+        return e
+    header = ["data"] + cidades
+    fp = StringIO(resp.text)
+    data = list(csv.DictReader(fp, fieldnames=header))
+    #print(data)
+    for i, c in enumerate(cidades):
+        sql = """insert into "{}".tweets values (%s, %s) """.format(c)
+        for r in data[1:]:
+            #print(r)
+            cur.execute(sql, (datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c]))
+    conn.commit()
 
     return resp.status_code
 

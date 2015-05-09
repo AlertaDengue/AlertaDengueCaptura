@@ -16,5 +16,5 @@ class TestTasks(unittest.TestCase):
         self.assertEquals(res, 200)
 
     def test_pega_tweets(self):
-        res = pega_tweets("2015-05-01", "2015-05-07", [330455])
+        res = pega_tweets("2015-04-01", "2015-05-07", [330455])
         self.assertEquals(res, 200)
