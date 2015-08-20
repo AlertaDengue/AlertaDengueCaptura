@@ -1,12 +1,11 @@
--- Created by Vertabelo (http://vertabelo.com)
 -- Last modification date: 2015-08-18 21:01:51.574
 
 
 
 
 -- tables
--- Table: "Bairro"
-CREATE TABLE "Bairro" (
+-- Table: "Municipio"."Bairro"
+CREATE TABLE "Municipio"."Bairro" (
     "nome" text  NOT NULL,
     "bairro_id" int  NOT NULL,
     "Localidade_id" int  NOT NULL,
@@ -14,7 +13,7 @@ CREATE TABLE "Bairro" (
 );
 
 
-COMMENT ON TABLE "Bairro" IS 'Lista de bairros por localidade';
+COMMENT ON TABLE "Municipio"."Bairro" IS 'Lista de bairros por localidade';
 
 
 -- Table: "CID10"
@@ -236,10 +235,10 @@ ALTER TABLE "Historico_alerta" ADD CONSTRAINT "Alerta_Localidade"
     INITIALLY IMMEDIATE 
 ;
 
--- Reference:  "Bairro_Localidade" (table: "Bairro")
+-- Reference:  "Bairro_Localidade" (table: "Municipio"."Bairro")
 
 
-ALTER TABLE "Bairro" ADD CONSTRAINT "Bairro_Localidade" 
+ALTER TABLE "Municipio"."Bairro" ADD CONSTRAINT "Bairro_Localidade" 
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Localidade" ("id")
     NOT DEFERRABLE 
@@ -271,7 +270,7 @@ ALTER TABLE "Clima_wu" ADD CONSTRAINT "Clima_wu_Estacao_wu"
 
 ALTER TABLE "Notificacao" ADD CONSTRAINT "Dengue_Bairro" 
     FOREIGN KEY ("Bairro_nome","Bairro_bairro_id")
-    REFERENCES "Bairro" ("nome","bairro_id")
+    REFERENCES "Municipio"."Bairro" ("nome","bairro_id")
     NOT DEFERRABLE 
     INITIALLY IMMEDIATE 
 ;
