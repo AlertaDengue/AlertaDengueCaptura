@@ -47,7 +47,7 @@ def pega_dados_cemaden(codigo, data, by='uf'):
     col.create_index([("nome", pymongo.ASCENDING),
                     ("cod_estacao", pymongo.ASCENDING),
                     ("datahora", pymongo.DESCENDING)],
-                    background=True
+                     background=True
                       )
     try:
         results = requests.get(url, params=pars)
