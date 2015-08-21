@@ -18,7 +18,7 @@ COMMENT ON TABLE "Municipio"."Bairro" IS 'Lista de bairros por localidade';
 
 -- Table: "CID10"
 CREATE TABLE "Dengue_global"."CID10" (
-    "nome" varchar(128)  NOT NULL,
+    "nome" varchar(512)  NOT NULL,
     "codigo" varchar(5)  NOT NULL,
     CONSTRAINT "CID10_pk" PRIMARY KEY ("codigo")
 );
@@ -152,7 +152,7 @@ CREATE TABLE "Dengue_global"."Municipio" (
     "nome" varchar(128)  NOT NULL,
     "geojson" text  NOT NULL,
     "populacao" bigint  NOT NULL,
-    "uf" varchar(2)  NOT NULL,
+    "uf" varchar(20)  NOT NULL,
     CONSTRAINT "Municipio_pk" PRIMARY KEY ("geocodigo")
 );
 
@@ -163,7 +163,7 @@ CREATE INDEX "Municipio_idx_n" on "Dengue_global"."Municipio" ("nome" ASC);
 
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio" IS 'Municipio integrado ao sistema de alerta';
+COMMENT ON TABLE "Dengue_global"."Municipio" IS 'Municipio. metadados. uf contem nome por extenso';
 
 
 -- Table: "Municipio"."Notificacao"
