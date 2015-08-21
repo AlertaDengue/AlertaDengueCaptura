@@ -4,8 +4,8 @@
 
 
 -- tables
--- Table: "Dengue_global"."Municipio"."Bairro"
-CREATE TABLE "Dengue_global"."Municipio"."Bairro" (
+-- Table: "Municipio"."Bairro"
+CREATE TABLE "Municipio"."Bairro" (
     "nome" text  NOT NULL,
     "bairro_id" int  NOT NULL,
     "Localidade_id" int  NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE "Dengue_global"."Municipio"."Bairro" (
 );
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Bairro" IS 'Lista de bairros por localidade';
+COMMENT ON TABLE "Municipio"."Bairro" IS 'Lista de bairros por localidade';
 
 
 -- Table: "CID10"
@@ -25,8 +25,8 @@ CREATE TABLE "Dengue_global"."CID10" (
 
 
 
--- Table: "Dengue_global"."Municipio"."Clima_Satelite"
-CREATE TABLE "Dengue_global"."Municipio"."Clima_Satelite" (
+-- Table: "Municipio"."Clima_Satelite"
+CREATE TABLE "Municipio"."Clima_Satelite" (
     "id" int  NOT NULL,
     "data" date  NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
@@ -39,16 +39,16 @@ CREATE TABLE "Dengue_global"."Municipio"."Clima_Satelite" (
     CONSTRAINT "Clima_Satelite_pk" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "Clima_Satelite_idx_data" on "Dengue_global"."Municipio"."Clima_Satelite" ("id" ASC);
+CREATE INDEX "Clima_Satelite_idx_data" on "Municipio"."Clima_Satelite" ("id" ASC);
 
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Clima_Satelite" IS 'Precipitação, temperatura e NVDI
+COMMENT ON TABLE "Municipio"."Clima_Satelite" IS 'Precipitação, temperatura e NVDI
 (Normalized Difference Vegetation Index)';
 
 
--- Table: "Dengue_global"."Municipio"."Clima_cemaden"
-CREATE TABLE "Dengue_global"."Municipio"."Clima_cemaden" (
+-- Table: "Municipio"."Clima_cemaden"
+CREATE TABLE "Municipio"."Clima_cemaden" (
     "chuva" real  NOT NULL,
     "intensidade_precip" real  NOT NULL,
     "id" int  NOT NULL,
@@ -58,11 +58,11 @@ CREATE TABLE "Dengue_global"."Municipio"."Clima_cemaden" (
 );
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Clima_cemaden" IS 'dados de clima - CEMADEN';
+COMMENT ON TABLE "Municipio"."Clima_cemaden" IS 'dados de clima - CEMADEN';
 
 
--- Table: "Dengue_global"."Municipio"."Clima_wu"
-CREATE TABLE "Dengue_global"."Municipio"."Clima_wu" (
+-- Table: "Municipio"."Clima_wu"
+CREATE TABLE "Municipio"."Clima_wu" (
     "temp_minima" real  NOT NULL,
     "temp_maxima" real  NOT NULL,
     "temp_media" real  NOT NULL,
@@ -78,15 +78,15 @@ CREATE TABLE "Dengue_global"."Municipio"."Clima_wu" (
     CONSTRAINT "Clima_wu_pk" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "Temperatura_idx_data" on "Dengue_global"."Municipio"."Clima_wu" ("data_dia" DESC);
+CREATE INDEX "Temperatura_idx_data" on "Municipio"."Clima_wu" ("data_dia" DESC);
 
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Clima_wu" IS 'série temporal de variaveis meteorologicas diarias do WU';
+COMMENT ON TABLE "Municipio"."Clima_wu" IS 'série temporal de variaveis meteorologicas diarias do WU';
 
 
 -- Table: "Estacao_cemaden"
-CREATE TABLE "Estacao_cemaden" (
+CREATE TABLE "Municipio"."Estacao_cemaden" (
     "codestacao" varchar(10)  NOT NULL,
     "nome" varchar(128)  NOT NULL,
     "latitude" real  NOT NULL,
@@ -96,11 +96,11 @@ CREATE TABLE "Estacao_cemaden" (
 );
 
 
-COMMENT ON TABLE "Estacao_cemaden" IS 'Metadados da estação do cemaden';
+COMMENT ON TABLE "Municipio"."Estacao_cemaden" IS 'Metadados da estação do cemaden';
 
 
--- Table: "Dengue_global"."Municipio"."Estacao_wu"
-CREATE TABLE "Dengue_global"."Municipio"."Estacao_wu" (
+-- Table: "Municipio"."Estacao_wu"
+CREATE TABLE "Municipio"."Estacao_wu" (
     "estacao_id" varchar(4)  NOT NULL,
     "latitude" real  NOT NULL,
     "longitude" real  NOT NULL,
@@ -110,11 +110,11 @@ CREATE TABLE "Dengue_global"."Municipio"."Estacao_wu" (
 );
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Estacao_wu" IS 'metadados das estacoes meteorologicas da WU';
+COMMENT ON TABLE "Municipio"."Estacao_wu" IS 'metadados das estacoes meteorologicas da WU';
 
 
--- Table: "Dengue_global"."Municipio"."Historico_alerta"
-CREATE TABLE "Dengue_global"."Municipio"."Historico_alerta" (
+-- Table: "Municipio"."Historico_alerta"
+CREATE TABLE "Municipio"."Historico_alerta" (
     "data_iniSE" date  NOT NULL,
     "SE" int  NOT NULL,
     "casos_est" int  NOT NULL,
@@ -125,15 +125,15 @@ CREATE TABLE "Dengue_global"."Municipio"."Historico_alerta" (
     CONSTRAINT "Historico_alerta_pk" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "Alerta_idx_data" on "Dengue_global"."Municipio"."Historico_alerta" ("data_iniSE" DESC);
+CREATE INDEX "Alerta_idx_data" on "Municipio"."Historico_alerta" ("data_iniSE" DESC);
 
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Historico_alerta" IS 'Resultados  do alerta, conforme publicado.';
+COMMENT ON TABLE "Municipio"."Historico_alerta" IS 'Resultados  do alerta, conforme publicado.';
 
 
--- Table: "Dengue_global"."Municipio"."Localidade"
-CREATE TABLE "Dengue_global"."Municipio"."Localidade" (
+-- Table: "Municipio"."Localidade"
+CREATE TABLE "Municipio"."Localidade" (
     "nome" varchar(32)  NOT NULL,
     "populacao" int  NOT NULL,
     "geojson" text  NOT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE "Dengue_global"."Municipio"."Localidade" (
 );
 
 
-COMMENT ON TABLE "Dengue_global"."Municipio"."Localidade" IS 'Sub-unidades de analise no municipio';
+COMMENT ON TABLE "Municipio"."Localidade" IS 'Sub-unidades de analise no municipio';
 
 
 -- Table: "Dengue_global"."Municipio"
@@ -288,7 +288,7 @@ ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_CID10"
 -- Reference:  "Estacao_cemaden_Localidade" (table: "Estacao_cemaden")
 
 
-ALTER TABLE "Estacao_cemaden" ADD CONSTRAINT "Estacao_cemaden_Localidade" 
+ALTER TABLE "Municipio"."Estacao_cemaden" ADD CONSTRAINT "Estacao_cemaden_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
     NOT DEFERRABLE 
