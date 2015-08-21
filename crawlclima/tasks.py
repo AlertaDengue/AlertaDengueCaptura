@@ -92,16 +92,16 @@ def pega_dados_wunderground(uf, inicio, fim, recapture=False):
     return
 
 @app.task
-def pega_tweets(inicio, fim, cidades=None):
+def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     """
     Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
 
+    :param CID10: código CID10 para a doença. default: dengue clássico
     :param inicio: data de início da captura: yyyy-mm-dd
     :param fim: data do fim da captura: yyyy-mm-dd
     :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
     :return:
     """
-    #todo: checar existência no banco para evitar duplicação de dados.
 
     cidades = [int(c) for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
@@ -123,11 +123,15 @@ def pega_tweets(inicio, fim, cidades=None):
     data = list(csv.DictReader(fp, fieldnames=header))
     #print(data)
     for i, c in enumerate(cidades):
-        sql = """insert into "Municipio".tweet values (%s, %s) """.format(c)
+        sql = """insert into "Municipio"."Tweet" (Municipio_geocodigo, data_dia, numero, CID10_codigo) values(%s, %s, %s, %s);""".format(c)
         for r in data[1:]:
-            #print(r)
-            cur.execute(sql, (datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c]))
+            cur.execute('select * from "Municipio"."Tweet" where Municipio_geocodigo=%s and data_dia=%s;')
+            res = cur.fetchall()
+            if not res:
+                continue
+            cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c], CID10))
     conn.commit()
+    cur.close()
 
     return resp.status_code
 

@@ -10,6 +10,7 @@ import pandas as pd
 import psycopg2
 import geojson
 from crawlclima.config.general import psql_host, psql_user
+from multiprocessing.pool import Pool
 
 try:
     conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))
@@ -43,6 +44,8 @@ siglas = {
     'Roraima': 'rr',
     'Ceará': 'ce',
     'Pernambuco': 'pe',
+    'Espírito Santo': 'es',
+    'Rio de Janeiro': 'rj'
 }
 
 #Carregando dados dos municipios
@@ -59,23 +62,43 @@ def pega_poligono_municipio(uf, gc):
     sigla_uf = siglas[uf]
     UF_GeoJSON = geojson.load(open("/home/fccoelho/Copy/Projetos/Alerta_Dengue/mapas/br-atlas/geo/{}-counties.json".format(sigla_uf),"r"))
     try:
-        pol = [p  for p in UF_GeoJSON["features"] if p["properties"]["CD_GEOCODM"] == gc][0]
+        pol = ""
+        for p in UF_GeoJSON["features"]:
+            if p["properties"]["CD_GEOCODM"] == gc:
+                pol = p
+                break
     except IndexError:
         print("Geocodigo possivelmente faltando na coleção de GeoJSONs: {}".format(gc))
         return ""
     return geojson.dumps(pol)
 
 registros = []
-for mun in tabela_completa.iterrows():
-    # print(mun[1]['Nome_Município'])
-    registros.append((mun[1]['Cod Municipio Completo'],
+
+def faz_tupla(mun):
+    print(mun[0], mun[1]['Nome_Município'])
+    return (mun[1]['Cod Municipio Completo'],
                        mun[1]['Nome_Município'],
                        pega_poligono_municipio(mun[1]['Nome_UF'], mun[1]['Cod Municipio Completo']),
                        0,
                        mun[1]['Nome_UF']
-                       ))
-sql = '''insert into "Dengue_global"."Municipio" (geocodigo, nome, geojson, populacao, uf) values(%s, %s, %s, %s, %s)'''
-cur.executemany(sql, registros)
+                       )
+
+# Constroi os registros em paralelo
+P = Pool()
+registros = P.map(faz_tupla, tabela_completa.iterrows())
+
+P.close()
+P.join()
+# for mun in tabela_completa.iterrows():
+#     print(mun[0], mun[1]['Nome_Município'])
+#     registros.append((mun[1]['Cod Municipio Completo'],
+#                        mun[1]['Nome_Município'],
+#                        pega_poligono_municipio(mun[1]['Nome_UF'], mun[1]['Cod Municipio Completo']),
+#                        0,
+#                        mun[1]['Nome_UF']
+#                        ))
+sql = '''insert into "Dengue_global"."Municipio" (geocodigo, nome, geojson, populacao, uf) values(%s, %s, %s, %s, %s);'''
+cur.executemany(sql, list(registros))
 conn.commit()
 cur.close()
 conn.close()
