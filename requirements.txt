@@ -7,3 +7,6 @@ bearcart
 bokeh
 psycopg2
 pgcli
+sqlsoup
+odo
+geojson

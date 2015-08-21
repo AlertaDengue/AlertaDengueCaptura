@@ -101,8 +101,9 @@ def pega_tweets(inicio, fim, cidades=None):
     :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
     :return:
     """
-    #todo: chacar existência no banco para evitar duplicação de dados.
-    cidades = [str(c) for c in cidades]
+    #todo: checar existência no banco para evitar duplicação de dados.
+
+    cidades = [int(c) for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
         resp = requests.get('?'.join([base_url, params]))
@@ -122,7 +123,7 @@ def pega_tweets(inicio, fim, cidades=None):
     data = list(csv.DictReader(fp, fieldnames=header))
     #print(data)
     for i, c in enumerate(cidades):
-        sql = """insert into "{}".tweets values (%s, %s) """.format(c)
+        sql = """insert into "Municipio".tweet values (%s, %s) """.format(c)
         for r in data[1:]:
             #print(r)
             cur.execute(sql, (datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c]))
