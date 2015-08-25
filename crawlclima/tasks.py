@@ -8,10 +8,20 @@ import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
 import time
+from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user
+import psycopg2
+import csv
+
+
 
 mongo = pymongo.MongoClient()
 
-logger = get_task_logger(__name__)
+logger = get_task_logger("alertadengue")
+
+try:
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='alerta'".format(psql_db, psql_user, psql_host))
+except Exception as e:
+    logger.error("Unable to connect to Postgresql: {}".format(e))
 
 @app.task
 def mock(t):
@@ -80,4 +90,48 @@ def pega_dados_cemaden(codigo, data, by='uf'):
 def pega_dados_wunderground(uf, inicio, fim, recapture=False):
 
     return
+
+@app.task
+def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
+    """
+    Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
+
+    :param CID10: código CID10 para a doença. default: dengue clássico
+    :param inicio: data de início da captura: yyyy-mm-dd
+    :param fim: data do fim da captura: yyyy-mm-dd
+    :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
+    :return:
+    """
+
+    cidades = [int(c) for c in cidades]
+    params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
+    try:
+        resp = requests.get('?'.join([base_url, params]))
+    except requests.RequestException as e:
+        logger.error("Request retornou um erro: {}".format(e))
+        raise self.retry(exc=e, countdown=60)
+    except ConnectionError as e:
+        logger.error("Conexão ao Obs. da Dengue falhou com erro {}".format(e))
+        raise self.retry(exc=e, countdown=60)
+    try:
+        cur = conn.cursor()
+    except NameError as e:
+        logger.error("Not saving data because connection to database has not been established.")
+        return e
+    header = ["data"] + cidades
+    fp = StringIO(resp.text)
+    data = list(csv.DictReader(fp, fieldnames=header))
+    #print(data)
+    for i, c in enumerate(cidades):
+        sql = """insert into "Municipio"."Tweet" (Municipio_geocodigo, data_dia, numero, CID10_codigo) values(%s, %s, %s, %s);""".format(c)
+        for r in data[1:]:
+            cur.execute('select * from "Municipio"."Tweet" where Municipio_geocodigo=%s and data_dia=%s;')
+            res = cur.fetchall()
+            if not res:
+                continue
+            cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c], CID10))
+    conn.commit()
+    cur.close()
+
+    return resp.status_code
 
