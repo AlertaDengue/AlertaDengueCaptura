@@ -43,7 +43,7 @@ if __name__=="__main__":
     sql = 'insert into "Municipio"."Localidade" (id, nome, populacao, geojson, Municipio_geocodigo) values(%s,%s,%s,%s,%s);'
     for i, ap in populações.iterrows():
         pol = pega_poligono_AP(str(ap.APS), "cap_sms.geojson")
-        registro = (i, pol['properties']['NOME'], ap.Pop2010, geojson.dumps(pol), 3304557)
+        registro = (int(i), pol['properties']['NOME'], float(ap.Pop2010), geojson.dumps(pol), 3304557)
         cur.execute(sql, registro)
     conn.commit()
     cur.close
