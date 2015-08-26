@@ -4,7 +4,6 @@ from crawlclima.fetchapp import app
 from celery.utils.log import get_task_logger
 import requests
 from crawlclima.config import cemaden
-import pymongo
 from io import StringIO
 from datetime import datetime, timedelta
 import time
@@ -14,12 +13,11 @@ import csv
 
 
 
-mongo = pymongo.MongoClient()
 
 logger = get_task_logger("Captura")
 
 try:
-    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='alerta'".format(psql_db, psql_user, psql_host))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='aldengue'".format(psql_db, psql_user, psql_host))
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
 
@@ -48,24 +46,66 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
         logger.error('Data mal formatada: {}'.format(e))
         raise ValueError
 
+    # Check for latest records in the database
+    cur = conn.cursor()
+    cur.execute('select datahora from "Municipio"."Clima_cemaden" ORDER BY datahora DESC ')
+    ultima_data = cur.fetchone()
+    inicio = datetime.strptime(inicio, "%Y%m%d%H%M")
+    fim = datetime.strptime(fim, "%Y%m%d%H%M")
+    if ultima_data is not None:
+        if ultima_data > inicio:
+            inicio = ultima_data
+        if inicio >= fim:
+            return
+
     if by == 'uf':
         url = cemaden.url_rede
         pars = {'chave': cemaden.chave,
-                'inicio': inicio,
-                'fim': fim,
+                'inicio': inicio.strftime("%Y%m%d%H%M"),
+                'fim': fim.strftime("%Y%m%d%H%M"),
                 'uf': codigo}
     elif by == 'estacao':
         url = cemaden.url_pcd
         pars = {'chave': cemaden.chave,
-                'inicio': inicio,
-                'fim': fim,
+                'inicio': inicio.strftime("%Y%m%d%H%M"),
+                'fim': fim.strftime("%Y%m%d%H%M"),
                 'codigo': codigo}
-    col = mongo.clima.cemaden
-    col.create_index([("nome", pymongo.ASCENDING),
-                    ("cod_estacao", pymongo.ASCENDING),
-                    ("datahora", pymongo.DESCENDING)],
-                     background=True
-                      )
+
+    # puxa os dados do servidor do CEMADEN
+    if fim-inicio > timedelta(hours=23, minutes=59):
+        fim_t = inicio + timedelta(hours=23, minutes=59)
+        data = []
+        while fim_t < fim:
+            pars['fim'] = fim_t.strftime("%Y%m%d%H%M")
+            results = fetch_results(pars, url)
+            try:
+                vnames = results.text.splitlines()[1].strip().split(';')
+            except IndexError:
+                logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")))
+            if not results.status_code == 200:
+                continue # try again
+            data += results.text.splitlines()[2:]
+            fim_t += timedelta(hours=23, minutes=59)
+            inicio += timedelta(hours=23, minutes=59)
+            pars['inicio'] = inicio.strftime("%Y%m%d%H%M")
+
+
+    vnames = [v.replace('.', '_') for v in vnames]
+    sql = 'insert INTO "Municipio"."Clima_cemaden" (valor,sensor,datahora,"Estacao_cemaden_codestacao") values(%s, %s, %s, %s);'
+    for linha in data:
+        doc = dict(zip(vnames, linha.strip().split(';')))
+        doc['latitude'] = float(doc['latitude'])
+        doc['longitude'] = float(doc['longitude'])
+        doc['valor'] = float(doc['valor'])
+        doc['datahora'] = datetime.strptime(doc['datahora'], "%Y-%m-%d %H:%M:%S")
+        cur.execute(sql, (doc['valor'], doc['sensor'], doc['datahora'], doc['cod_estacao']))
+    conn.commit()
+    cur.close()
+
+    return results.status_code
+
+
+def fetch_results(pars, url):
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
@@ -74,23 +114,7 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     except requests.ConnectionError as e:
         logger.error("Conexão falhou com erro {}".format(e))
         raise self.retry(exc=e, countdown=60)
-
-
-    fp = StringIO(results.text)
-    fp.readline()  # Remove o comentário
-    vnames = fp.readline().strip().split(';')
-    vnames = [v.replace('.', '_') for v in vnames]
-    subs = 0
-    for linha in fp:
-        doc = dict(zip(vnames, linha.strip().split(';')))
-        doc['latitude'] = float(doc['latitude'])
-        doc['longitude'] = float(doc['longitude'])
-        doc['valor'] = float(doc['valor'])
-        doc['datahora'] = datetime.strptime(doc['datahora'], "%Y-%m-%d %H:%M:%S")
-        mongo_result = col.replace_one({"cod_estacao": doc['cod_estacao'], "datahora": doc['datahora'], "nome": doc['nome']}, doc, upsert=True)
-        subs += mongo_result.modified_count
-    logger.info("Registros Substituídos: {}".format(subs))
-    return results.status_code
+    return results
 
 
 @app.task
@@ -110,7 +134,7 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     :return:
     """
 
-    cidades = [int(c) for c in cidades]
+    cidades = [c for c in cidades]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
         resp = requests.get('?'.join([base_url, params]))
@@ -132,9 +156,9 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     for i, c in enumerate(cidades):
         sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c)
         for r in data[1:]:
-            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;')
+            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c), datetime.strptime(r['data'], "%Y-%m-%d")))
             res = cur.fetchall()
-            if not res:
+            if res:
                 continue
             cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c], CID10))
     conn.commit()

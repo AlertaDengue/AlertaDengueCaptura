@@ -6,5 +6,5 @@ base_url = "http://observatorio.inweb.org.br/dengueapp/api/1.0/totais"
 token = "XXXXX"
 
 psql_host = "127.0.0.1"
-psql_user = "dengue_admin"
+psql_user = "dengueadmin"
 psql_db = "dengue"

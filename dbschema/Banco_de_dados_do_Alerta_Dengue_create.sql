@@ -49,9 +49,9 @@ COMMENT ON TABLE "Municipio"."Clima_Satelite" IS 'Precipitação, temperatura e 
 
 -- Table: "Municipio"."Clima_cemaden"
 CREATE TABLE "Municipio"."Clima_cemaden" (
-    "chuva" real  NOT NULL,
-    "intensidade_precip" real  NOT NULL,
-    "id" int  NOT NULL,
+    "valor" real  NOT NULL,
+    "sensor" CHARACTER VARYING(32)  NOT NULL,
+    "id" serial  NOT NULL,
     "datahora" timestamp  NOT NULL,
     "Estacao_cemaden_codestacao" varchar(10)  NOT NULL,
     CONSTRAINT "Clima_cemaden_pk" PRIMARY KEY ("id")
@@ -74,7 +74,7 @@ CREATE TABLE "Municipio"."Clima_wu" (
     "pressao_med" real  NOT NULL,
     "pressao_max" real  NOT NULL,
     "Estacao_wu_estacao_id" varchar(4)  NOT NULL,
-    "id" int  NOT NULL,
+    "id" SERIAL  NOT NULL,
     CONSTRAINT "Clima_wu_pk" PRIMARY KEY ("id")
 );
 
@@ -206,11 +206,12 @@ CREATE TABLE "Municipio"."Ovitrampa" (
 
 -- Table: "Municipio"."Tweet"
 CREATE TABLE "Municipio"."Tweet" (
+    "id" SERIAL PRIMARY KEY NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
     "data_dia" date  NOT NULL,
     "numero" int  NOT NULL,
     "CID10_codigo" varchar(5)  NOT NULL,
-    CONSTRAINT "Tweet_pk" PRIMARY KEY ("Municipio_geocodigo")
+    CONSTRAINT "Tweet_pk" PRIMARY KEY ("id")
 );
 
 CREATE INDEX "Tweets_idx_data" on "Municipio"."Tweet" ("data_dia" DESC);

@@ -13,7 +13,7 @@ from crawlclima.config.general import psql_host, psql_user
 from multiprocessing.pool import Pool
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))
+    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format(psql_user, psql_host))
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
@@ -78,7 +78,7 @@ def faz_tupla(mun):
     print(mun[0], mun[1]['Nome_Município'])
     return (mun[1]['Cod Municipio Completo'],
                        mun[1]['Nome_Município'],
-                       pega_poligono_municipio(mun[1]['Nome_UF'], mun[1]['Cod Municipio Completo']),
+                       pega_poligono_municipio(mun[1]['Nome_UF'], int(str(mun[1]['Cod Municipio Completo'])[:-1])),
                        0,
                        mun[1]['Nome_UF']
                        )
