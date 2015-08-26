@@ -10,7 +10,7 @@ license: GPL v3
 import requests
 import re
 import pandas as pd
-from cStringIO import StringIO
+from io import StringIO
 import argparse
 import datetime
 from dateutil.parser import parse
@@ -39,7 +39,7 @@ def parse_page(url):
     Parses the resulting CSV and
     """
     page = requests.get(url)
-    csv = re.subn("<br />", "", page.content)[0]
+    csv = re.subn("<br />", "", page.text)[0]
     #print csv
     csvf = StringIO(csv)
     #print csvf.readline()
@@ -76,7 +76,7 @@ def captura(start, end, code):
         if coll.find({"DateUTC":start}).count() > 0:
             start = start + datetime.timedelta(1)
             continue
-        print "Fetching data from {} on {}.".format(code, start)
+        print("Fetching data from {} on {}.".format(code, start))
         y,m,d = start.year, start.month, start.day
         # Open wunderground.com url
         url = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html??format=1&format=1".format(code,y,m,d)
@@ -89,7 +89,7 @@ def captura(start, end, code):
         except AttributeError:
             start = start + datetime.timedelta(1)
             continue
-        print "Fetching climate for {} on {}".format(code, start)
+        print("Fetching climate for {} on {}".format(code, start))
         try:
             data["DateUTC"] = dateutc
         except AttributeError:
@@ -137,8 +137,8 @@ def captura(start, end, code):
         try:
             db[code].insert(data, w=1)
         except DuplicateKeyError as e:
-            print e
-            print "{} already in the database.".format(start)
+            print(e)
+            print("{} already in the database.".format(start))
         time.sleep(1)
         start = start + datetime.timedelta(1)
 
