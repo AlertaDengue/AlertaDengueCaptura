@@ -24,7 +24,7 @@ if __name__=="__main__":
     bairrosAP = pd.read_csv("bairro2AP.csv", header=0)
     APS = populações.APS
     loc_id = dict([(str(k),j) for j,k in APS.iteritems()])
-    sql = 'insert into "Municipio"."Bairro" (id, nome, Localidade_id) values(%s,%s,%s);'
+    sql = 'insert into "Municipio"."Bairro" (id, nome, "Localidade_id") values(%s,%s,%s);'
     for i, bairro in bairrosAP.iterrows():
         registro = (int(i), bairro.bairro, loc_id[str(bairro.APS)])
         cur.execute(sql, registro)

@@ -40,7 +40,7 @@ def pega_poligono_AP(ap, mapa):
 if __name__=="__main__":
     populações = pd.read_csv('popAPRJ.csv', header=0)
     APS = populações.APS
-    sql = 'insert into "Municipio"."Localidade" (id,nome,populacao,geojson,Municipio_geocodigo) values(%s,%s,%s,%s,%s);'
+    sql = 'insert into "Municipio"."Localidade" (id,nome,populacao,geojson,"Municipio_geocodigo") values(%s,%s,%s,%s,%s);'
     for i, ap in populações.iterrows():
         pol = pega_poligono_AP(str(ap.APS), "cap_sms.geojson")
         registro = (int(i), pol['properties']['NOME'], float(ap.Pop2010), geojson.dumps(pol), 3304557)
