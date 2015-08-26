@@ -1,11 +1,13 @@
 import pandas as pd
 import psycopg2
-import geojson
 import sys
 import logging
-from crawlclima.config.general import psql_host, psql_user
 
-logger = logging.getLogger("crialoc")
+
+psql_user = "fill in"
+psql_host = "127.0.0.1"
+
+logger = logging.getLogger("criabairro")
 
 try:
     conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))

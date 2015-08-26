@@ -3,16 +3,18 @@ import psycopg2
 import geojson
 import sys
 import logging
-from crawlclima.config.general import psql_host, psql_user
+
+psql_user = "fill in"
+psql_host = "127.0.0.1"
 
 logger = logging.getLogger("crialoc")
 
-# try:
-#     conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))
-#     cur = conn.cursor()
-# except Exception as e:
-#     logger.error("Unable to connect to Postgresql: {}".format(e))
-#     sys.exit()
+try:
+    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))
+    cur = conn.cursor()
+except Exception as e:
+    logger.error("Unable to connect to Postgresql: {}".format(e))
+    sys.exit()
 
 def pega_poligono_AP(ap, mapa):
     """
