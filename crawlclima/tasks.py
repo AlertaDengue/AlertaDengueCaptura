@@ -16,7 +16,7 @@ import csv
 
 mongo = pymongo.MongoClient()
 
-logger = get_task_logger("alertadengue")
+logger = get_task_logger("Captura")
 
 try:
     conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='alerta'".format(psql_db, psql_user, psql_host))
@@ -29,29 +29,36 @@ def mock(t):
     return "done"
 
 @app.task
-def pega_dados_cemaden(codigo, data, by='uf'):
+def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
+    :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
+    :param fim: data-hora (UTC) de fim da captura %Y%m%d%H%M
     :param codigo: Código da estação de coleta do CEMADEN ou código de duas letras da uf: 'SP' ou 'RJ' ou...
-    :param data: data-hora (UTC) de inicio da captura %Y%m%d%H%M
+
     :param by: uf|estacao
     :return: Status code da tarefa
     """
-    if len(data) > 8:
-        data = data[:8]
-    data = datetime.strptime(str(data), "%Y%m%d")
-    fim = data + timedelta(days=0, hours=23, minutes=59)
+    try:
+        assert (datetime.strptime(inicio, "%Y%m%d%H%M") < datetime.strptime(fim, "%Y%m%d%H%M"))
+    except AssertionError:
+        logger.error('data de início posterior à de fim.')
+        raise AssertionError
+    except ValueError as e:
+        logger.error('Data mal formatada: {}'.format(e))
+        raise ValueError
+
     if by == 'uf':
         url = cemaden.url_rede
         pars = {'chave': cemaden.chave,
-                'inicio': data.strftime("%Y%m%d")+"0000",
-                'fim': fim.strftime("%Y%m%d%H%M"),
+                'inicio': inicio,
+                'fim': fim,
                 'uf': codigo}
     elif by == 'estacao':
         url = cemaden.url_pcd
         pars = {'chave': cemaden.chave,
-                'inicio': data.strftime("%Y%m%d")+"0000",
-                'fim': fim.strftime("%Y%m%d%H%M"),
+                'inicio': inicio,
+                'fim': fim,
                 'codigo': codigo}
     col = mongo.clima.cemaden
     col.create_index([("nome", pymongo.ASCENDING),
@@ -123,9 +130,9 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     data = list(csv.DictReader(fp, fieldnames=header))
     #print(data)
     for i, c in enumerate(cidades):
-        sql = """insert into "Municipio"."Tweet" (Municipio_geocodigo, data_dia, numero, CID10_codigo) values(%s, %s, %s, %s);""".format(c)
+        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c)
         for r in data[1:]:
-            cur.execute('select * from "Municipio"."Tweet" where Municipio_geocodigo=%s and data_dia=%s;')
+            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;')
             res = cur.fetchall()
             if not res:
                 continue
