@@ -74,11 +74,11 @@ CREATE TABLE "Municipio"."Clima_wu" (
     "pressao_med" real  NOT NULL,
     "pressao_max" real  NOT NULL,
     "Estacao_wu_estacao_id" varchar(4)  NOT NULL,
-    "id" SERIAL  NOT NULL,
+    "id" BIGSERIAL  NOT NULL,
     CONSTRAINT "Clima_wu_pk" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "Temperatura_idx_data" on "Municipio"."Clima_wu" ("data_dia" DESC);
+CREATE INDEX "WU_idx_data" on "Municipio"."Clima_wu" ("data_dia" DESC);
 
 
 
@@ -120,7 +120,7 @@ CREATE TABLE "Municipio"."Historico_alerta" (
     "casos_est" int  NOT NULL,
     "Localidade_id" int  NOT NULL,
     "nivel" smallint  NOT NULL,
-    "id" int  NOT NULL,
+    "id" BIGSERIAL  NOT NULL,
     "versao_modelo" varchar(40)  NOT NULL,
     CONSTRAINT "Historico_alerta_pk" PRIMARY KEY ("id")
 );
@@ -198,7 +198,7 @@ CREATE TABLE "Municipio"."Ovitrampa" (
     "Positiva" boolean  NOT NULL,
     "Ovos" int  NOT NULL,
     "Localidade_id" int  NOT NULL,
-    "id" int  NOT NULL,
+    "id" BIGSERIAL  NOT NULL,
     CONSTRAINT "Ovitrampa_pk" PRIMARY KEY ("id")
 );
 
@@ -206,7 +206,7 @@ CREATE TABLE "Municipio"."Ovitrampa" (
 
 -- Table: "Municipio"."Tweet"
 CREATE TABLE "Municipio"."Tweet" (
-    "id" SERIAL PRIMARY KEY NOT NULL,
+    "id" BIGSERIAL PRIMARY KEY NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
     "data_dia" date  NOT NULL,
     "numero" int  NOT NULL,

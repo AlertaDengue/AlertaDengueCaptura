@@ -130,11 +130,16 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     :param CID10: código CID10 para a doença. default: dengue clássico
     :param inicio: data de início da captura: yyyy-mm-dd
     :param fim: data do fim da captura: yyyy-mm-dd
-    :param cidades: lista de cidades identificadas pelo geocódico do IBGE.
+    :param cidades: lista de cidades identificadas pelo geocódico(7 dig.) do IBGE - lista de strings.
     :return:
     """
-
-    cidades = [c for c in cidades]
+    geocodigos = []
+    for c in cidades:
+        if len(str(c)) == 7:
+            geocodigos.append((c, c[:-1]))
+        else:
+            geocodigos.append((c, c))
+    cidades = [c[1] for c in geocodigos]
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
         resp = requests.get('?'.join([base_url, params]))
@@ -153,14 +158,14 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     fp = StringIO(resp.text)
     data = list(csv.DictReader(fp, fieldnames=header))
     #print(data)
-    for i, c in enumerate(cidades):
-        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c)
+    for i, c in enumerate(geocodigos):
+        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
         for r in data[1:]:
-            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c), datetime.strptime(r['data'], "%Y-%m-%d")))
+            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
             res = cur.fetchall()
             if res:
                 continue
-            cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c], CID10))
+            cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[0]], CID10))
     conn.commit()
     cur.close()
 

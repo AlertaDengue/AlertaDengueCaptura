@@ -28,7 +28,7 @@ class TestTasks(unittest.TestCase):
         self.assertGreaterEqual(len(resp), 0)
 
     def test_pega_tweets(self):
-        res = pega_tweets("2015-04-01", "2015-05-07", ['330455', '330330'])
+        res = pega_tweets("2015-04-01", "2015-05-07", ['3304557', '3303302'])
         self.cur.execute('select * from "Municipio"."Tweet";')
         resp = self.cur.fetchall()
         self.assertEquals(res, 200)

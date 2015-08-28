@@ -11,6 +11,9 @@ import psycopg2
 import geojson
 from crawlclima.config.general import psql_host, psql_user
 from multiprocessing.pool import Pool
+import logging
+
+logger = logging.getLogger("cria-municipio")
 
 try:
     conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format(psql_user, psql_host))
@@ -60,7 +63,7 @@ def pega_poligono_municipio(uf, gc):
     """
     gc = str(gc)
     sigla_uf = siglas[uf]
-    UF_GeoJSON = geojson.load(open("/home/fccoelho/Copy/Projetos/Alerta_Dengue/mapas/br-atlas/geo/{}-counties.json".format(sigla_uf),"r"))
+    UF_GeoJSON = geojson.load(open("/home/fccoelho/Copy/Projetos/Alerta_Dengue/mapas/br-atlas/geo/{}-counties.json".format(sigla_uf), "r"))
     try:
         pol = ""
         for p in UF_GeoJSON["features"]:
@@ -75,10 +78,10 @@ def pega_poligono_municipio(uf, gc):
 registros = []
 
 def faz_tupla(mun):
-    print(mun[0], mun[1]['Nome_Município'])
+    print(mun[0], mun[1]['Nome_Município'], mun[1]['Cod Municipio Completo'])
     return (mun[1]['Cod Municipio Completo'],
                        mun[1]['Nome_Município'],
-                       pega_poligono_municipio(mun[1]['Nome_UF'], int(str(mun[1]['Cod Municipio Completo'])[:-1])),
+                       pega_poligono_municipio(mun[1]['Nome_UF'], mun[1]['Cod Municipio Completo']),
                        0,
                        mun[1]['Nome_UF']
                        )
@@ -89,14 +92,7 @@ registros = P.map(faz_tupla, tabela_completa.iterrows())
 
 P.close()
 P.join()
-# for mun in tabela_completa.iterrows():
-#     print(mun[0], mun[1]['Nome_Município'])
-#     registros.append((mun[1]['Cod Municipio Completo'],
-#                        mun[1]['Nome_Município'],
-#                        pega_poligono_municipio(mun[1]['Nome_UF'], mun[1]['Cod Municipio Completo']),
-#                        0,
-#                        mun[1]['Nome_UF']
-#                        ))
+
 sql = '''insert into "Dengue_global"."Municipio" (geocodigo, nome, geojson, populacao, uf) values(%s, %s, %s, %s, %s);'''
 cur.executemany(sql, list(registros))
 conn.commit()
