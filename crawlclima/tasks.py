@@ -49,7 +49,7 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     # Check for latest records in the database
     cur = conn.cursor()
     cur.execute('select datahora from "Municipio"."Clima_cemaden" ORDER BY datahora DESC ')
-    ultima_data = cur.fetchone()
+    ultima_data = cur.fetchone()[0]
     inicio = datetime.strptime(inicio, "%Y%m%d%H%M")
     fim = datetime.strptime(fim, "%Y%m%d%H%M")
     if ultima_data is not None:
@@ -165,7 +165,7 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
             res = cur.fetchall()
             if res:
                 continue
-            cur.execute(sql, (c, datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[0]], CID10))
+            cur.execute(sql, (c[0], datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[1]], CID10))
     conn.commit()
     cur.close()
 

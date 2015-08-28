@@ -21,14 +21,14 @@ class TestTasks(unittest.TestCase):
         self.cur.close()
 
     def test_pega_por_uf_escreve_no_banco(self):
-        res = pega_dados_cemaden('RJ', '201508090000', '201508100000')
+        res = pega_dados_cemaden('RJ', '201508100000', '201508120000')
         self.cur.execute('select * from "Municipio"."Clima_cemaden";')
         resp = self.cur.fetchall()
         self.assertEquals(res, 200)
         self.assertGreaterEqual(len(resp), 0)
 
     def test_pega_tweets(self):
-        res = pega_tweets("2015-04-01", "2015-05-07", ['3304557', '3303302'])
+        res = pega_tweets("2015-01-01", "2015-08-07", ['3304557', '3303302'])
         self.cur.execute('select * from "Municipio"."Tweet";')
         resp = self.cur.fetchall()
         self.assertEquals(res, 200)
