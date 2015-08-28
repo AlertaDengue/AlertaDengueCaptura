@@ -33,3 +33,7 @@ class TestTasks(unittest.TestCase):
         resp = self.cur.fetchall()
         self.assertEquals(res, 200)
         self.assertGreater(len(resp), 0)
+
+if __name__ == "__main__":
+    pass
+    # TestTasks().run()

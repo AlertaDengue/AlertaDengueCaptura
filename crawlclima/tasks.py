@@ -49,12 +49,12 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     # Check for latest records in the database
     cur = conn.cursor()
     cur.execute('select datahora from "Municipio"."Clima_cemaden" ORDER BY datahora DESC ')
-    ultima_data = cur.fetchone()[0]
+    ultima_data = cur.fetchone()
     inicio = datetime.strptime(inicio, "%Y%m%d%H%M")
     fim = datetime.strptime(fim, "%Y%m%d%H%M")
     if ultima_data is not None:
-        if ultima_data > inicio:
-            inicio = ultima_data
+        if ultima_data[0] > inicio:
+            inicio = ultima_data[0]
         if inicio >= fim:
             return
 
