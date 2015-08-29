@@ -27,7 +27,7 @@ CREATE TABLE "Dengue_global"."CID10" (
 
 -- Table: "Municipio"."Clima_Satelite"
 CREATE TABLE "Municipio"."Clima_Satelite" (
-    "id" int  NOT NULL,
+    "id" BIGSERIAL  NOT NULL,
     "data" date  NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
     "ndvi" int  NOT NULL,
@@ -51,7 +51,7 @@ COMMENT ON TABLE "Municipio"."Clima_Satelite" IS 'Precipitação, temperatura e 
 CREATE TABLE "Municipio"."Clima_cemaden" (
     "valor" real  NOT NULL,
     "sensor" CHARACTER VARYING(32)  NOT NULL,
-    "id" serial  NOT NULL,
+    "id" BIGSERIAL  NOT NULL,
     "datahora" timestamp  NOT NULL,
     "Estacao_cemaden_codestacao" varchar(10)  NOT NULL,
     CONSTRAINT "Clima_cemaden_pk" PRIMARY KEY ("id")
@@ -63,9 +63,9 @@ COMMENT ON TABLE "Municipio"."Clima_cemaden" IS 'dados de clima - CEMADEN';
 
 -- Table: "Municipio"."Clima_wu"
 CREATE TABLE "Municipio"."Clima_wu" (
-    "temp_minima" real  NOT NULL,
-    "temp_maxima" real  NOT NULL,
-    "temp_media" real  NOT NULL,
+    "temp_min" real  NOT NULL,
+    "temp_max" real  NOT NULL,
+    "temp_med" real  NOT NULL,
     "data_dia" date  NOT NULL,
     "umid_min" real  NOT NULL,
     "umid_med" real  NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE "Municipio"."Notificacao" (
     "SE_notif" int  NOT NULL,
     "ano_notif" int  NOT NULL,
     "dt_sin_pri" date  NOT NULL,
-    "SE_sin_pri" date  NOT NULL,
+    "SE_sin_pri" INT  NOT NULL,
     "dt_digita" date  NOT NULL,
     "Bairro_nome" text  NOT NULL,
     "Bairro_bairro_id" int  NOT NULL,
@@ -195,8 +195,8 @@ CREATE TABLE "Municipio"."Ovitrampa" (
     "longitude" real  NOT NULL,
     "Arm_codigo" int  NOT NULL,
     "Perdida" boolean  NOT NULL,
-    "Positiva" boolean  NOT NULL,
-    "Ovos" int  NOT NULL,
+    "Positiva" boolean ,
+    "Ovos" int,
     "Localidade_id" int  NOT NULL,
     "id" BIGSERIAL  NOT NULL,
     CONSTRAINT "Ovitrampa_pk" PRIMARY KEY ("id")
