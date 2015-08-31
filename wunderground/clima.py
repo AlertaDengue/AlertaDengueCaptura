@@ -57,6 +57,20 @@ def fahrenheit_to_celsius(f):
     """
     return ((f - 32)/9.) * 5
 
+def wu_url_generator(code, start, end=None):
+    url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
+    step = datetime.timedelta(1)
+
+    if not end:
+        end = start + step
+    elif start > end:
+        step = -step
+
+    while start != end:
+        url = url_pattern.format(code, start.year, start.month, start.day)
+        yield url
+        start += step
+
 
 def captura(start, end, code):
     """
