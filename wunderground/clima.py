@@ -46,17 +46,16 @@ def parse_page(url):
     df = pd.read_csv(csvf, sep=',', header=0, skiprows=0, parse_dates=True, na_values=["N/A",'-9999'])
 
     if 'TemperatureF' in df.columns:
-        df['TemperatureC'] = FtoC(df.TemperatureF)
+        df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
     #print df
     summary = df.describe()
     return df, summary
 
-def FtoC(F):
+def fahrenheit_to_celsius(f):
     """
-    Converts temperture from Fahrenheit to Celsius
+    Converts temperature from Fahrenheit to Celsius
     """
-    c = ((F-32)/9.)*5
-    return c
+    return ((f - 32)/9.) * 5
 
 
 def captura(start, end, code):
