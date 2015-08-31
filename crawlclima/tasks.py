@@ -97,7 +97,7 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
         try:
             vnames = results.text.splitlines()[1].strip().split(';')
         except IndexError:
-            logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")))
+            logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim.strftime("%Y%m%d%H%M")))
         if not results.status_code == 200:
             logger.error("Request to CEMADEN server failed with code: {}".format(results.status_code))
         data = results.text.splitlines()[2:]
