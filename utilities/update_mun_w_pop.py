@@ -4,13 +4,12 @@ Atualiza tabela de municípios com dados da população estimada
 """
 import pandas as pd
 import psycopg2
-from crawlclima.config.general import psql_host, psql_user
 import logging
 
 logger = logging.getLogger("update-pop")
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format(psql_user, psql_host))
+    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format('dengueadmin', 'localhost'))
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
