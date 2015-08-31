@@ -92,6 +92,15 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
             fim_t += timedelta(hours=23, minutes=59)
             inicio += timedelta(hours=23, minutes=59)
             pars['inicio'] = inicio.strftime("%Y%m%d%H%M")
+    else:
+        results = fetch_results(pars, url)
+        try:
+            vnames = results.text.splitlines()[1].strip().split(';')
+        except IndexError:
+            logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")))
+        if not results.status_code == 200:
+            logger.error("Request to CEMADEN server failed with code: {}".format(results.status_code))
+        data = results.text.splitlines()[2:]
 
 
     vnames = [v.replace('.', '_') for v in vnames]
