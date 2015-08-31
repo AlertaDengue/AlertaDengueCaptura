@@ -21,7 +21,8 @@ CELERY_ANNOTATIONS = {'crawlclima.tasks.pega_dados_cemaden': {'rate_limit': '10/
 
 CELERY_TIMEZONE = 'America/Sao_Paulo'
 
-
+today = datetime.fromordinal(date.today().toordinal())
+week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
 
 CELERYBEAT_SCHEDULE = {
     # Executes every monday morning at 9:30 A.M

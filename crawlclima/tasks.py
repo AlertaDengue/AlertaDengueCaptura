@@ -35,6 +35,12 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     :param by: uf|estacao
     :return: Status code da tarefa
     """
+    if isinstance(inicio, datetime):
+        inicio = inicio.strftime("%Y%m%d%H%M")
+
+    if isinstance(fim, datetime):
+        fim = fim.strftime("%Y%m%d%H%M")
+
     try:
         assert (datetime.strptime(inicio, "%Y%m%d%H%M") < datetime.strptime(fim, "%Y%m%d%H%M"))
     except AssertionError:
