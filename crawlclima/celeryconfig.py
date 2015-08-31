@@ -19,6 +19,10 @@ CELERY_ANNOTATIONS = {'tasks.pega_dados_cemaden': {'rate_limit': '10/s'}}
 
 #Celery beat configurations
 
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+
+
+
 CELERYBEAT_SCHEDULE = {
     # Executes every monday morning at 9:30 A.M
     'fetch-tweets-monday-morning': {
