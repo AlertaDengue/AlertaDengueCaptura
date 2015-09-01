@@ -15,13 +15,9 @@ import argparse
 import datetime
 from dateutil.parser import parse
 import time
-import logging
-import numpy as np
-from pymongo import MongoClient, ASCENDING
-from pymongo.errors import DuplicateKeyError
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
+import model_mongo
+
 
 codes = ['SBRJ',  # santos dumont
          'SBJR',  # Jacarepagua
@@ -30,32 +26,27 @@ codes = ['SBRJ',  # santos dumont
          'IRIODEJA14',  # Pepino
          'SBAF',  # Campo dos Afonsos
          'IRIODEJA5',  # Recreio
+         'SBCA',  # Cascavel
          ]
 
 
-
-def parse_page(url):
-    """
-    Parses the resulting CSV and
-    """
-    page = requests.get(url)
-    csv = re.subn("<br />", "", page.text)[0]
-    #print csv
+def parse_page(page):
+    csv = re.subn("<br />", "", page)[0]
     csvf = StringIO(csv)
-    #print csvf.readline()
     df = pd.read_csv(csvf, sep=',', header=0, skiprows=0, parse_dates=True, na_values=["N/A",'-9999'])
 
     if 'TemperatureF' in df.columns:
         df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
-    #print df
-    summary = df.describe()
-    return df, summary
+
+    return df
+
 
 def fahrenheit_to_celsius(f):
     """
     Converts temperature from Fahrenheit to Celsius
     """
     return ((f - 32)/9.) * 5
+
 
 def wu_url_generator(code, start, end=None):
     url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
@@ -72,88 +63,35 @@ def wu_url_generator(code, start, end=None):
         start += step
 
 
-def captura(start, end, code):
-    """
-    Fetches each day.
-    """
-    mongo = MongoClient()
-    db = mongo.clima
-    coll = db[code]
-    coll.create_index([("DateUTC", ASCENDING),], unique=True, dropDups=True)
+def normalize(station, dataframe):
+    summary = dataframe.describe()
+    data = {}
+
+    data["date"] = parse(dataframe.DateUTC[0])
+    data['station'] = station
+    field_names = ('temperature', 'humidity', 'pressure')
+    measurements = ('TemperatureC', 'Humidity', 'Sea Level PressurehPa')
+    aggregations = ('min', 'mean', 'max')
+
+    for field_name, measurement in zip(field_names, measurements):
+        for aggregation in aggregations:
+            key = field_name + '_' + aggregation
+            value = summary[measurement].ix[aggregation]
+            data[key] = value
+
+    return data
 
 
-    while start != end:
-        data = {}
+def capture(station, start, end, save):
+    for url in wu_url_generator(station, start, end):
+        print("Fetching data from {}.".format(url))
 
-        start = datetime.datetime.fromordinal(start.toordinal())
-        if coll.find({"DateUTC":start}).count() > 0:
-            start = start + datetime.timedelta(1)
-            continue
-        print("Fetching data from {} on {}.".format(code, start))
-        y,m,d = start.year, start.month, start.day
-        # Open wunderground.com url
-        url = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html??format=1&format=1".format(code,y,m,d)
-        df, summ = parse_page(url)
-        #print df
+        page = requests.get(url).text
+        df = parse_page(page)
+        data = normalize(station, df)
+        save(data)
 
-        try:
-            dateutc = parse(df.DateUTC[0]).date()
-            dateutc = datetime.datetime.fromordinal(dateutc.toordinal())
-        except AttributeError:
-            start = start + datetime.timedelta(1)
-            continue
-        print("Fetching climate for {} on {}".format(code, start))
-        try:
-            data["DateUTC"] = dateutc
-        except AttributeError:
-            logger.error("failed storing date")
-            data["DateUTC"] = np.nan
-        try:
-            data["Tmin"] = summ.TemperatureC.ix['min']
-        except AttributeError as e:
-            logger.error("failed storing Tmin: {}".format(e))
-            data["Tmin"] = np.nan
-        try:
-            data["Tmed"] = summ.TemperatureC.ix['mean']
-        except AttributeError as e:
-            logger.error("failed storing Tmed: {}".format(e))
-            data["Tmed"] = np.nan
-        try:
-            data["Tmax"] = summ.TemperatureC.ix['max']
-        except AttributeError as e:
-            logger.error("failed storing Tmax: {}".format(e))
-            data["Tmax"] = np.nan
-        try:
-            data["Umid_min"] = summ.Humidity.ix['min']
-        except AttributeError:
-            data["Umid_min"] = np.nan
-        try:
-            data["Umid_med"] = summ.Humidity.ix['mean']
-        except AttributeError:
-            data["Umid_med"] = np.nan
-        try:
-            data["Umid_max"] = summ.Humidity.ix['max']
-        except AttributeError:
-            data["Umid_max"] = np.nan
-        try:
-            data["Pressao_min"] = summ['Sea Level PressurehPa'].ix['min']
-        except KeyError:
-            data["Pressao_min"] = np.nan
-        try:
-            data["Pressao_med"] = summ['Sea Level PressurehPa'].ix['mean']
-        except KeyError:
-            data["Pressao_med"] = np.nan
-        try:
-            data["Pressao_max"] = summ['Sea Level PressurehPa'].ix['max']
-        except KeyError:
-            data["Pressao_max"] = np.nan
-        try:
-            db[code].insert(data, w=1)
-        except DuplicateKeyError as e:
-            print(e)
-            print("{} already in the database.".format(start))
         time.sleep(1)
-        start = start + datetime.timedelta(1)
 
 
 if __name__=="__main__":
@@ -165,5 +103,5 @@ if __name__=="__main__":
     ini = datetime.datetime.strptime(args.inicio, "%Y-%m-%d")
     fim = datetime.datetime.strptime(args.fim, "%Y-%m-%d")
 
-    captura(ini, fim, args.codigo)
+    capture(args.codigo, ini, fim, model_mongo.save)
 
