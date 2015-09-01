@@ -69,29 +69,24 @@ class TestWUUrlGenerator(unittest.TestCase):
         self.assertEqual(len(generated_urls), 3)
         self.assertEqual(generated_urls, urls)
 
-class TestParse(unittest.TestCase):
 
-    def test_can_parse(self):
-        y=2015
-        m=1
-        d=3
-        for code in codes:
-            url = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html??format=1&format=1".format(code,y,m,d)
-            df = parse_page(url)
-            self.assertIsInstance(df, pd.DataFrame)
+class TestParsePage(unittest.TestCase):
+    def testCelsiusDailyHistory(self):
+        with open('wunderground/CelsiusDailyHistory.html', 'r') as fd:
+            dataframe = parse_page(fd.read())
+        self.assertEqual(dataframe.DateUTC[0], '2015-08-01 03:00:00')
+        self.assertAlmostEqual(dataframe.TemperatureC.mean(), 24.33, 2)
 
-    def test_can_convert_temperatures(self):
-        def test_can_parse(self):
-            y=2015
-            m=1
-            d=3
-            for code in codes:
-                url = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html??format=1&format=1".format(code,y,m,d)
-                df = parse_page(url)
-                print(df)
-                assert "TemperatureC" in df.columns
+    def testEmptyDailyHistory(self):
+        with open('wunderground/EmptyDailyHistory.html', 'r') as fd:
+            dataframe = parse_page(fd.read())
 
+        self.assertIsInstance(dataframe, pd.DataFrame)
+        self.assertTrue(dataframe.empty)
 
+    @unittest.skip("Test a case with no Celsius temp")
+    def testFahrenheitDailyHistory(self):
+        pass
 
 
 if __name__ == "__main__":

@@ -35,6 +35,9 @@ def parse_page(page):
     csvf = StringIO(csv)
     df = pd.read_csv(csvf, sep=',', header=0, skiprows=0, parse_dates=True, na_values=["N/A",'-9999'])
 
+    if df.ix[0][0] == 'No daily or hourly history data available':
+        return pd.DataFrame()
+
     if 'TemperatureF' in df.columns:
         df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
 
