@@ -19,7 +19,7 @@ def save(data):
     db = mongo.clima
     coll = db[data['station']]
 
-    data = {k: data[field_names[k]] for k, v in field_names.items()}
+    data = {k: data[v] for k, v in field_names.items() if data.get(v)}
 
     coll.create_index([("DateUTC", ASCENDING),], unique=True, dropDups=True)
 
