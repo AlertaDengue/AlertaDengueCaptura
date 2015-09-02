@@ -84,7 +84,7 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
             results = fetch_results(pars, url)
             try:
                 vnames = results.text.splitlines()[1].strip().split(';')
-            except IndexError:
+            except IndexError as e:
                 logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")))
             if not results.status_code == 200:
                 continue # try again
@@ -94,15 +94,30 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
             pars['inicio'] = inicio.strftime("%Y%m%d%H%M")
     else:
         results = fetch_results(pars, url)
+        if isinstance(results, Exception):
+            raise self.retry(exc=results, countdown=60)
         try:
             vnames = results.text.splitlines()[1].strip().split(';')
         except IndexError:
             logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim.strftime("%Y%m%d%H%M")))
         if not results.status_code == 200:
             logger.error("Request to CEMADEN server failed with code: {}".format(results.status_code))
+            raise self.retry(exc=requests.RequestException(), countdown=60)
         data = results.text.splitlines()[2:]
 
+    save_to_cemaden_db(cur, data, vnames)
 
+    return results.status_code
+
+
+def save_to_cemaden_db(cur, data, vnames):
+    """
+    Saves the rceived data to the "Clima_cemaden" table
+    :param cur: db cursor
+    :param data: data to be saved
+    :param vnames: variable names in the server's response
+    :return: None
+    """
     vnames = [v.replace('.', '_') for v in vnames]
     sql = 'insert INTO "Municipio"."Clima_cemaden" (valor,sensor,datahora,"Estacao_cemaden_codestacao") values(%s, %s, %s, %s);'
     for linha in data:
@@ -115,18 +130,16 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     conn.commit()
     cur.close()
 
-    return results.status_code
-
 
 def fetch_results(pars, url):
     try:
         results = requests.get(url, params=pars)
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
-        raise self.retry(exc=e, countdown=60)
+        results = e
     except requests.ConnectionError as e:
         logger.error("Conexão falhou com erro {}".format(e))
-        raise self.retry(exc=e, countdown=60)
+        results = e
     return results
 
 
