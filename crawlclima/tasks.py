@@ -14,10 +14,13 @@ import csv
 
 logger = get_task_logger("Captura")
 
-try:
-    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='aldengue'".format(psql_db, psql_user, psql_host))
-except Exception as e:
-    logger.error("Unable to connect to Postgresql: {}".format(e))
+def get_connection():
+    try:
+        conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='aldengue'".format(psql_db, psql_user, psql_host))
+    except Exception as e:
+        logger.error("Unable to connect to Postgresql: {}".format(e))
+        raise e
+    return conn
 
 @app.task
 def mock(t):
@@ -35,6 +38,7 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
     :param by: uf|estacao
     :return: Status code da tarefa
     """
+    conn = get_connection()
     if isinstance(inicio, datetime):
         inicio = inicio.strftime("%Y%m%d%H%M")
 
@@ -159,6 +163,7 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     :param cidades: lista de cidades identificadas pelo geocódico(7 dig.) do IBGE - lista de strings.
     :return:
     """
+    conn = get_connection()
     geocodigos = []
     for c in cidades:
         if len(str(c)) == 7:
