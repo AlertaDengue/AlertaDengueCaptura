@@ -63,13 +63,16 @@ def wu_url(station, date):
     return url_pattern.format(station, date.year, date.month, date.day)
 
 def describe(dataframe):
+    if dataframe.empty:
+        return {}
+
     summary = dataframe.describe()
-    data = {}
 
     measurements = ('TemperatureC', 'Humidity', 'Sea Level PressurehPa')
     field_names = ('temperature', 'humidity', 'pressure')
     aggregations = ('min', 'mean', 'max')
 
+    data = {}
     for field_name, measurement in zip(field_names, measurements):
         for aggregation in aggregations:
             key = field_name + '_' + aggregation

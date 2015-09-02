@@ -100,5 +100,31 @@ class TestParsePage(unittest.TestCase):
         pass
 
 
+class TestDescribe(unittest.TestCase):
+    def test_filled_dataframe(self):
+        with open('wunderground/CelsiusDailyHistory.html', 'r') as fd:
+            dataframe = parse_page(fd.read())
+
+        summary = describe(dataframe)
+        self.assertEqual(summary, {
+            'humidity_max': 100.0,
+            'humidity_mean': 79.799999999999997,
+            'humidity_min': 47.0,
+            'pressure_max': 1021.0,
+            'pressure_mean': 1019.0689655172414,
+            'pressure_min': 1017.0,
+            'temperature_max': 33.0,
+            'temperature_mean': 24.333333333333332,
+            'temperature_min': 21.0
+        })
+
+    def test_empty_dataframe(self):
+        with open('wunderground/EmptyDailyHistory.html', 'r') as fd:
+            dataframe = parse_page(fd.read())
+
+        summary = describe(dataframe)
+        self.assertEqual(summary, {})
+
+
 if __name__ == "__main__":
     unittest.main()
