@@ -51,8 +51,7 @@ def fahrenheit_to_celsius(f):
     return ((f - 32)/9.) * 5
 
 
-def wu_url_generator(code, start, end=None):
-    url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
+def date_generator(start, end=None):
     step = datetime.timedelta(1)
 
     if not end:
@@ -61,19 +60,19 @@ def wu_url_generator(code, start, end=None):
         step = -step
 
     while start != end:
-        url = url_pattern.format(code, start.year, start.month, start.day)
-        yield url
+        yield start
         start += step
 
+def wu_url(station, date):
+    url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
+    return url_pattern.format(station, date.year, date.month, date.day)
 
-def normalize(station, dataframe):
+def describe(dataframe):
     summary = dataframe.describe()
     data = {}
 
-    data["date"] = parse(dataframe.DateUTC[0])
-    data['station'] = station
-    field_names = ('temperature', 'humidity', 'pressure')
     measurements = ('TemperatureC', 'Humidity', 'Sea Level PressurehPa')
+    field_names = ('temperature', 'humidity', 'pressure')
     aggregations = ('min', 'mean', 'max')
 
     for field_name, measurement in zip(field_names, measurements):
@@ -86,12 +85,16 @@ def normalize(station, dataframe):
 
 
 def capture(station, start, end, save):
-    for url in wu_url_generator(station, start, end):
+    for date in date_generator(start, end):
+        url = wu_url(station, date)
         print("Fetching data from {}.".format(url))
-
         page = requests.get(url).text
-        df = parse_page(page)
-        data = normalize(station, df)
+        dataframe = parse_page(page)
+
+        data = describe(dataframe)
+        data['date'] = date
+        data['station'] = station
+
         save(data)
 
         time.sleep(1)
