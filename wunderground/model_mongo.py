@@ -26,5 +26,5 @@ def save(data):
     try:
         return coll.insert(data, w=1)
     except DuplicateKeyError:
-        print("{} already in the database.".format(data['DateUTC']))
+        print("{} already in the database.".format(data['date']))
 
