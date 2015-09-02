@@ -11,7 +11,7 @@ import argparse
 import datetime
 
 from wu import capture
-from model_postgres import save
+from models.mongo import save
 
 
 codes = ['SBRJ',  # santos dumont
