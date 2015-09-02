@@ -52,16 +52,11 @@ def fahrenheit_to_celsius(f):
 
 
 def date_generator(start, end=None):
-    step = datetime.timedelta(1)
+    delta = (end - start).days if end else 1
+    step = delta // abs(delta)
+    for days in range(0, delta, step):
+        yield start + datetime.timedelta(days)
 
-    if not end:
-        end = start + step
-    elif start > end:
-        step = -step
-
-    while start != end:
-        yield start
-        start += step
 
 def wu_url(station, date):
     url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
