@@ -2,10 +2,11 @@
 
 from datetime import datetime
 import unittest
-import pandas as pd
-from clima import parse_page, fahrenheit_to_celsius, wu_url, date_generator, describe
 
-codes = ['SBGL', 'SBRJ','SBAF', 'SBJR']
+import pandas as pd
+
+from wu import parse_page, fahrenheit_to_celsius, wu_url, date_generator, describe
+
 
 class TestFahrenheitToCelsius(unittest.TestCase):
     def test_32(self):
