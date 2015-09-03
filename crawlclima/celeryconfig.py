@@ -33,17 +33,17 @@ CELERYBEAT_SCHEDULE = {
     },
     'fetch-cemaden-monday-morning-RJ': {
         'task': 'crawlclima.tasks.pega_dados_cemaden',
-        'schedule': crontab(hour=12, minute=40, day_of_week=1),
+        'schedule': crontab(hour=8, minute=1, day_of_week=1),
         'args': ('RJ', week_ago, today, 'uf')
     },
     'fetch-cemaden-monday-morning-MG': {
         'task': 'crawlclima.tasks.pega_dados_cemaden',
-        'schedule': crontab(hour=12, minute=40, day_of_week=1),
+        'schedule': crontab(hour=8, minute=1, day_of_week=1),
         'args': ('MG', week_ago, today, 'uf')
     },
     'fetch-cemaden-monday-morning-PR': {
         'task': 'crawlclima.tasks.pega_dados_cemaden',
-        'schedule': crontab(hour=12, minute=40, day_of_week=1),
+        'schedule': crontab(hour=8, minute=1, day_of_week=1),
         'args': ('PR', week_ago, today, 'uf')
     },
 }
