@@ -111,6 +111,9 @@ def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
 
     save_to_cemaden_db(cur, data, vnames)
 
+    conn.commit()
+    cur.close()
+
     return results.status_code
 
 
@@ -131,8 +134,7 @@ def save_to_cemaden_db(cur, data, vnames):
         doc['valor'] = float(doc['valor'])
         doc['datahora'] = datetime.strptime(doc['datahora'], "%Y-%m-%d %H:%M:%S")
         cur.execute(sql, (doc['valor'], doc['sensor'], doc['datahora'], doc['cod_estacao']))
-    conn.commit()
-    cur.close()
+
 
 
 def fetch_results(pars, url):
