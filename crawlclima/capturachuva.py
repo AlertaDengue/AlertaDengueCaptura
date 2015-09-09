@@ -3,7 +3,7 @@
 Fetch a week of data from cemaden
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from crawlclima.tasks import pega_dados_cemaden, mock
 
 # Data inicial da captura
