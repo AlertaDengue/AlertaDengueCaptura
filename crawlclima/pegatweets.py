@@ -12,5 +12,5 @@ from crawlclima.tasks import pega_tweets
 today = datetime.fromordinal(date.today().toordinal())
 week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
 
-pega_tweets(week_ago.isoformat(), today.isoformat(), ['3304557', '3303302', '3106200', '4104808'], "A90")
+pega_tweets.delay(week_ago.isoformat(), today.isoformat(), ['3304557', '3303302', '3106200', '4104808'], "A90")
 
