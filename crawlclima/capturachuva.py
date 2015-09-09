@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
+"""
+Fetch a week of data from cemaden
+"""
 
 from datetime import datetime, timedelta
 from crawlclima.tasks import pega_dados_cemaden, mock
 
 # Data inicial da captura
 
-inicio = datetime(2014, 7, 1)
+today = datetime.fromordinal(date.today().toordinal())
+week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
 
-hoje = datetime.today()
+pega_dados_cemaden.delay('PR', week_ago, today, 'uf')
+pega_dados_cemaden.delay('RJ', week_ago, today, 'uf')
+pega_dados_cemaden.delay('MG', week_ago, today, 'uf')
 
-data = inicio
-while data <= hoje:
-    pega_dados_cemaden.delay('PR', data.strftime("%Y%m%d%H%M"))
-    #mock.delay(5)
-    data += timedelta(1)
