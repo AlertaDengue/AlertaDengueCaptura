@@ -10,5 +10,4 @@ pgcli
 sqlsoup
 odo
 geojson
-postgres==2.1.2
 python-decouple==2.3
