@@ -7,6 +7,7 @@ import geojson
 from multiprocessing.pool import Pool
 
 from initials import initials
+from locale_model import save
 
 
 @functools.lru_cache(maxsize=None)
@@ -25,7 +26,6 @@ def county_polygon(uf, county_code):
 def to_row(county):
     county_code = county['Cod Municipio Completo']
     name = county['Nome_Município']
-    population = 0
     uf = county['Nome_UF']
     try:
         geojson = county_polygon(initials[uf], county_code)
@@ -33,9 +33,13 @@ def to_row(county):
     except ValueError as e:
         print(e)
         geojson = ''
-    return (county_code, name, geojson, population, uf)
+    return dict(county_code=county_code,
+                name=name,
+                geojson=geojson,
+                population=0)
 
 BASE_DIR = dirname(abspath(__file__))
 path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
 rows = Pool().map(to_row, csv.DictReader(open(path)))
 
+save(rows)
