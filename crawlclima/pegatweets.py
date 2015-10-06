@@ -5,7 +5,7 @@ Fetch a week of tweets
 """
 
 from datetime import datetime, timedelta, date
-from tasks import pega_tweets
+from crawlclima.tasks import pega_tweets
 
 # Data inicial da captura
 

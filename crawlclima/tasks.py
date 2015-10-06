@@ -151,7 +151,6 @@ def fetch_results(pars, url):
 
 @app.task
 def pega_dados_wunderground(uf, inicio, fim, recapture=False):
-
     return
 
 @app.task
