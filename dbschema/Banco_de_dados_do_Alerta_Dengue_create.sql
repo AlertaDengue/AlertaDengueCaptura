@@ -136,7 +136,7 @@ CREATE TABLE "Municipio"."Localidade" (
     "nome" varchar(32)  NOT NULL,
     "populacao" int  NOT NULL,
     "geojson" text  NOT NULL,
-    "id" int  NOT NULL,
+    "id" BIGSERIAL NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
     CONSTRAINT "Localidade_pk" PRIMARY KEY ("id")
 );
