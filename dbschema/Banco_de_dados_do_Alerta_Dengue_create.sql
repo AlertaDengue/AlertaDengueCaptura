@@ -1,6 +1,5 @@
--- Last modification date: 2015-08-18 21:01:51.574
-
-
+﻿CREATE SCHEMA "Municipio";
+CREATE SCHEMA "Dengue_global";
 
 
 -- tables
