@@ -205,7 +205,7 @@ CREATE TABLE "Municipio"."Ovitrampa" (
 
 -- Table: "Municipio"."Tweet"
 CREATE TABLE "Municipio"."Tweet" (
-    "id" BIGSERIAL PRIMARY KEY NOT NULL,
+    "id" BIGSERIAL NOT NULL,
     "Municipio_geocodigo" int  NOT NULL,
     "data_dia" date  NOT NULL,
     "numero" int  NOT NULL,
