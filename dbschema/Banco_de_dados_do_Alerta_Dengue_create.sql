@@ -90,7 +90,7 @@ CREATE TABLE "Municipio"."Estacao_cemaden" (
     "nome" varchar(128)  NOT NULL,
     "latitude" real  NOT NULL,
     "longitude" real  NOT NULL,
-    "Localidade_id" int  NOT NULL,
+    "Localidade_id" int NOT NULL,
     CONSTRAINT "Estacao_cemaden_pk" PRIMARY KEY ("codestacao")
 );
 
@@ -231,8 +231,8 @@ COMMENT ON TABLE "Municipio"."Tweet" IS 'Série de tweets diários';
 ALTER TABLE "Municipio"."Historico_alerta" ADD CONSTRAINT "Alerta_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Bairro_Localidade" (table: "Municipio"."Bairro")
@@ -241,8 +241,8 @@ ALTER TABLE "Municipio"."Historico_alerta" ADD CONSTRAINT "Alerta_Localidade"
 ALTER TABLE "Municipio"."Bairro" ADD CONSTRAINT "Bairro_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Clima_cemaden_Estacao_cemaden" (table: "Municipio"."Clima_cemaden")
@@ -251,8 +251,8 @@ ALTER TABLE "Municipio"."Bairro" ADD CONSTRAINT "Bairro_Localidade"
 ALTER TABLE "Municipio"."Clima_cemaden" ADD CONSTRAINT "Clima_cemaden_Estacao_cemaden"
     FOREIGN KEY ("Estacao_cemaden_codestacao")
     REFERENCES "Municipio"."Estacao_cemaden" ("codestacao")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Clima_wu_Estacao_wu" (table: "Municipio"."Clima_wu")
@@ -261,28 +261,28 @@ ALTER TABLE "Municipio"."Clima_cemaden" ADD CONSTRAINT "Clima_cemaden_Estacao_ce
 ALTER TABLE "Municipio"."Clima_wu" ADD CONSTRAINT "Clima_wu_Estacao_wu"
     FOREIGN KEY ("Estacao_wu_estacao_id")
     REFERENCES "Municipio"."Estacao_wu" ("estacao_id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Dengue_Bairro" (table: "Municipio"."Notificacao")
 
 
-ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_Bairro" 
+ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_Bairro"
     FOREIGN KEY ("Bairro_nome","Bairro_bairro_id")
     REFERENCES "Municipio"."Bairro" ("nome","bairro_id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Dengue_CID10" (table: "Municipio"."Notificacao")
 
 
-ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_CID10" 
+ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_CID10"
     FOREIGN KEY ("CID10_codigo")
     REFERENCES "Dengue_global"."CID10" ("codigo")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Estacao_cemaden_Localidade" (table: "Estacao_cemaden")
@@ -291,8 +291,8 @@ ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_CID10"
 ALTER TABLE "Municipio"."Estacao_cemaden" ADD CONSTRAINT "Estacao_cemaden_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Estacao_wu_Localidades" (table: "Municipio"."Estacao_wu")
@@ -301,8 +301,8 @@ ALTER TABLE "Municipio"."Estacao_cemaden" ADD CONSTRAINT "Estacao_cemaden_Locali
 ALTER TABLE "Municipio"."Estacao_wu" ADD CONSTRAINT "Estacao_wu_Localidades"
     FOREIGN KEY ("Localidades_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Localidades_Municipio" (table: "Municipio"."Localidade")
@@ -311,8 +311,8 @@ ALTER TABLE "Municipio"."Estacao_wu" ADD CONSTRAINT "Estacao_wu_Localidades"
 ALTER TABLE "Municipio"."Localidade" ADD CONSTRAINT "Localidades_Municipio"
     FOREIGN KEY ("Municipio_geocodigo")
     REFERENCES "Dengue_global"."Municipio" ("geocodigo")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "NDVI_Localidade" (table: "Municipio"."Clima_Satelite")
@@ -321,38 +321,38 @@ ALTER TABLE "Municipio"."Localidade" ADD CONSTRAINT "Localidades_Municipio"
 ALTER TABLE "Municipio"."Clima_Satelite" ADD CONSTRAINT "NDVI_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Ovitrampa_Localidade" (table: "Municipio"."Ovitrampa")
 
 
-ALTER TABLE "Municipio"."Ovitrampa" ADD CONSTRAINT "Ovitrampa_Localidade" 
+ALTER TABLE "Municipio"."Ovitrampa" ADD CONSTRAINT "Ovitrampa_Localidade"
     FOREIGN KEY ("Localidade_id")
     REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Tweet_CID10" (table: "Municipio"."Tweet")
 
 
-ALTER TABLE "Municipio"."Tweet" ADD CONSTRAINT "Tweet_CID10" 
+ALTER TABLE "Municipio"."Tweet" ADD CONSTRAINT "Tweet_CID10"
     FOREIGN KEY ("CID10_codigo")
     REFERENCES "Dengue_global"."CID10" ("codigo")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 -- Reference:  "Tweets_Municipio" (table: "Municipio"."Tweet")
 
 
-ALTER TABLE "Municipio"."Tweet" ADD CONSTRAINT "Tweets_Municipio" 
+ALTER TABLE "Municipio"."Tweet" ADD CONSTRAINT "Tweets_Municipio"
     FOREIGN KEY ("Municipio_geocodigo")
     REFERENCES "Dengue_global"."Municipio" ("geocodigo")
-    NOT DEFERRABLE 
-    INITIALLY IMMEDIATE 
+    NOT DEFERRABLE
+    INITIALLY IMMEDIATE
 ;
 
 
