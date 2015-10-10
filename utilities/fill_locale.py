@@ -36,10 +36,12 @@ def to_row(county):
     return dict(county_code=county_code,
                 name=name,
                 geojson=geojson,
+                uf = initials[uf],
                 population=0)
 
 BASE_DIR = dirname(abspath(__file__))
 path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
 rows = Pool().map(to_row, csv.DictReader(open(path)))
 
-save(rows)
+save(rows, schema="Dengue_global", table="Municipio")
+save(rows, schema="Municipio", table="Localidade")
