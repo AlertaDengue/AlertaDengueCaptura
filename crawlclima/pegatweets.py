@@ -11,11 +11,15 @@ from crawlclima.tasks import pega_tweets
 
 # Data inicial da captura
 
-today = datetime.fromordinal(date.today().toordinal())
-week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
+today = date.fromordinal(date.today().toordinal())
+week_ago = date.fromordinal(date.today().toordinal())-timedelta(8)
 year_start = date(date.today().year, 1, 1)
 
+with open("../municipios") as f:
+    municipios = f.read().split('\n')
+
+
 if today.isoweekday() == 5:
-    pega_tweets.delay(year_start.isoformat(), today.isoformat(), ['3304557', '3303302', '3106200', '4104808'], "A90")
+    pega_tweets.delay(year_start.isoformat(), today.isoformat(), municipios, "A90")
 else:
-    pega_tweets.delay(week_ago.isoformat(), today.isoformat(), ['3304557', '3303302', '3106200', '4104808'], "A90")
+    pega_tweets.delay(week_ago.isoformat(), today.isoformat(), municipios, "A90")
