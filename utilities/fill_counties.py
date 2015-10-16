@@ -44,4 +44,3 @@ path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
 rows = Pool().map(to_row, csv.DictReader(open(path)))
 
 save(rows, schema="Dengue_global", table="Municipio")
-save(rows, schema="Municipio", table="Localidade")
