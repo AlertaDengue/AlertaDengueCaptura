@@ -18,7 +18,7 @@ year_start = date(date.today().year, 1, 1)
 with open("../municipios") as f:
     municipios = f.read().split('\n')
 
-municipios = [gc for gc in municipios if gc]
+municipios = list(filter(None, municipios))
 
 
 if today.isoweekday() == 5:
