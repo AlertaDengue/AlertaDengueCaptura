@@ -13,7 +13,7 @@ from crawlclima.tasks import pega_dados_cemaden, mock
 
 today = datetime.fromordinal(date.today().toordinal())
 week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
-year_start = date(date.today().year, 1, 1)
+year_start = datetime(date.today().year, 1, 1)
 
 if today.isoweekday() != 5:
     pega_dados_cemaden.delay('PR', week_ago, today, 'uf')

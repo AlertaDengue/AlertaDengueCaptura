@@ -27,8 +27,8 @@ def mock(t):
     time.sleep(t)
     return "done"
 
-@app.task
-def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
+@app.task(bind=True)
+def pega_dados_cemaden(self, codigo, inicio, fim, by='uf'):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
     :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
