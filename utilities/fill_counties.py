@@ -7,7 +7,7 @@ import geojson
 from multiprocessing.pool import Pool
 
 from initials import initials
-from locale_model import save
+from models import save
 
 
 @functools.lru_cache(maxsize=None)
