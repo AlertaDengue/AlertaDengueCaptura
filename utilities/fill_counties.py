@@ -13,7 +13,7 @@ from models import save
 @functools.lru_cache(maxsize=None)
 def uf_geojson(uf):
     path = config('GEOJSON_PATH')
-    filename = '{}-municipalities.json'.format(uf)
+    filename = '{}-counties.json'.format(uf)
     return geojson.load(open(join_path(path, filename), "r"))
 
 # TODO: We should improve the complexity of this function

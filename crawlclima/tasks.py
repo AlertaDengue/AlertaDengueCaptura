@@ -27,8 +27,8 @@ def mock(t):
     time.sleep(t)
     return "done"
 
-@app.task
-def pega_dados_cemaden(codigo, inicio, fim, by='uf'):
+@app.task(bind=True)
+def pega_dados_cemaden(self, codigo, inicio, fim, by='uf'):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
     :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
@@ -153,8 +153,8 @@ def fetch_results(pars, url):
 def pega_dados_wunderground(uf, inicio, fim, recapture=False):
     return
 
-@app.task
-def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
+@app.task(bind=True)
+def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     """
     Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
 
@@ -175,6 +175,7 @@ def pega_tweets(inicio, fim, cidades=None, CID10="A90"):
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
         resp = requests.get('?'.join([base_url, params]))
+        logger.info("URL ==> ", '?'.join([base_url, params]))
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)
