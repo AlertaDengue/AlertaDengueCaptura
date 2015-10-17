@@ -18,7 +18,6 @@ year_start = datetime(date.today().year, 1, 1)
 date_from = week_ago if today.isoweekday() != 5 else year_start
 
 
-
 pega_dados_cemaden.delay('PR', date_from, today, 'uf')
 pega_dados_cemaden.delay('RJ', date_from, today, 'uf')
 pega_dados_cemaden.delay('MG', date_from, today, 'uf')
