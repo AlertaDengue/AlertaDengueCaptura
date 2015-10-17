@@ -103,7 +103,7 @@ CREATE TABLE "Municipio"."Estacao_wu" (
     "estacao_id" varchar(4)  NOT NULL,
     "latitude" real  NOT NULL,
     "longitude" real  NOT NULL,
-    "Localidades_id" int  NOT NULL,
+    "Localidades_id" int NULL,
     "nome" varchar(128)  NOT NULL,
     CONSTRAINT "Estacao_wu_pk" PRIMARY KEY ("estacao_id")
 );
