@@ -175,7 +175,7 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
     try:
         resp = requests.get('?'.join([base_url, params]))
-        logger.info("URL ==> ", '?'.join([base_url, params]))
+        logger.info("URL ==> "+'?'.join([base_url, params]))
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)

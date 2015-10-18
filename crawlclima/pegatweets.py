@@ -5,9 +5,11 @@ Once a week go over the entire year to fill in possible gaps in the local databa
 requires celery worker to be up and running
 but this script will actually be executed by cron
 """
-
+import sys, os
 from datetime import datetime, timedelta, date
+sys.path.append(os.getcwd())
 from crawlclima.tasks import pega_tweets
+
 
 # Data inicial da captura
 
@@ -15,7 +17,7 @@ today = date.fromordinal(date.today().toordinal())
 week_ago = date.fromordinal(date.today().toordinal())-timedelta(8)
 year_start = date(date.today().year, 1, 1)
 
-with open("../municipios") as f:
+with open("municipios") as f:
     municipios = f.read().split('\n')
 
 municipios = list(filter(None, municipios))

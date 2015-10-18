@@ -5,8 +5,9 @@ Once a week go over the entire year to fill in possible gaps in the local databa
 requires celery worker to be up and running
 but this script will actually be executed by cron
 """
-
+import os, sys
 from datetime import datetime, timedelta, date
+sys.path.append(os.getcwd())
 from crawlclima.tasks import pega_dados_cemaden, mock
 
 # Data inicial da captura
