@@ -24,6 +24,12 @@ field_names = {
         'geojson': 'geojson',
         'populacao': 'population'
     },
+    "Estacao_wu": {
+        'estacao_id': 'ICAO',
+        'nome': 'Estação',
+        'latitude': 'Latitude',
+        'longitude': 'Longitude',
+    },
 }
 
 def names_converter(field_names):
