@@ -8,3 +8,7 @@ Para testar estes scripts de importação de dados, é preciso criar o banco loc
 
 
 
+## Estações meteorológicas.
+A tabela de estações meteorológicas (`utilities/stations/stations_seed.csv`) foi gerada a partir da [busca](http://bancodedados.cptec.inpe.br/tabelaestacoes/faces/consultapais.jsp) presente no site do [CPTEC/INPE](http://bancodedados.cptec.inpe.br/).
+
+Apesar de termos a lista completa de estações do Brasil, só as estações de aeroportos (`utilities/stations/airport_stations_seed.csv`) possuem dados históricos no [WU](http://www.wunderground.com/), por isso, essas serão as carregadas para o Banco de Dados.
