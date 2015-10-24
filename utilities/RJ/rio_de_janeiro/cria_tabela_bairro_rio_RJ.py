@@ -4,13 +4,13 @@ import sys
 import logging
 
 
-psql_user = "fill in"
+psql_user = "dengueadmin"
 psql_host = "127.0.0.1"
 
 logger = logging.getLogger("criabairro")
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='alerta'".format(psql_user, psql_host))
+    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format(psql_user, psql_host))
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))

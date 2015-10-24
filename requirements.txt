@@ -11,3 +11,4 @@ sqlsoup
 odo
 geojson
 python-decouple==3.0
+dbfread

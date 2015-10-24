@@ -167,17 +167,18 @@ COMMENT ON TABLE "Dengue_global"."Municipio" IS 'Municipio. metadados. uf contem
 
 -- Table: "Municipio"."Notificacao"
 CREATE TABLE "Municipio"."Notificacao" (
-    "dt_notific" date  NOT NULL,
+    id bigserial PRIMARY KEY,
+    "dt_notific" date,
     "SE_notif" int  NOT NULL,
     "ano_notif" int  NOT NULL,
-    "dt_sin_pri" date  NOT NULL,
+    "dt_sin_pri" date,
     "SE_sin_pri" INT  NOT NULL,
-    "dt_digita" date  NOT NULL,
+    "dt_digita" date,
     "Bairro_nome" text  NOT NULL,
-    "Bairro_bairro_id" int  NOT NULL,
+    "Bairro_bairro_id" int,
     "nu_notific" int  NOT NULL,
     "CID10_codigo" varchar(5)  NOT NULL,
-    CONSTRAINT "Notificacao_pk" PRIMARY KEY ("nu_notific")
+    CONSTRAINT "Notificacao_pk" PRIMARY KEY ("id")
 );
 
 CREATE INDEX "Dengue_idx_data" on "Municipio"."Notificacao" ("dt_notific" DESC,"SE_notif" DESC);
@@ -261,16 +262,6 @@ ALTER TABLE "Municipio"."Clima_cemaden" ADD CONSTRAINT "Clima_cemaden_Estacao_ce
 ALTER TABLE "Municipio"."Clima_wu" ADD CONSTRAINT "Clima_wu_Estacao_wu"
     FOREIGN KEY ("Estacao_wu_estacao_id")
     REFERENCES "Municipio"."Estacao_wu" ("estacao_id")
-    NOT DEFERRABLE
-    INITIALLY IMMEDIATE
-;
-
--- Reference:  "Dengue_Bairro" (table: "Municipio"."Notificacao")
-
-
-ALTER TABLE "Municipio"."Notificacao" ADD CONSTRAINT "Dengue_Bairro"
-    FOREIGN KEY ("Bairro_nome","Bairro_bairro_id")
-    REFERENCES "Municipio"."Bairro" ("nome","bairro_id")
     NOT DEFERRABLE
     INITIALLY IMMEDIATE
 ;
