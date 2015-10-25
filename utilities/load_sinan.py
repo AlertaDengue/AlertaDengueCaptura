@@ -49,10 +49,14 @@ class Sinan:
         self.dbf = DBF(dbf_fname, encoding=encoding)
         self.colunas_entrada = self.dbf.field_names
         self.tabela = pd.DataFrame(list(self.dbf))
-        for col in filter(lambda x: x.startswith("DT"), self.colunas_entrada):
-            self.tabela[col] = pd.to_datetime(self.tabela[col])
+        self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
+        self._parse_date_cols()
         if not self.time_span[1].year == self.ano and self.time_span[1].year == self.ano:
             logger.error("O Banco contém notificações incompatíveis com o ano declarado!")
+
+    def _parse_date_cols(self):
+        for col in filter(lambda x: x.startswith("DT"), self.colunas_entrada):
+            self.tabela[col] = pd.to_datetime(self.tabela[col])
 
     @property
     def time_span(self):
