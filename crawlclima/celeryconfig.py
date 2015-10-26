@@ -46,4 +46,9 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(hour=8, minute=1, day_of_week=1),
         'args': ('PR', week_ago, today, 'uf')
     },
+    'fetch-wunderground-daily': {
+        'task': 'crawlclima.tasks.fetch_wunderground_all',
+        'schedule': crontab(hour=9, minute=0),
+        'args': (today, )
+    },
 }
