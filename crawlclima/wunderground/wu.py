@@ -1,7 +1,6 @@
 from io import StringIO
 import datetime
 import re
-import time
 
 import requests
 import pandas as pd
@@ -59,19 +58,13 @@ def describe(dataframe):
 
     return data
 
+def capture(station, date):
+    url = wu_url(station, date)
+    page = requests.get(url).text
+    dataframe = parse_page(page)
 
-def capture(station, start, end):
-    for date in date_generator(start, end):
-        url = wu_url(station, date)
-        print("Fetching data from {}.".format(url))
-        page = requests.get(url).text
-        dataframe = parse_page(page)
+    data = describe(dataframe)
+    data['date'] = date
+    data['station'] = station
 
-        data = describe(dataframe)
-        data['date'] = date
-        data['station'] = station
-
-        yield data
-
-        time.sleep(1)
-
+    return data

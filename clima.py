@@ -10,8 +10,9 @@ license: GPL v3
 """
 import argparse
 from datetime import datetime
+import time
 
-from crawlclima.wunderground.wu import capture
+from crawlclima.wunderground.wu import capture, date_generator
 from utilities.models import save, find_all
 
 
@@ -26,5 +27,12 @@ parser.add_argument("--fim", "-f", type=date, help="Data final de captura: yyyy-
 parser.add_argument("--codigo", "-c", choices=codes, metavar='ICAO', help="Codigo da estação" )
 args = parser.parse_args()
 
-data = capture(args.codigo, args.inicio, args.fim)
+station, start, end = args.codigo, args.inicio, args.fim
+data = []
+
+for date in date_generator(start, end):
+    print("Fetching data from {} at {}.".format(station, date))
+    data.append(capture(station, date))
+    time.sleep(1)
+
 save(data, schema='Municipio', table='Clima_wu')
