@@ -19,13 +19,8 @@ def parse_page(page):
 
     return df
 
-
 def fahrenheit_to_celsius(f):
-    """
-    Converts temperature from Fahrenheit to Celsius
-    """
     return ((f - 32)/9.) * 5
-
 
 def date_generator(start, end=None):
     delta = (end - start).days if end else 1
@@ -33,11 +28,9 @@ def date_generator(start, end=None):
     for days in range(0, delta, step):
         yield start + datetime.timedelta(days)
 
-
 def wu_url(station, date):
     url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
     return url_pattern.format(station, date.year, date.month, date.day)
-
 
 def describe(dataframe):
     if dataframe.empty:
