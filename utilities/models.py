@@ -30,6 +30,19 @@ field_names = {
         'latitude': 'Latitude',
         'longitude': 'Longitude',
     },
+    "Clima_wu": {
+        '"Estacao_wu_estacao_id"': 'station',
+        'data_dia': 'date',
+        'pressao_max': 'pressure_max',
+        'pressao_med': 'pressure_mean',
+        'pressao_min': 'pressure_min',
+        'temp_max': 'temperature_max',
+        'temp_med': 'temperature_mean',
+        'temp_min': 'temperature_min',
+        'umid_max': 'humidity_max',
+        'umid_med': 'humidity_mean',
+        'umid_min': 'humidity_min',
+    },
 }
 
 def names_converter(field_names):

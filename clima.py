@@ -11,7 +11,7 @@ import argparse
 import datetime
 
 from crawlclima.wunderground.wu import capture
-from crawlclima.wunderground.models.postgres import save
+from utilities.models import save
 
 
 codes = ['SBRJ',  # santos dumont
