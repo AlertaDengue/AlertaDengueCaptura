@@ -74,6 +74,7 @@ CREATE TABLE "Municipio"."Clima_wu" (
     "pressao_max" real  NOT NULL,
     "Estacao_wu_estacao_id" varchar(4)  NOT NULL,
     "id" BIGSERIAL  NOT NULL,
+    UNIQUE ("Estacao_wu_estacao_id", "data_dia"),
     CONSTRAINT "Clima_wu_pk" PRIMARY KEY ("id")
 );
 
