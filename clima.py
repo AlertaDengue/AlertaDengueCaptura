@@ -11,18 +11,11 @@ import argparse
 import datetime
 
 from crawlclima.wunderground.wu import capture
-from utilities.models import save
+from utilities.models import save, find_all
 
 
-codes = ['SBRJ',  # santos dumont
-         'SBJR',  # Jacarepagua
-         'SBGL',  # Galeão
-         'IRIODEJA30',  # Cachambi, Meier
-         'IRIODEJA14',  # Pepino
-         'SBAF',  # Campo dos Afonsos
-         'IRIODEJA5',  # Recreio
-         'SBCA',  # Cascavel
-         ]
+rows = find_all(schema='Municipio', table='Estacao_wu')
+codes = [row['estacao_id'] for row in rows]
 
 
 parser = argparse.ArgumentParser(description="Pega séries de Clima do servidor da Weather Underground em um período determinado")
