@@ -60,7 +60,7 @@ def describe(dataframe):
     return data
 
 
-def capture(station, start, end, save):
+def capture(station, start, end):
     for date in date_generator(start, end):
         url = wu_url(station, date)
         print("Fetching data from {}.".format(url))
@@ -71,7 +71,7 @@ def capture(station, start, end, save):
         data['date'] = date
         data['station'] = station
 
-        save(data)
+        yield data
 
         time.sleep(1)
 

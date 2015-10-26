@@ -10,8 +10,8 @@ license: GPL v3
 import argparse
 import datetime
 
-from wu import capture
-from models.mongo import save
+from crawlclima.wunderground.wu import capture
+from crawlclima.wunderground.models.postgres import save
 
 
 codes = ['SBRJ',  # santos dumont
@@ -33,5 +33,6 @@ args = parser.parse_args()
 ini = datetime.datetime.strptime(args.inicio, "%Y-%m-%d")
 fim = datetime.datetime.strptime(args.fim, "%Y-%m-%d")
 
-capture(args.codigo, ini, fim, save)
+data = capture(args.codigo, ini, fim)
+save(data, schema='Municipio', table='Clima_wu')
 
