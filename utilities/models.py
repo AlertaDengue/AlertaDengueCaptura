@@ -49,8 +49,7 @@ join = lambda x: ', '.join(x)
 
 def names_converter(field_names):
     def convert_names(datum):
-        return {k: datum[v] for k, v in field_names.items()
-                if not datum.get(v) == None}
+        return {k: datum.get(v) for k, v in field_names.items()}
     return convert_names
 
 def find_all(schema, table):
@@ -81,7 +80,8 @@ def save(data, schema='Dengue_global', table='Municipio'):
 
     with psycopg2.connect(**db_config) as conn:
         with conn.cursor() as curr:
-            curr.executemany(sql, map(convert_names, data))
+            rows = map(convert_names, data)
+            curr.executemany(sql, rows)
 
     conn.close() # Context doesn't close connection
 
