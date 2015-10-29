@@ -15,10 +15,15 @@ from utilities.models import save, find_all
 
 
 today = datetime.today()
+year_start = datetime.today().year, 1, 1
+
 yesterday = today - timedelta(1)
 
 rows = find_all(schema='Municipio', table='Estacao_wu')
 stations = [row['estacao_id'] for row in rows]
 
+
+dia = yesterday if today.isoweekday() == 5 else yesterday
+
 for station in stations:
-    fetch_wunderground.delay(station, yesterday)
+    fetch_wunderground.delay(station, dia)
