@@ -1,16 +1,15 @@
 from io import StringIO
 import datetime
 import re
-
 import requests
 import pandas as pd
 
 
 def parse_page(page):
-    csv = re.subn("<br />", "", page)[0]
+    csv = re.subn("<br />", "", page.strip())[0]
     csvf = StringIO(csv)
-    df = pd.read_csv(csvf, sep=',', header=0, skiprows=0, parse_dates=True, na_values=["N/A",'-9999'])
-
+    df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")
+    df = df.replace(-9999.0, pd.np.nan)
     if df.ix[0][0] == 'No daily or hourly history data available':
         return pd.DataFrame()
 
@@ -19,8 +18,10 @@ def parse_page(page):
 
     return df
 
+
 def fahrenheit_to_celsius(f):
-    return ((f - 32)/9.) * 5
+    return ((f - 32) / 9.) * 5
+
 
 def date_generator(start, end=None):
     delta = (end - start).days if end else 1
@@ -28,9 +29,11 @@ def date_generator(start, end=None):
     for days in range(0, delta, step):
         yield start + datetime.timedelta(days)
 
+
 def wu_url(station, date):
     url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
     return url_pattern.format(station, date.year, date.month, date.day)
+
 
 def describe(dataframe):
     if dataframe.empty:
@@ -50,6 +53,7 @@ def describe(dataframe):
             data[key] = value
 
     return data
+
 
 def capture(station, date):
     url = wu_url(station, date)

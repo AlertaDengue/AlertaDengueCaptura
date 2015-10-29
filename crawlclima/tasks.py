@@ -150,20 +150,8 @@ def fetch_results(pars, url):
     return results
 
 
-@app.task
-def fetch_wunderground_all(today):
-    logger.info('Fetching all.')
-
-    yesterday = today - timedelta(1)
-
-    rows = find_all(schema='Municipio', table='Estacao_wu')
-    stations = [row['estacao_id'] for row in rows]
-
-    for station in stations:
-        fetch_wunderground.delay(station, yesterday)
-
-@app.task
-def fetch_wunderground(station, date):
+@app.task(bind=True)
+def fetch_wunderground(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
         datum = capture(station, date)
