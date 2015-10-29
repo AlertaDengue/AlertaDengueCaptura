@@ -9,7 +9,8 @@ from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_u
 import psycopg2
 import csv
 
-
+from crawlclima.wunderground.wu import capture
+from utilities.models import save, find_all
 
 
 logger = get_task_logger("Captura")
@@ -149,9 +150,18 @@ def fetch_results(pars, url):
     return results
 
 
-@app.task
-def pega_dados_wunderground(uf, inicio, fim, recapture=False):
-    return
+@app.task(bind=True)
+def fetch_wunderground(self, station, date):
+    try:
+        logger.info("Fetching {}".format(station))
+        datum = capture(station, date)
+        data = [datum]
+
+        logger.info("Saving {}".format(station))
+        save(data, schema='Municipio', table='Clima_wu')
+    except Exception as e:
+        logger.error("Error with {} at {}: {}".format(station, date, e))
+
 
 @app.task(bind=True)
 def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):

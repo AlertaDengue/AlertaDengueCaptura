@@ -2,10 +2,8 @@
 
 from datetime import datetime
 import unittest
-
 import pandas as pd
-
-from wunderground.wu import parse_page, fahrenheit_to_celsius, wu_url, date_generator, describe
+from crawlclima.wunderground.wu import parse_page, fahrenheit_to_celsius, wu_url, date_generator, describe
 
 
 class TestFahrenheitToCelsius(unittest.TestCase):
@@ -84,13 +82,13 @@ class TestDateGenerator(unittest.TestCase):
 
 class TestParsePage(unittest.TestCase):
     def testCelsiusDailyHistory(self):
-        with open('wunderground/tests/CelsiusDailyHistory.html', 'r') as fd:
+        with open('crawlclima/wunderground/tests/CelsiusDailyHistory.html', 'r') as fd:
             dataframe = parse_page(fd.read())
         self.assertEqual(dataframe.DateUTC[0], '2015-08-01 03:00:00')
         self.assertAlmostEqual(dataframe.TemperatureC.mean(), 24.33, 2)
 
     def testEmptyDailyHistory(self):
-        with open('wunderground/tests/EmptyDailyHistory.html', 'r') as fd:
+        with open('crawlclima/wunderground/tests/EmptyDailyHistory.html', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         self.assertIsInstance(dataframe, pd.DataFrame)
@@ -103,7 +101,7 @@ class TestParsePage(unittest.TestCase):
 
 class TestDescribe(unittest.TestCase):
     def test_filled_dataframe(self):
-        with open('wunderground/tests/CelsiusDailyHistory.html', 'r') as fd:
+        with open('crawlclima/wunderground/tests/CelsiusDailyHistory.html', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         summary = describe(dataframe)
@@ -120,7 +118,7 @@ class TestDescribe(unittest.TestCase):
         })
 
     def test_empty_dataframe(self):
-        with open('wunderground/tests/EmptyDailyHistory.html', 'r') as fd:
+        with open('crawlclima/wunderground/tests/EmptyDailyHistory.html', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         summary = describe(dataframe)

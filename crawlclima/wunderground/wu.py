@@ -1,17 +1,15 @@
 from io import StringIO
 import datetime
 import re
-import time
-
 import requests
 import pandas as pd
 
 
 def parse_page(page):
-    csv = re.subn("<br />", "", page)[0]
+    csv = re.subn("<br />", "", page.strip())[0]
     csvf = StringIO(csv)
-    df = pd.read_csv(csvf, sep=',', header=0, skiprows=0, parse_dates=True, na_values=["N/A",'-9999'])
-
+    df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")
+    df = df.replace(-9999.0, pd.np.nan)
     if df.ix[0][0] == 'No daily or hourly history data available':
         return pd.DataFrame()
 
@@ -22,10 +20,7 @@ def parse_page(page):
 
 
 def fahrenheit_to_celsius(f):
-    """
-    Converts temperature from Fahrenheit to Celsius
-    """
-    return ((f - 32)/9.) * 5
+    return ((f - 32) / 9.) * 5
 
 
 def date_generator(start, end=None):
@@ -60,18 +55,13 @@ def describe(dataframe):
     return data
 
 
-def capture(station, start, end, save):
-    for date in date_generator(start, end):
-        url = wu_url(station, date)
-        print("Fetching data from {}.".format(url))
-        page = requests.get(url).text
-        dataframe = parse_page(page)
+def capture(station, date):
+    url = wu_url(station, date)
+    page = requests.get(url).text
+    dataframe = parse_page(page)
 
-        data = describe(dataframe)
-        data['date'] = date
-        data['station'] = station
+    data = describe(dataframe)
+    data['date'] = date
+    data['station'] = station
 
-        save(data)
-
-        time.sleep(1)
-
+    return data
