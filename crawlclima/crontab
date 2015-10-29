@@ -2,3 +2,4 @@
 # m h  dom mon dow   command
 0 8 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/pegatweets.py
 0 9 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/capturachuva.py
+0 7 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/pegatemperatura.py
