@@ -156,13 +156,15 @@ def fetch_wunderground(self, station, date):
         logger.info("Fetching {}".format(station))
         data = capture_date_range(station, date)
         # data = [datum]
-
+    except Exception as e:
+        logger.error("Error fetching from {} at {}: {}".format(station, date, e))
+    try:
         logger.info("Saving {}".format(station))
         if len(data) > 0:
             save(data, schema='Municipio', table='Clima_wu')
     except Exception as e:
-        logger.error("Error with {} at {}: {}".format(station, date, e))
-        raise(e)
+        logger.error("Error saving to db with {} at {}: {}".format(station, date, e))
+
 
 
 @app.task(bind=True)
