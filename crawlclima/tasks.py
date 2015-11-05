@@ -154,8 +154,8 @@ def fetch_results(pars, url):
 def fetch_wunderground(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
-        datum = capture_date_range(station, date)
-        data = [datum]
+        data = capture_date_range(station, date)
+        # data = [datum]
 
         logger.info("Saving {}".format(station))
         save(data, schema='Municipio', table='Clima_wu')
