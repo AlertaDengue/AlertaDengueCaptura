@@ -10,11 +10,11 @@ sys.path.append(os.getcwd())
 from crawlclima.tasks import fetch_wunderground
 from utilities.models import save, find_all
 
+user_date = None
+if len(sys.argv) > 1:
+    user_date = datetime.strptime(sys.argv[1], format="%Y-%m-%d")
 
-
-
-
-today = datetime.today()
+today = datetime.today() if user_date is None else user_date
 year_start = datetime.today().year, 1, 1
 
 yesterday = today - timedelta(1)
@@ -27,3 +27,4 @@ day = year_start if today.isoweekday() == 5 else yesterday
 
 for station in stations:
     fetch_wunderground.delay(station, day)
+
