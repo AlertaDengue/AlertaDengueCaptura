@@ -162,6 +162,7 @@ def fetch_wunderground(self, station, date):
             save(data, schema='Municipio', table='Clima_wu')
     except Exception as e:
         logger.error("Error with {} at {}: {}".format(station, date, e))
+        raise(e)
 
 
 @app.task(bind=True)
