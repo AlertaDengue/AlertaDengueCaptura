@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="3852720786">
+  <component name="DataSourceManagerImpl" format="xml" hash="2341502506">
     <data-source source="LOCAL" name="PostgreSQL - dengue@localhost" uuid="d7d77457-57e8-45a2-93f8-64a0debf5d8c">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/dengue</jdbc-url>
+      <libraries />
     </data-source>
   </component>
 </project>

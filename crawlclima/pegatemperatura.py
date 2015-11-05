@@ -23,7 +23,7 @@ rows = find_all(schema='Municipio', table='Estacao_wu')
 stations = [row['estacao_id'] for row in rows]
 
 
-dia = yesterday if today.isoweekday() == 5 else yesterday
+day = year_start if today.isoweekday() == 5 else yesterday
 
 for station in stations:
-    fetch_wunderground.delay(station, dia)
+    fetch_wunderground.delay(station, day)
