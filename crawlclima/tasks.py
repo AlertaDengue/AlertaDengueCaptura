@@ -158,7 +158,8 @@ def fetch_wunderground(self, station, date):
         # data = [datum]
 
         logger.info("Saving {}".format(station))
-        save(data, schema='Municipio', table='Clima_wu')
+        if len(data) > 0:
+            save(data, schema='Municipio', table='Clima_wu')
     except Exception as e:
         logger.error("Error with {} at {}: {}".format(station, date, e))
 
