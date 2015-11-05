@@ -9,7 +9,7 @@ from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_u
 import psycopg2
 import csv
 
-from crawlclima.wunderground.wu import capture
+from crawlclima.wunderground.wu import capture_date_range
 from utilities.models import save, find_all
 
 
@@ -154,7 +154,7 @@ def fetch_results(pars, url):
 def fetch_wunderground(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
-        datum = capture(station, date)
+        datum = capture_date_range(station, date)
         data = [datum]
 
         logger.info("Saving {}".format(station))

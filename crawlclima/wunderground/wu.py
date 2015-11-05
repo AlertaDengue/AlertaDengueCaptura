@@ -49,9 +49,27 @@ def describe(dataframe):
     for field_name, measurement in zip(field_names, measurements):
         for aggregation in aggregations:
             key = field_name + '_' + aggregation
-            value = summary[measurement].ix[aggregation]
+            try:
+                value = summary[measurement].ix[aggregation]
+            except KeyError as e:
+                value = None
             data[key] = value
 
+    return data
+
+
+def capture_date_range(station, date):
+    """
+    Baixa dados da estação específica a partir da data especificada até a data de hoje
+    :param station: código da estação
+    :param date: data de início da captura
+    :return:
+    """
+    today = datetime.datetime.today()
+    data = []
+    while date <= today:
+        data.append(capture(station, date))
+        date = date + datetime.timedelta(1)
     return data
 
 

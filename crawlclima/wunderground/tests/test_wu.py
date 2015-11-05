@@ -3,7 +3,8 @@
 from datetime import datetime
 import unittest
 import pandas as pd
-from crawlclima.wunderground.wu import parse_page, fahrenheit_to_celsius, wu_url, date_generator, describe
+from crawlclima.wunderground.wu import parse_page, fahrenheit_to_celsius, wu_url, date_generator, \
+    describe, capture_date_range, capture
 
 
 class TestFahrenheitToCelsius(unittest.TestCase):
@@ -16,6 +17,18 @@ class TestFahrenheitToCelsius(unittest.TestCase):
     def test_212(self):
         self.assertAlmostEqual(fahrenheit_to_celsius(0), -17.78, 2)
 
+class TestCapture(unittest.TestCase):
+    def test_capture_return_type(self):
+        station_code = 'SBAF'
+        date = datetime(2015, 11, 2)
+        data = capture(station_code, date)
+        self.assertIsInstance(data, dict)
+
+    def test_capture_range(self):
+        station_code = 'SBAF'
+        date = datetime(2015, 11, 2)
+        data = capture_date_range(station_code, date)
+        self.assertIsInstance(data, list)
 
 class TestWUUrl(unittest.TestCase):
     def test_SBGL_20150228(self):
