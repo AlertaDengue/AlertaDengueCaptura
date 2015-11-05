@@ -44,7 +44,6 @@ def check_day(day, estacao):
     :param day: dia (datetime)
     :return: True se ainda não foi capturado ou False, caso contrário.
     """
-    datetime.datetime.str
     sql = 'select data_dia from "Municipio"."Clima_wu" WHERE data_dia=DATE {} AND "Estacao_wu_estacao_id"={}'.\
         format(day.strftime("%Y-%m-%d"), estacao)
     with psycopg2.connect(**db_config) as conn:
