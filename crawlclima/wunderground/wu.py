@@ -3,6 +3,9 @@ import datetime
 import re
 import requests
 import pandas as pd
+from utilities.models import db_config
+import psycopg2
+import time
 
 
 def parse_page(page):
@@ -33,6 +36,27 @@ def date_generator(start, end=None):
 def wu_url(station, date):
     url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
     return url_pattern.format(station, date.year, date.month, date.day)
+
+
+def check_day(day, estacao):
+    """
+    Verifica se dia já foi capturado para uma dada estacao
+    :param day: dia (datetime)
+    :return: True se ainda não foi capturado ou False, caso contrário.
+    """
+    datetime.datetime.str
+    sql = 'select data_dia from "Municipio"."Clima_wu" WHERE data_dia=DATE {} AND "Estacao_wu_estacao_id"={}'.\
+        format(day.strftime("%Y-%m-%d"), estacao)
+    with psycopg2.connect(**db_config) as conn:
+        with conn.cursor() as curr:
+            curr.execute(sql)
+            rows = curr.fetchall()
+    conn.close()  # Context doesn't close connection
+    if len(rows) == 0:
+        return True
+    else:
+        return False
+
 
 
 def describe(dataframe):
@@ -68,8 +92,10 @@ def capture_date_range(station, date):
     today = datetime.datetime.today()
     data = []
     while date <= today:
-        data.append(capture(station, date))
-        date = date + datetime.timedelta(1)
+        if check_day(date, station):
+            data.append(capture(station, date))
+            date = date + datetime.timedelta(1)
+        time.sleep(1)
     return data
 
 
