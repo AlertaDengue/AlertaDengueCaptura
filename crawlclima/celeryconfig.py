@@ -15,7 +15,9 @@ CELERY_RESULT_BACKEND = 'rpc://'
 #     'crawlclima.tasks.pega_dados_cemaden': 'high-priority',
 # }
 
-CELERY_ANNOTATIONS = {'crawlclima.tasks.pega_dados_cemaden': {'rate_limit': '10/s'}}
+CELERY_ANNOTATIONS = {'crawlclima.tasks.pega_dados_cemaden': {'rate_limit': '10/s'},
+                      'crawlclima.tasks.fetch_wunderground': {'rate_limit': '1/s'}
+                      }
 
 #Celery beat configurations
 
