@@ -32,6 +32,7 @@ data = []
 i = 0
 for date in date_generator(start, end):
     if not check_day(date, station):
+        print("Date {} has already been captured from station {} ".format(date, station))
         continue
     print("Fetching data from {} at {}.".format(station, date))
     res = capture(station, date)

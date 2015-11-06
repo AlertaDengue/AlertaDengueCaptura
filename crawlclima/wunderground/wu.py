@@ -18,6 +18,7 @@ def parse_page(page):
             return pd.DataFrame()
     except IndexError:
         print(page)
+        return pd.DataFrame()
 
     if 'TemperatureF' in df.columns:
         df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
@@ -103,7 +104,15 @@ def capture_date_range(station, date):
 
 def capture(station, date):
     url = wu_url(station, date)
-    resp = requests.get(url)
+    status = 0
+    wait = 1
+    while status != 200:
+        resp = requests.get(url)
+        status = resp.status_code
+        time.sleep(wait)
+        wait *= 2
+        if wait > 30:
+            break
     print(resp.status_code)
     page = resp.text
     dataframe = parse_page(page)
