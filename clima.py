@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-#coding:utf8
+#!/usr/bin/env python3
+
 """
 Este script captura series de clima do servidor da Weather Underground em um
 período determinado.
@@ -29,10 +29,13 @@ args = parser.parse_args()
 
 station, start, end = args.codigo, args.inicio, args.fim
 data = []
-
+i = 0
 for date in date_generator(start, end):
     print("Fetching data from {} at {}.".format(station, date))
     data.append(capture(station, date))
+    if i % 10 == 0:
+        save(data, schema='Municipio', table='Clima_wu')
+        data = []
     time.sleep(1)
 
 save(data, schema='Municipio', table='Clima_wu')
