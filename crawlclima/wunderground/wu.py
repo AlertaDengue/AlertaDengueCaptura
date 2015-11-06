@@ -13,8 +13,11 @@ def parse_page(page):
     csvf = StringIO(csv)
     df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")
     df = df.replace(-9999.0, pd.np.nan)
-    if df.ix[0][0] == 'No daily or hourly history data available':
-        return pd.DataFrame()
+    try:
+        if df.ix[0][0] == 'No daily or hourly history data available':
+            return pd.DataFrame()
+    except IndexError:
+        print(page)
 
     if 'TemperatureF' in df.columns:
         df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
@@ -100,7 +103,9 @@ def capture_date_range(station, date):
 
 def capture(station, date):
     url = wu_url(station, date)
-    page = requests.get(url).text
+    resp = requests.get(url)
+    print(resp.status_code)
+    page = resp.text
     dataframe = parse_page(page)
 
     data = describe(dataframe)
