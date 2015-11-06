@@ -32,7 +32,9 @@ data = []
 i = 0
 for date in date_generator(start, end):
     print("Fetching data from {} at {}.".format(station, date))
-    data.append(capture(station, date))
+    res = capture(station, date)
+    print(res)
+    data.append(res)
     if i % 10 == 0:
         save(data, schema='Municipio', table='Clima_wu')
         data = []
