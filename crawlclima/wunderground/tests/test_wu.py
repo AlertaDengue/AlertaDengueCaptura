@@ -30,6 +30,9 @@ class TestCapture(unittest.TestCase):
         data = capture_date_range(station_code, date)
         self.assertIsInstance(data, list)
 
+    def test_check_day(self):
+        pass
+
 class TestWUUrl(unittest.TestCase):
     def test_SBGL_20150228(self):
         station_code = 'SBGL'

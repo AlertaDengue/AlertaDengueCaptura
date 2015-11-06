@@ -12,7 +12,7 @@ import argparse
 from datetime import datetime
 import time
 
-from crawlclima.wunderground.wu import capture, date_generator
+from crawlclima.wunderground.wu import capture, date_generator, check_day
 from utilities.models import save, find_all
 
 
@@ -31,6 +31,8 @@ station, start, end = args.codigo, args.inicio, args.fim
 data = []
 i = 0
 for date in date_generator(start, end):
+    if not check_day(date, station):
+        continue
     print("Fetching data from {} at {}.".format(station, date))
     res = capture(station, date)
     print(res)
