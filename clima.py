@@ -45,6 +45,6 @@ for station in stations:
         if i % 10 == 0:
             save(data, schema='Municipio', table='Clima_wu')
             data = []
-        time.sleep(0.8)
+        time.sleep(1)
 
 save(data, schema='Municipio', table='Clima_wu')
