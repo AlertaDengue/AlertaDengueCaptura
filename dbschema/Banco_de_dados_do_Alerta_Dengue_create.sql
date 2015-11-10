@@ -118,7 +118,13 @@ CREATE TABLE "Municipio"."Historico_alerta" (
     "data_iniSE" date  NOT NULL,
     "SE" int  NOT NULL,
     "casos_est" int  NOT NULL,
+    "casos_est_min" int NOT NULL,
+    "casos_est_max" int NOT NULL,
+    "casos" int NOT NULL,
     "Localidade_id" int  NOT NULL,
+    "municipio_geocodigo" int NOT NULL,
+    "p_rt1" real NOT NULL,
+    "p_inc100k" real NOT NULL,
     "nivel" smallint  NOT NULL,
     "id" BIGSERIAL  NOT NULL,
     "versao_modelo" varchar(40)  NOT NULL,
@@ -177,6 +183,7 @@ CREATE TABLE "Municipio"."Notificacao" (
     "dt_digita" date,
     "Bairro_nome" text  NOT NULL,
     "Bairro_bairro_id" int,
+    "municipio_geocodigo" int NOT NULL,
     "nu_notific" int  NOT NULL,
     "CID10_codigo" varchar(5)  NOT NULL,
     CONSTRAINT "Notificacao_pk" PRIMARY KEY ("id")
@@ -227,15 +234,6 @@ COMMENT ON TABLE "Municipio"."Tweet" IS 'Série de tweets diários';
 
 
 -- foreign keys
--- Reference:  "Alerta_Localidade" (table: ""Municipio"."Historico_alerta")
-
-
-ALTER TABLE "Municipio"."Historico_alerta" ADD CONSTRAINT "Alerta_Localidade"
-    FOREIGN KEY ("Localidade_id")
-    REFERENCES "Municipio"."Localidade" ("id")
-    NOT DEFERRABLE
-    INITIALLY IMMEDIATE
-;
 
 -- Reference:  "Bairro_Localidade" (table: "Municipio"."Bairro")
 
