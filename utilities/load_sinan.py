@@ -82,7 +82,7 @@ class Sinan:
             logger.error("O Banco contém notificações incompatíveis com o ano declarado!")
 
     def _parse_date_cols(self):
-        print("Formatando as datas")
+        print("Formatando as datas...")
         for col in filter(lambda x: x.startswith("DT"), self.tabela.columns):
             self.tabela[col] = pd.to_datetime(self.tabela[col])
 
@@ -97,6 +97,7 @@ class Sinan:
         return data_inicio, data_fim
 
     def save_to_pgsql(self, connection, table_name='"Municipio"."Notificacao"'):
+        print("Escrevendo no PostgreSQL...")
         ano = self.time_span[1].year if self.time_span[0] == self.time_span[1] else self.ano
         geoclist_sql = ",".join([str(gc) for gc in self.geocodigos])
         with connection.cursor(cursor_factory=DictCursor) as cursor:
