@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Este script Lê DBF do Sinan e os prepara para exportar para outro SGBD
 """
