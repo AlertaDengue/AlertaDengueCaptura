@@ -76,6 +76,7 @@ class Sinan:
         self.colunas_entrada = self.dbf.field_names
         self.tabela = pd.DataFrame(list(self.dbf))
         self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
+        self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
         self.geocodigos = self.tabela.ID_MUNICIP.dropna().unique()
         self._parse_date_cols()
         if not self.time_span[0].year == self.ano and self.time_span[1].year == self.ano:
