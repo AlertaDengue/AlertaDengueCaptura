@@ -1,6 +1,6 @@
 import unittest
 from unittest import skip
-from utilities.load_sinan import Sinan
+from utilities.load_sinan import Sinan, calculate_digit
 import pandas as pd
 from decouple import config
 import psycopg2
@@ -40,3 +40,11 @@ class TestSinan(unittest.TestCase):
         cur.close()
         conn.close()
         self.assertEquals(len(self.S.tabela), res)
+
+    def test_calculate_digit(self):
+        dig_rio = calculate_digit(330455)
+        dig_nit = calculate_digit(330330)
+        dig3 = calculate_digit(170190)
+        self.assertEqual(dig_rio, 7)
+        self.assertEqual(dig_nit, 2)
+        self.assertEqual(dig3, 3)
