@@ -83,8 +83,8 @@ class Sinan:
 
     def _parse_date_cols(self):
         print("Formatando as datas")
-        for col in filter(lambda x: x.startswith("DT"), self.colunas_entrada):
-            self.tabela[col] = pd.to_datetime(self.tabela[col], format="%d/%m/%y")
+        for col in filter(lambda x: x.startswith("DT"), self.tabela.columns):
+            self.tabela[col] = pd.to_datetime(self.tabela[col])
 
     @property
     def time_span(self):
