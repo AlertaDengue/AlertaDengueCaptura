@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 Este script Lê DBF do Sinan e os prepara para exportar para outro SGBD
+Como Usar:
+$ ./load_sinan.py <arquivo dbf do sinan> <YYYY>
 """
 
 import pandas as pd
@@ -80,8 +82,9 @@ class Sinan:
             logger.error("O Banco contém notificações incompatíveis com o ano declarado!")
 
     def _parse_date_cols(self):
+        print("Formatando as datas")
         for col in filter(lambda x: x.startswith("DT"), self.colunas_entrada):
-            self.tabela[col] = pd.to_datetime(self.tabela[col])
+            self.tabela[col] = pd.to_datetime(self.tabela[col], format="%d/%m/%y")
 
     @property
     def time_span(self):
