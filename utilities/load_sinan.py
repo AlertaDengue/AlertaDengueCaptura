@@ -26,16 +26,16 @@ logger = logging.getLogger('Load_SINAN')
 
 field_map = {
     'dt_notific': "DT_NOTIFIC",
-    'SE_notif': "SEM_NOT",
+    'se_notif': "SEM_NOT",
     'ano_notif': "NU_ANO",
     'dt_sin_pri': "DT_SIN_PRI",
-    'SE_sin_pri': "SEM_PRI",
+    'se_sin_pri': "SEM_PRI",
     'dt_digita': "DT_DIGITA",
-    'Bairro_nome': "NM_BAIRRO",
-    'Bairro_bairro_id': "ID_BAIRRO",
+    'bairro_nome': "NM_BAIRRO",
+    'bairro_bairro_id': "ID_BAIRRO",
     'municipio_geocodigo': "ID_MUNICIP",
     'nu_notific': "NU_NOTIFIC",
-    'CID10_codigo': "ID_AGRAVO",
+    'cid10_codigo': "ID_AGRAVO",
 
 }
 
