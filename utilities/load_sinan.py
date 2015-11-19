@@ -35,7 +35,7 @@ field_map = {
     'Bairro_bairro_id': "ID_BAIRRO",
     'municipio_geocodigo': "ID_MUNICIP",
     'nu_notific': "NU_NOTIFIC",
-    'cid10_codigo': "ID_AGRAVO",
+    'CID10_codigo': "ID_AGRAVO",
 
 }
 
