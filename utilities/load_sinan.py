@@ -39,6 +39,7 @@ field_map = {
 
 }
 
+
 def calculate_digit(dig):
     """
     Calcula o digito verificador do geocódigo de município
@@ -51,19 +52,22 @@ def calculate_digit(dig):
     for i in range(6):
         valor = int(dig[i]) * peso[i]
         soma += sum([int(d) for d in str(valor)]) if valor > 9 else valor
-    dv = 0 if soma % 10 == 0 else (10-(soma % 10))
+    dv = 0 if soma % 10 == 0 else (10 - (soma % 10))
     return dv
+
 
 def add_dv(geocodigo):
     if len(str(geocodigo)) == 7:
         return geocodigo
     else:
-        return int(str(geocodigo)+str(calculate_digit(geocodigo)))
+        return int(str(geocodigo) + str(calculate_digit(geocodigo)))
+
 
 class Sinan:
     """
     Introspecta arquivo DBF do SINAN preparando-o para inserção em outro banco.
     """
+
     def __init__(self, dbf_fname, ano, encoding="iso=8859-1"):
         """
         Instancia Objeto SINAN carregando-o a partir do arquivo indicado
@@ -76,7 +80,6 @@ class Sinan:
         self.colunas_entrada = self.dbf.field_names
         self.tabela = pd.DataFrame(list(self.dbf))
         self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
-        self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
         self.geocodigos = self.tabela.ID_MUNICIP.dropna().unique()
         self._parse_date_cols()
         if not self.time_span[0].year == self.ano and self.time_span[1].year == self.ano:
@@ -85,7 +88,10 @@ class Sinan:
     def _parse_date_cols(self):
         print("Formatando as datas...")
         for col in filter(lambda x: x.startswith("DT"), self.tabela.columns):
-            self.tabela[col] = pd.to_datetime(self.tabela[col], coerce=True)
+            try:
+                self.tabela[col] = pd.to_datetime(self.tabela[col])  # , errors='coerce')
+            except ValueError:
+                self.tabela[col] = pd.to_datetime(self.tabela[col], format='%d/%m/%y', errors='coerce')
 
     @property
     def time_span(self):
@@ -102,27 +108,33 @@ class Sinan:
         ano = self.time_span[1].year if self.time_span[0] == self.time_span[1] else self.ano
         geoclist_sql = ",".join([str(gc) for gc in self.geocodigos])
         with connection.cursor(cursor_factory=DictCursor) as cursor:
-            cursor.execute("delete FROM {} where ano_notif={} and municipio_geocodigo in ({});".format(table_name, ano, geoclist_sql))
             cursor.execute("select * from {} limit 1;".format(table_name))
             col_names = [c.name for c in cursor.description if c.name != "id"]
             df_names = [field_map[n] for n in col_names]
-            insert_sql = 'INSERT INTO {}({}) VALUES ({})'.format(table_name, ','.join(col_names), ','.join(['%s' for i in col_names]))
+            insert_sql = 'INSERT INTO {}({}) VALUES ({})'.format(table_name, ','.join(col_names),
+                                                                 ','.join(['%s' for i in col_names]))
             for row in self.tabela[df_names].iterrows():
+                i = row[0]
                 row = row[1]
-                row[0] = date.fromordinal(row[0].to_datetime().toordinal())
-                row[1] = int(row[1][-2:])
-                row[2] = int(row[2])
-                row[3] = date.fromordinal(row[3].to_datetime().toordinal())
-                row[4] = int(row[4][-2:])
-                row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(row[5].to_datetime().toordinal())
-                row[7] = None if not row[7] else int(row[7])
-                row[8] = add_dv(int(row[8]))
-                row[9] = int(row[9])
-
+                row[0] = date.fromordinal(row[0].to_datetime().toordinal())  # dt_notific
+                row[1] = int(row[1][-2:])  # se_notific
+                row[2] = int(row[2])  # ano_notific
+                row[3] = date.fromordinal(row[3].to_datetime().toordinal())  # dt_sin_pri
+                row[4] = int(row[4][-2:])  # se_sin_pri
+                row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(
+                    row[5].to_datetime().toordinal())  # dt_digita
+                row[7] = None if not row[7] else int(row[7])  # bairro_bairro_id
+                row[8] = add_dv(int(row[8]))  # municipio_geocodigo
+                row[9] = int(row[9])  # nu_notific
+                cursor.execute(
+                    "delete FROM {} where ano_notif={} and nu_notific={} and municipio_geocodigo in ({});".format(
+                        table_name, ano, int(row[9]), geoclist_sql))
                 cursor.execute(insert_sql, row)
-
+                if (i % 1000 == 0) and (i > 0):
+                    connection.commit()
 
             connection.commit()
+
 
 if __name__ == "__main__":
     fname = sys.argv[1]
@@ -130,10 +142,3 @@ if __name__ == "__main__":
     conn = psycopg2.connect(**db_config)
     S = Sinan(fname, ano)
     S.save_to_pgsql(conn)
-
-
-
-
-
-
-
