@@ -116,10 +116,10 @@ class Sinan:
             for row in self.tabela[df_names].iterrows():
                 i = row[0]
                 row = row[1]
-                row[0] = date.fromordinal(row[0].to_datetime().toordinal())  # dt_notific
+                row[0] = None if isinstance(row[0], pd.tslib.NaTType) else date.fromordinal(row[0].to_datetime().toordinal())  # dt_notific
                 row[1] = int(row[1][-2:])  # se_notific
                 row[2] = int(row[2])  # ano_notific
-                row[3] = date.fromordinal(row[3].to_datetime().toordinal())  # dt_sin_pri
+                row[3] = None if isinstance(row[3], pd.tslib.NaTType) else date.fromordinal(row[3].to_datetime().toordinal())  # dt_sin_pri
                 row[4] = int(row[4][-2:])  # se_sin_pri
                 row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(
                     row[5].to_datetime().toordinal())  # dt_digita
