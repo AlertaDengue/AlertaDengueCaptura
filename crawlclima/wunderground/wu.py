@@ -102,13 +102,11 @@ def capture(station, date):
     url = wu_url(station, date)
     status = 0
     wait = 1
-    while status != 200:
+    while status != 200 and wait <= 16:
         resp = requests.get(url)
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-        if wait > 30:
-            break
     print(resp.status_code)
     page = resp.text
     dataframe = parse_page(page)
