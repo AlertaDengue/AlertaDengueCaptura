@@ -93,26 +93,20 @@ def capture_date_range(station, date):
     :return:
     """
     today = datetime.datetime.today()
-    data = []
-    while date <= today:
-        if check_day(date, station):
-            data.append(capture(station, date))
-            date = date + datetime.timedelta(1)
-        time.sleep(1)
-    return data
+    check_day_station = lambda d: check_day(d, station)
+    dates = filter(check_day_station, date_generator(today, date))
+    return map(lambda d: capture(station, d), dates)
 
 
 def capture(station, date):
     url = wu_url(station, date)
     status = 0
     wait = 1
-    while status != 200:
+    while status != 200 and wait <= 16:
         resp = requests.get(url)
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-        if wait > 30:
-            break
     print(resp.status_code)
     page = resp.text
     dataframe = parse_page(page)
