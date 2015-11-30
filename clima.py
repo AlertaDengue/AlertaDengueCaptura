@@ -18,7 +18,7 @@ from utilities.models import save, find_all
 
 rows = find_all(schema='Municipio', table='Estacao_wu')
 codes = [row['estacao_id'] for row in rows]
-codes.append('all')  # keyword to allow fetching from all stations
+# codes.append('all')  # keyword to allow fetching from all stations
 
 date = lambda d: datetime.strptime(d, "%Y-%m-%d")
 

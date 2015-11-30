@@ -194,12 +194,12 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)
     except ConnectionError as e:
-        logger.error("Conexão ao Obs. da Dengue falhou com erro {}".format(e))
+        logger.error("Conexão ao Observ. da Dengue falhou com erro {}".format(e))
         raise self.retry(exc=e, countdown=60)
     try:
         cur = conn.cursor()
     except NameError as e:
-        logger.error("Not saving data because connection to database has not been established.")
+        logger.error("Not saving data because connection to database could not be established.")
         return e
     header = ["data"] + cidades
     fp = StringIO(resp.text)
