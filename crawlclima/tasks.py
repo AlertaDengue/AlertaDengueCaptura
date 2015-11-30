@@ -208,7 +208,11 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     for i, c in enumerate(geocodigos):
         sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
         for r in data[1:]:
-            cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
+            try:
+                cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
+            except ValueError as e:
+                print(c, r)
+                raise e
             res = cur.fetchall()
             if res:
                 continue
