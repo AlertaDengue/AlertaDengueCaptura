@@ -11,8 +11,7 @@ Copyright 2014 by Flávio Codeço Coelho
 license: GPL v3
 """
 import argparse
-from datetime import datetime
-import time
+
 
 from crawlclima.tasks import pega_tweets
 
@@ -21,14 +20,12 @@ with open("municipios") as f:
     municipios = f.read().split('\n')
 
 
-date = lambda d: datetime.strptime(d, "%Y-%m-%d")
-
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--inicio", "-i", type=date, help="Data inicial de captura: yyyy-mm-dd")
 parser.add_argument("--fim", "-f", type=date, help="Data final de captura: yyyy-mm-dd")
 args = parser.parse_args()
 
-start, end = args.codigo, args.inicio, args.fim
+start, end = args.inicio, args.fim
 
 pega_tweets(start, fim=end, cidades=municipios, CID10="A90")
 
