@@ -95,7 +95,7 @@ def capture_date_range(station, date):
     today = datetime.datetime.today()
     check_day_station = lambda d: check_day(d, station)
     dates = filter(check_day_station, date_generator(today, date))
-    return map(lambda d: capture(station, d), dates)
+    return list(map(lambda d: capture(station, d), dates))
 
 
 def capture(station, date):
