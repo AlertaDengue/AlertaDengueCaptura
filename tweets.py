@@ -12,7 +12,6 @@ license: GPL v3
 """
 import argparse
 import datetime
-from datetime import datetime
 
 
 from crawlclima.tasks import pega_tweets
@@ -22,7 +21,7 @@ with open("municipios") as f:
     municipios = f.read().split('\n')
 
 
-date = lambda d: datetime.date.fromordinal(datetime.strptime(d, "%Y-%m-%d").toordinal())
+date = lambda d: datetime.date.fromordinal(datetime.datetime.strptime(d, "%Y-%m-%d").toordinal())
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--inicio", "-i", type=date, help="Data inicial de captura: yyyy-mm-dd")
