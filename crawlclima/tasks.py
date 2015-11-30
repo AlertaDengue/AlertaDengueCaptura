@@ -181,6 +181,8 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     conn = get_connection()
     geocodigos = []
     for c in cidades:
+        if c == '':
+            continue
         if len(str(c)) == 7:
             geocodigos.append((c, c[:-1]))
         else:
