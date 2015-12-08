@@ -18,7 +18,7 @@ from utilities.models import save, find_all
 
 rows = find_all(schema='Municipio', table='Estacao_wu')
 codes = [row['estacao_id'] for row in rows]
-# codes.append('all')  # keyword to allow fetching from all stations
+codes.append('all')  # keyword to allow fetching from all stations
 
 date = lambda d: datetime.strptime(d, "%Y-%m-%d")
 
@@ -34,6 +34,8 @@ i = 0
 
 stations = codes if station == 'all' else [station]
 for station in stations:
+    if station == 'all':
+        continue
     for date in date_generator(start, end):
         if not check_day(date, station):
             print("Date {} has already been captured from station {} ".format(date, station))
