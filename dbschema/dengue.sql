@@ -722,6 +722,12 @@ ALTER TABLE ONLY "Ovitrampa"
 ALTER TABLE ONLY "Tweet"
     ADD CONSTRAINT "Tweet_CID10" FOREIGN KEY ("CID10_codigo") REFERENCES "Dengue_global"."CID10"(codigo);
 
+--
+-- Name: casos_unicos; Type: UNIQUE CONSTRAINT; Schema: Municipio; Owner: -
+
+
+ALTER TABLE ONLY "Municipio"."Notificacao"
+    ADD constraint casos_unicos UNIQUE(nu_notific, bairro_nome, dt_digita,municipio_geocodigo);
 
 --
 -- PostgreSQL database dump complete

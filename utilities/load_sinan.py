@@ -111,8 +111,11 @@ class Sinan:
             cursor.execute("select * from {} limit 1;".format(table_name))
             col_names = [c.name for c in cursor.description if c.name != "id"]
             df_names = [field_map[n] for n in col_names]
-            insert_sql = 'INSERT INTO {}({}) VALUES ({})'.format(table_name, ','.join(col_names),
-                                                                 ','.join(['%s' for i in col_names]))
+            insert_sql = 'INSERT INTO {}({}) VALUES ({}) on conflict on CONSTRAINT casos_unicos do UPDATE SET {}'.\
+                format(table_name,
+                       ','.join(col_names),
+                        ','.join(['%s' for i in col_names]),
+                       ','.join(['{0}=excluded.{0}'.format(j) for j in col_names]))
             for row in self.tabela[df_names].iterrows():
                 i = row[0]
                 row = row[1]
@@ -126,9 +129,6 @@ class Sinan:
                 row[7] = None if not row[7] else int(row[7])  # bairro_bairro_id
                 row[8] = add_dv(int(row[8]))  # municipio_geocodigo
                 row[9] = int(row[9])  # nu_notific
-                cursor.execute(
-                    "delete FROM {} where ano_notif={} and nu_notific={} and municipio_geocodigo in ({});".format(
-                        table_name, ano, int(row[9]), geoclist_sql))
                 cursor.execute(insert_sql, row)
                 if (i % 1000 == 0) and (i > 0):
                     connection.commit()
