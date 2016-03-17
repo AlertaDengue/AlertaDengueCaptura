@@ -80,7 +80,13 @@ class Sinan:
         self.colunas_entrada = self.dbf.field_names
         self.tabela = pd.DataFrame(list(self.dbf))
         self.tabela.drop_duplicates('NU_NOTIFIC', keep='first', inplace=True)
-        self.geocodigos = self.tabela.ID_MUNICIP.dropna().unique()
+        if "ID_MUNICIP" in self.tabela.columns:
+            self.geocodigos = self.tabela.ID_MUNICIP.dropna().unique()
+        elif "ID_MN_RESI" in self.tabela.columns:
+            # print(self.tabela.columns)
+            self.geocodigos = self.tabela.ID_MN_RESI.dropna().unique()
+            self.tabela["ID_MUNICIP"] = self.tabela.ID_MN_RESI
+            del self.tabela['ID_MN_RESI']
         self._parse_date_cols()
         if not self.time_span[0].year == self.ano and self.time_span[1].year == self.ano:
             logger.error("O Banco contém notificações incompatíveis com o ano declarado!")
@@ -103,6 +109,16 @@ class Sinan:
         data_fim = self.tabela['DT_NOTIFIC'].max()
         return data_inicio, data_fim
 
+    def _fill_missing_columns(self, col_names):
+        """
+        checks if the table to be inserted contains all columns required in the database model.
+        If not create this columns filled with Null values, to allow for database insertion.
+        :param col_names:
+        """
+        for nm in col_names:
+            if field_map[nm] not in self.tabela.columns:
+                self.tabela[field_map[nm]] = None
+
     def save_to_pgsql(self, connection, table_name='"Municipio"."Notificacao"'):
         print("Escrevendo no PostgreSQL...")
         ano = self.time_span[1].year if self.time_span[0] == self.time_span[1] else self.ano
@@ -110,11 +126,12 @@ class Sinan:
         with connection.cursor(cursor_factory=DictCursor) as cursor:
             cursor.execute("select * from {} limit 1;".format(table_name))
             col_names = [c.name for c in cursor.description if c.name != "id"]
+            self._fill_missing_columns(col_names)
             df_names = [field_map[n] for n in col_names]
             insert_sql = 'INSERT INTO {}({}) VALUES ({}) on conflict on CONSTRAINT casos_unicos do UPDATE SET {}'.\
                 format(table_name,
                        ','.join(col_names),
-                        ','.join(['%s' for i in col_names]),
+                       ','.join(['%s' for i in col_names]),
                        ','.join(['{0}=excluded.{0}'.format(j) for j in col_names]))
             for row in self.tabela[df_names].iterrows():
                 i = row[0]
@@ -127,7 +144,7 @@ class Sinan:
                 row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(
                     row[5].to_datetime().toordinal())  # dt_digita
                 row[7] = None if not row[7] else int(row[7])  # bairro_bairro_id
-                row[8] = add_dv(int(row[8]))  # municipio_geocodigo
+                row[8] = None if row[8] == '' else add_dv(int(row[8]))  # municipio_geocodigo
                 row[9] = int(row[9])  # nu_notific
                 cursor.execute(insert_sql, row)
                 if (i % 1000 == 0) and (i > 0):
