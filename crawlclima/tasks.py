@@ -198,6 +198,7 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
             geocodigos.append((c, c))
     cidades_todas = [c[1] for c in geocodigos]
     for cidades in chunk(cidades_todas, 50):
+        cidades = list(cidades)
         params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
         try:
             resp = requests.get('?'.join([base_url, params]))
