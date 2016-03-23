@@ -196,9 +196,9 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
             geocodigos.append((c, c[:-1]))
         else:
             geocodigos.append((c, c))
-    cidades_todas = [c[1] for c in geocodigos]
-    for cidades in chunk(cidades_todas, 10):
-        cidades = list(cidades)
+
+    for geocs in chunk(geocodigos, 10):
+        cidades = [c[1] for c in geocs]# using geocodes with 6 digits
         params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
         try:
             resp = requests.get('?'.join([base_url, params]))
@@ -218,7 +218,7 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
         fp = StringIO(resp.text)
         data = list(csv.DictReader(fp, fieldnames=header))
         #print(data)
-        for i, c in enumerate(geocodigos):
+        for i, c in enumerate(geocs):
             sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
             for r in data[1:]:
                 try:
