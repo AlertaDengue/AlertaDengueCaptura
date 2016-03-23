@@ -140,7 +140,7 @@ class Sinan:
                 row[1] = int(row[1][-2:])  # se_notific
                 row[2] = int(row[2])  # ano_notific
                 row[3] = None if isinstance(row[3], pd.tslib.NaTType) else date.fromordinal(row[3].to_datetime().toordinal())  # dt_sin_pri
-                row[4] = int(row[4][-2:])  # se_sin_pri
+                row[4] = None if pd.isnull(row[4]) else int(row[4][-2:])  # se_sin_pri
                 row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(
                     row[5].to_datetime().toordinal())  # dt_digita
                 row[7] = None if not row[7] else int(row[7])  # bairro_bairro_id
