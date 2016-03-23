@@ -8,6 +8,7 @@ import time
 from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user
 import psycopg2
 import csv
+from itertools import islice
 
 from crawlclima.wunderground.wu import capture_date_range
 from utilities.models import save, find_all
@@ -165,7 +166,15 @@ def fetch_wunderground(self, station, date):
     except Exception as e:
         logger.error("Error saving to db with {} at {}: {}".format(station, date, e))
 
-
+def chunk(it, size):
+    """
+    divide a long list into sizeable chuncks
+    :param it: iterable
+    :param size: chunk size
+    :return:
+    """
+    it = iter(it)
+    return iter(lambda: tuple(islice(it, size)), ())
 
 @app.task(bind=True)
 def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
@@ -187,40 +196,41 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
             geocodigos.append((c, c[:-1]))
         else:
             geocodigos.append((c, c))
-    cidades = [c[1] for c in geocodigos]
-    params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
-    try:
-        resp = requests.get('?'.join([base_url, params]))
-        logger.info("URL ==> "+'?'.join([base_url, params]))
-    except requests.RequestException as e:
-        logger.error("Request retornou um erro: {}".format(e))
-        raise self.retry(exc=e, countdown=60)
-    except ConnectionError as e:
-        logger.error("Conexão ao Observ. da Dengue falhou com erro {}".format(e))
-        raise self.retry(exc=e, countdown=60)
-    try:
-        cur = conn.cursor()
-    except NameError as e:
-        logger.error("Not saving data because connection to database could not be established.")
-        return e
-    header = ["data"] + cidades
-    fp = StringIO(resp.text)
-    data = list(csv.DictReader(fp, fieldnames=header))
-    #print(data)
-    for i, c in enumerate(geocodigos):
-        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
-        for r in data[1:]:
-            try:
-                cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
-            except ValueError as e:
-                print(c, r)
-                raise e
-            res = cur.fetchall()
-            if res:
-                continue
-            cur.execute(sql, (c[0], datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[1]], CID10))
-    conn.commit()
-    cur.close()
+    cidades_todas = [c[1] for c in geocodigos]
+    for cidades in chunk(cidades_todas, 50):
+        params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
+        try:
+            resp = requests.get('?'.join([base_url, params]))
+            logger.info("URL ==> "+'?'.join([base_url, params]))
+        except requests.RequestException as e:
+            logger.error("Request retornou um erro: {}".format(e))
+            raise self.retry(exc=e, countdown=60)
+        except ConnectionError as e:
+            logger.error("Conexão ao Observ. da Dengue falhou com erro {}".format(e))
+            raise self.retry(exc=e, countdown=60)
+        try:
+            cur = conn.cursor()
+        except NameError as e:
+            logger.error("Not saving data because connection to database could not be established.")
+            return e
+        header = ["data"] + cidades
+        fp = StringIO(resp.text)
+        data = list(csv.DictReader(fp, fieldnames=header))
+        #print(data)
+        for i, c in enumerate(geocodigos):
+            sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
+            for r in data[1:]:
+                try:
+                    cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
+                except ValueError as e:
+                    print(c, r)
+                    raise e
+                res = cur.fetchall()
+                if res:
+                    continue
+                cur.execute(sql, (c[0], datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[1]], CID10))
+        conn.commit()
+        cur.close()
 
     return resp.status_code
 
