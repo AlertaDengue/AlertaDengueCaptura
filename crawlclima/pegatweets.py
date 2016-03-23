@@ -39,5 +39,8 @@ if today.isoweekday() == 5:
 else:
     date_start = week_ago
 
+if len(sys.argv) > 1:
+    date_start = sys.argv[1]
+
 for cidades in chunk(municipios, 50):
     pega_tweets.delay(date_start.isoformat(), today.isoformat(), cidades, "A90")
