@@ -16,12 +16,14 @@ def uf_geojson(uf):
     filename = '{}-municipalities.json'.format(uf)
     return geojson.load(open(join_path(path, filename), "r"))
 
+
 # TODO: We should improve the complexity of this function
 def county_polygon(uf, county_code):
     for feature in uf_geojson(uf)["features"]:
         if feature["properties"].get("CD_GEOCODM") == county_code:
             return geojson.dumps(feature)
     raise ValueError("{} is not in this geojson: {}.".format(county_code, uf))
+
 
 def to_row(county):
     county_code = county['Cod Municipio Completo']
@@ -36,8 +38,9 @@ def to_row(county):
     return dict(county_code=county_code,
                 name=name,
                 geojson=geojson,
-                uf = initials[uf],
+                uf=initials[uf],
                 population=0)
+
 
 BASE_DIR = dirname(abspath(__file__))
 path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
