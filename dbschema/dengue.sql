@@ -290,6 +290,7 @@ CREATE TABLE "Historico_alerta" (
     casos_est_max integer NOT NULL,
     casos integer NOT NULL,
     municipio_geocodigo integer NOT NULL,
+    municipio_nome varchar(128),
     p_rt1 real NOT NULL,
     p_inc100k real NOT NULL,
     "Localidade_id" integer,
