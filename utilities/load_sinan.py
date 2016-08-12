@@ -128,7 +128,7 @@ class Sinan:
             col_names = [c.name for c in cursor.description if c.name != "id"]
             self._fill_missing_columns(col_names)
             df_names = [field_map[n] for n in col_names]
-            insert_sql = 'INSERT INTO {}({}) VALUES ({}) on conflict on CONSTRAINT casos_unicos do UPDATE SET {}'.\
+            insert_sql = 'INSERT INTO {}({}) VALUES ({}) on conflict on CONSTRAINT casos_unicos do UPDATE SET {}'. \
                 format(table_name,
                        ','.join(col_names),
                        ','.join(['%s' for i in col_names]),
@@ -136,10 +136,12 @@ class Sinan:
             for row in self.tabela[df_names].iterrows():
                 i = row[0]
                 row = row[1]
-                row[0] = None if isinstance(row[0], pd.tslib.NaTType) else date.fromordinal(row[0].to_datetime().toordinal())  # dt_notific
+                row[0] = None if isinstance(row[0], pd.tslib.NaTType) else date.fromordinal(
+                    row[0].to_datetime().toordinal())  # dt_notific
                 row[1] = int(row[1][-2:])  # se_notific
                 row[2] = int(self.ano) if pd.isnull(row[2]) else int(row[2])  # ano_notific
-                row[3] = None if isinstance(row[3], pd.tslib.NaTType) else date.fromordinal(row[3].to_datetime().toordinal())  # dt_sin_pri
+                row[3] = None if isinstance(row[3], pd.tslib.NaTType) else date.fromordinal(
+                    row[3].to_datetime().toordinal())  # dt_sin_pri
                 row[4] = None if not row[4] else int(row[4][-2:])  # se_sin_pri
                 row[5] = None if isinstance(row[5], pd.tslib.NaTType) else date.fromordinal(
                     row[5].to_datetime().toordinal())  # dt_digita
@@ -159,3 +161,4 @@ if __name__ == "__main__":
     conn = psycopg2.connect(**db_config)
     S = Sinan(fname, ano)
     S.save_to_pgsql(conn)
+
