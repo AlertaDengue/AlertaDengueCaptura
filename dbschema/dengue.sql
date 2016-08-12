@@ -82,12 +82,24 @@ CREATE TABLE "Municipio" (
 );
 
 
+
 --
 -- Name: TABLE "Municipio"; Type: COMMENT; Schema: Dengue_global; Owner: -
 --
 
 COMMENT ON TABLE "Municipio" IS 'Municipio integrado ao sistema de alerta';
 
+--
+-- Name: estado; Type: TABLE; Schema: Dengue_global; Owner: -; Tablespace:
+--
+
+CREATE TABLE estado (
+    nome character varying(128) NOT NULL,
+    geojson text NOT NULL,
+    regiao character varying(32) NOT NULL,
+    uf character varying(2) NOT NULL,
+    geocodigo INTEGER NOT NULL
+);
 
 SET search_path = "Municipio", pg_catalog;
 
