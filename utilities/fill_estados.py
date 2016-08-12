@@ -24,6 +24,7 @@ if __name__=="__main__":
     conn = psycopg2.connect(**db_config)
     with conn.cursor() as cur:
         for fname in glob.glob(os.path.join(path, '*-state.json')):
+            print("Processing {}".format(fname))
             uf = fname.split('-')[0]
             geo_json = load_geojson(fname)
             properties = geo_json['features'][0]['properties']
