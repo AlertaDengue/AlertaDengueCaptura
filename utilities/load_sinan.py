@@ -138,7 +138,7 @@ class Sinan:
                 row = row[1]
                 row[0] = None if isinstance(row[0], pd.tslib.NaTType) else date.fromordinal(
                     row[0].to_datetime().toordinal())  # dt_notific
-                row[1] = int(row[1][-2:])  # se_notific
+                row[1] = int(str(int(row[1]))[-2:])  # se_notific
                 row[2] = int(self.ano) if pd.isnull(row[2]) else int(row[2])  # ano_notific
                 row[3] = None if isinstance(row[3], pd.tslib.NaTType) else date.fromordinal(
                     row[3].to_datetime().toordinal())  # dt_sin_pri
