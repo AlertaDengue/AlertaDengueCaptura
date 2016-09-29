@@ -25,6 +25,7 @@ if __name__=="__main__":
     with conn.cursor() as cur:
         for fname in glob.glob(os.path.join(path, '*-state.json')):
             print("Processing {}".format(fname))
+            uf = os.path.split(fname)[1].split('-')[0]
             geo_json = load_geojson(fname)
             properties = geo_json['features'][0]['properties']
             nome = properties['NM_ESTADO']
