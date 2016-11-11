@@ -44,7 +44,7 @@ def load_station_metadata(station_ID):
         print('Station {} returned no data'.format(station_ID))
         return 1
     # print(results.url)
-    print(df.ix[0])
+    print(df.ix[0]['cod.estacao'])
     record = {
         'codestacao': str(station_ID),
         'nome': df.ix[0]['nome'],
