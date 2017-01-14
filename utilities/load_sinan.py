@@ -36,7 +36,9 @@ field_map = {
     'municipio_geocodigo': "ID_MUNICIP",
     'nu_notific': "NU_NOTIFIC",
     'cid10_codigo': "ID_AGRAVO",
-
+    'cs_sexo': "CS_SEXO",
+    'dt_nasc': "DT_NASC",
+    'nu_idade_n': "NU_IDADE_N",
 }
 
 
@@ -148,6 +150,9 @@ class Sinan:
                 row[7] = None if not row[7] else int(row[7])  # bairro_bairro_id
                 row[8] = None if row[8] == '' else add_dv(int(row[8]))  # municipio_geocodigo
                 row[9] = int(row[9])  # nu_notific
+                row[11] = None if isinstance(row[11], pd.tslib.NaTType) else date.fromordinal(
+                    row[11].to_datetime().toordinal())  # dt_nasc
+                row[13] = None if not row[13] else int(row[13])  # nu_idade_n
                 cursor.execute(insert_sql, row)
                 if (i % 1000 == 0) and (i > 0):
                     connection.commit()
