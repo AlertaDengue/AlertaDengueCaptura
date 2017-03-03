@@ -15,11 +15,11 @@ except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
 
 
-df = pd.read_csv("geocodigo_pop_estimada_2014.csv", header=0, sep=',')
+df = pd.read_csv("estimativa_pop_municipios_2016.csv.gz", header=0, sep=',')
 
 sql = 'update "Dengue_global"."Municipio" set populacao=%s WHERE geocodigo=%s;'
 for i, row in df.iterrows():
-    cur.execute(sql, (row.Pop_estimada, row.Codigo_Municipio))
+    cur.execute(sql, (row.pop_est, row.geocodigo))
 
 conn.commit()
 cur.close()
