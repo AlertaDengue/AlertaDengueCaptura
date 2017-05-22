@@ -227,4 +227,3 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     cur.close()
 
     return resp.status_code
-

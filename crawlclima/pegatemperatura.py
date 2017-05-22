@@ -27,4 +27,3 @@ day = year_start if today.isoweekday() == 5 else yesterday
 
 for station in stations:
     fetch_wunderground.delay(station, day)
-
