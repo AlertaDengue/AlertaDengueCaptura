@@ -22,5 +22,8 @@ date_from = week_ago if today.isoweekday() != 5 else year_start
 pega_dados_cemaden.delay('PR', date_from, today, 'uf')
 pega_dados_cemaden.delay('RJ', date_from, today, 'uf')
 pega_dados_cemaden.delay('MG', date_from, today, 'uf')
+pega_dados_cemaden.delay('ES', date_from, today, 'uf')
+pega_dados_cemaden.delay('CE', date_from, today, 'uf')
+pega_dados_cemaden.delay('SP', date_from, today, 'uf')
 
 
