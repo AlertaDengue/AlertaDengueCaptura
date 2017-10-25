@@ -206,7 +206,7 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
         cur = conn.cursor()
     except NameError as e:
         logger.error("Not saving data because connection to database could not be established.")
-        return e
+        raise e
     header = ["data"] + cidades
     fp = StringIO(resp.text)
     data = list(csv.DictReader(fp, fieldnames=header))
