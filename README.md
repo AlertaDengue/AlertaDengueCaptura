@@ -7,7 +7,7 @@ No diretório notebooks há alguns notebooks experimentais para testar os acesso
 
 Este repo contém uma framework para capturar dados de forma distribuída. Esta framework usa a bilbioteca Celery
 
-##Requisitos
+## Requisitos
 
 Para iniciar a captura é preciso ter installado o Rabbitmq-server e o Celery.
 
