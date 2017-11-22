@@ -19,6 +19,7 @@ class TestFahrenheitToCelsius(unittest.TestCase):
         self.assertAlmostEqual(fahrenheit_to_celsius(0), -17.78, 2)
 
 
+@unittest.skip
 class TestCapture(unittest.TestCase):
     def test_capture_return_type(self):
         station_code = 'SBAF'
