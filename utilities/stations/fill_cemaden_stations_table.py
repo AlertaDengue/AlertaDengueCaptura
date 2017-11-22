@@ -24,7 +24,7 @@ chave = "bc10602ea62759fab1578f8eb1ff6f7abbf8678d"
 
 def get_connection():
     try:
-        conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='aldengue'".format(db_config['database'], db_config['user'], 'localhost'))
+        conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(db_config['database'], db_config['user'], 'localhost', db_config['password']))
     except Exception as e:
         print("Unable to connect to Postgresql: {}".format(e))
         raise e
@@ -78,4 +78,3 @@ if __name__ == "__main__":
     for code in get_station_codes():
         load_station_metadata(code[0])
         # break
-

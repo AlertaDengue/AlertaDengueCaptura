@@ -4,13 +4,11 @@ import geojson
 import sys
 import logging
 
-psql_user = "dengueadmin"
-psql_host = "127.0.0.1"
-
 logger = logging.getLogger("crialoc")
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format(psql_user, psql_host))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(
+        config('POSTGRES_DATABASE'), config('POSTGRES_USER'), config('POSTGRES_HOST'), config('POSTGRES_PASSWORD')))
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
