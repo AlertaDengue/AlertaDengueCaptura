@@ -61,7 +61,6 @@ def check_day(day, estacao):
         return False
 
 
-
 def describe(dataframe):
     if dataframe.empty:
         return {}

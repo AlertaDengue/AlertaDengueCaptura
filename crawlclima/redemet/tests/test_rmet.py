@@ -101,27 +101,24 @@ class TestDateGenerator(unittest.TestCase):
 
 
 class TestParsePage(unittest.TestCase):
-    def testCelsiusDailyHistory(self):
-        with open('crawlclima/redemet/tests/CelsiusDailyHistory.html', 'r') as fd:
+    def testDailyHistory(self):
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
-        self.assertEqual(dataframe.DateUTC[0], '2015-08-01 03:00:00')
-        self.assertAlmostEqual(dataframe.TemperatureC.mean(), 24.33, 2)
+        self.assertEqual(dataframe.DateUTC[0], '2015-02-28 00:00:00')
+        self.assertAlmostEqual(dataframe.TemperatureC.mean(), 44.33, 2)
 
     def testEmptyDailyHistory(self):
-        with open('crawlclima/redemet/tests/EmptyDailyHistory.html', 'r') as fd:
+        with open('crawlclima/redemet/tests/'
+                  'example_with_no_record.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         self.assertIsInstance(dataframe, pd.DataFrame)
         self.assertTrue(dataframe.empty)
 
-    @unittest.skip("Test a case with no Celsius temp")
-    def testFahrenheitDailyHistory(self):
-        pass
-
 
 class TestDescribe(unittest.TestCase):
     def test_filled_dataframe(self):
-        with open('crawlclima/redemet/tests/CelsiusDailyHistory.html', 'r') as fd:
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         summary = describe(dataframe)
@@ -138,7 +135,8 @@ class TestDescribe(unittest.TestCase):
         })
 
     def test_empty_dataframe(self):
-        with open('crawlclima/redemet/tests/EmptyDailyHistory.html', 'r') as fd:
+        with open('crawlclima/redemet/tests/'
+                  'example_with_no_record.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         summary = describe(dataframe)
