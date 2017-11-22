@@ -3,8 +3,9 @@
 from datetime import datetime
 import unittest
 import pandas as pd
-from crawlclima.redemet.rmet import parse_page, fahrenheit_to_celsius, wu_url, date_generator, \
-    describe, capture_date_range, capture
+from crawlclima.redemet.rmet import (parse_page, fahrenheit_to_celsius,
+                                     wu_url, date_generator, describe,
+                                     capture_date_range, capture)
 
 
 class TestFahrenheitToCelsius(unittest.TestCase):
@@ -14,8 +15,9 @@ class TestFahrenheitToCelsius(unittest.TestCase):
     def test_212(self):
         self.assertEqual(fahrenheit_to_celsius(212), 100)
 
-    def test_212(self):
+    def test_0(self):
         self.assertAlmostEqual(fahrenheit_to_celsius(0), -17.78, 2)
+
 
 class TestCapture(unittest.TestCase):
     def test_capture_return_type(self):
@@ -32,6 +34,7 @@ class TestCapture(unittest.TestCase):
 
     def test_check_day(self):
         pass
+
 
 class TestWUUrl(unittest.TestCase):
     def test_SBGL_20150228(self):
