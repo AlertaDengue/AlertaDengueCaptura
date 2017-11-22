@@ -1,5 +1,6 @@
 from celery.schedules import crontab
 from datetime import datetime, timedelta, date
+from decouple import config
 
 ## Broker settings.
 BROKER_URL = 'amqp://'
@@ -22,6 +23,8 @@ CELERY_ANNOTATIONS = {'crawlclima.tasks.pega_dados_cemaden': {'rate_limit': '10/
 #Celery beat configurations
 
 CELERY_TIMEZONE = 'America/Sao_Paulo'
+
+CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
 
 # today = datetime.fromordinal(date.today().toordinal())
 # week_ago = datetime.fromordinal(date.today().toordinal())-timedelta(8)
