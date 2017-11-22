@@ -37,9 +37,12 @@ def date_generator(start, end=None):
         yield start + datetime.timedelta(days)
 
 
-def wu_url(station, date):
-    url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
-    return url_pattern.format(station, date.year, date.month, date.day)
+def redemet_url(station, date):
+    url_pattern = ("https://www.redemet.aer.mil.br/api/consulta_automatica/"
+                   "index.php?local={}&msg=metar"
+                   "&data_ini={formatted_date}00&data_fim={formatted_date}23")
+
+    return url_pattern.format(station, formatted_date=date.strftime('%Y%m%d'))
 
 
 def check_day(day, estacao):
@@ -98,7 +101,7 @@ def capture_date_range(station, date):
 
 
 def capture(station, date):
-    url = wu_url(station, date)
+    url = redemet_url(station, date)
     status = 0
     wait = 1
     while status != 200 and wait <= 16:

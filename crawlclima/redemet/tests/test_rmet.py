@@ -4,7 +4,7 @@ from datetime import datetime
 import unittest
 import pandas as pd
 from crawlclima.redemet.rmet import (parse_page, fahrenheit_to_celsius,
-                                     wu_url, date_generator, describe,
+                                     redemet_url, date_generator, describe,
                                      capture_date_range, capture)
 
 
@@ -37,20 +37,24 @@ class TestCapture(unittest.TestCase):
         pass
 
 
-class TestWUUrl(unittest.TestCase):
+class TestREDEMETUrl(unittest.TestCase):
     def test_SBGL_20150228(self):
         station_code = 'SBGL'
         date = datetime(2015, 2, 28)
-        url = "http://www.wunderground.com/history/airport/SBGL/2015/2/28/DailyHistory.html?format=1"
+        url = ("https://www.redemet.aer.mil.br/api/consulta_automatica/"
+               "index.php?local=SBGL&msg=metar"
+               "&data_ini=2015022800&data_fim=2015022823")
 
-        self.assertEqual(wu_url(station_code, date), url)
+        self.assertEqual(redemet_url(station_code, date), url)
 
     def test_SBJR_20150131(self):
-        station_code = 'SBJR'
+        station_code = 'SBRJ'
         date = datetime(2015, 1, 31)
-        url = "http://www.wunderground.com/history/airport/SBJR/2015/1/31/DailyHistory.html?format=1"
+        url = ("https://www.redemet.aer.mil.br/api/consulta_automatica/"
+               "index.php?local=SBRJ&msg=metar"
+               "&data_ini=2015013100&data_fim=2015013123")
 
-        self.assertEqual(wu_url(station_code, date), url)
+        self.assertEqual(redemet_url(station_code, date), url)
 
 
 class TestDateGenerator(unittest.TestCase):
