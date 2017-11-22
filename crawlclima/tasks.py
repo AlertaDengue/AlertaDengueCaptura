@@ -10,7 +10,7 @@ import psycopg2
 import csv
 from itertools import islice
 
-from crawlclima.wunderground.wu import capture_date_range
+from crawlclima.redemet.rmet import capture_date_range
 from utilities.models import save, find_all
 
 
@@ -153,7 +153,7 @@ def fetch_results(pars, url):
 
 
 @app.task(bind=True)
-def fetch_wunderground(self, station, date):
+def fetch_redemet(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
         if isinstance(date, str):

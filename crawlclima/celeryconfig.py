@@ -16,7 +16,7 @@ CELERY_RESULT_BACKEND = 'rpc://'
 
 CELERY_ANNOTATIONS = {
     'crawlclima.tasks.pega_dados_cemaden': {'rate_limit': '10/s'},
-    'crawlclima.tasks.fetch_wunderground': {'rate_limit': '1/s'}
+    'crawlclima.tasks.fetch_redemet': {'rate_limit': '1/s'}
 }
 
 CELERY_TIMEZONE = 'America/Sao_Paulo'
