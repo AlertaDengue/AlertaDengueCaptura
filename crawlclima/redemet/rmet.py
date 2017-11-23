@@ -8,6 +8,13 @@ import psycopg2
 import time
 
 
+def get_date_and_standard_metar(raw_data):
+    date_str, partially_cleaned_data = raw_data.split(' - ')
+    observation_time = datetime.datetime.strptime(date_str, '%Y%m%d%H')
+    cleaned_data = partially_cleaned_data.rstrip('=')
+    return observation_time, cleaned_data
+
+
 def parse_page(page):
     csv = re.subn("<br />", "", page.strip())[0]
     csvf = StringIO(csv)
