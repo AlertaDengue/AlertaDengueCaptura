@@ -13,3 +13,4 @@ geojson
 python-decouple
 dbfread
 pandasql
+python-metar

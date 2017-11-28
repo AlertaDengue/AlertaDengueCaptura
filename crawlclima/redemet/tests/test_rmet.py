@@ -160,21 +160,32 @@ class TestCalculateHumidity(unittest.TestCase):
         self.assertAlmostEqual(humidity(temperature, dew_point), 83.45, 2)
 
 
-@unittest.skip
 class TestParsePage(unittest.TestCase):
-    def testDailyHistory(self):
+
+    def test_skip_SPECI_entries(self):
         with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
-        self.assertEqual(dataframe.DateUTC[0], '2015-02-28 00:00:00')
-        self.assertAlmostEqual(dataframe.TemperatureC.mean(), 44.33, 2)
+        self.assertEqual(len(dataframe), 24)
 
-    def testEmptyDailyHistory(self):
+    def test_with_data(self):
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
+            dataframe = parse_page(fd.read())
+        self.assertEqual(dataframe.observation_time[0].to_pydatetime(),
+                         datetime(2015, 2, 28, 0, 0))
+        self.assertAlmostEqual(dataframe.temperature.mean(), 27.75, 2)
+
+    def test_with_empty_data(self):
         with open('crawlclima/redemet/tests/'
                   'example_with_no_record.txt', 'r') as fd:
             dataframe = parse_page(fd.read())
 
         self.assertIsInstance(dataframe, pd.DataFrame)
         self.assertTrue(dataframe.empty)
+
+    def test_includes_humidity(self):
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
+            dataframe = parse_page(fd.read())
+        self.assertAlmostEqual(dataframe.humidity.min(), 55.32, 2)
 
 
 @unittest.skip

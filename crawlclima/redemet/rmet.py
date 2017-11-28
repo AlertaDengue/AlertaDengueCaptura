@@ -8,6 +8,8 @@ import math
 import psycopg2
 import time
 
+from metar.Metar import Metar
+
 
 def get_date_and_standard_metar(raw_data):
     date_str, partially_cleaned_data = raw_data.split(' - ')
@@ -34,21 +36,25 @@ def clean_line(line):
 
 def parse_page(page):
     lines = filter(clean_line, page.split('\n'))
-    csv = re.subn("<br />", "", page.strip())[0]
-    csvf = StringIO(csv)
-    df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")
-    df = df.replace(-9999.0, pd.np.nan)
-    try:
-        if df.ix[0][0] == 'No daily or hourly history data available':
-            return pd.DataFrame()
-    except IndexError:
-        print(page)
-        return pd.DataFrame()
+    records = map(get_date_and_standard_metar, lines)
+    data = {
+        'observation_time': [],
+        'temperature': [],
+        'dew_point': [],
+        'pressure': [],
+        'humidity': [],
+    }
+    for observation_time, raw_metar in records:
+        m = Metar(raw_metar)
+        temperature = m.temp.value()
+        dew_point = m.dewpt.value()
+        data['observation_time'].append(observation_time)
+        data['temperature'].append(temperature)
+        data['dew_point'].append(dew_point)
+        data['pressure'].append(m.press.value())
+        data['humidity'].append(humidity(temperature, dew_point))
 
-    if 'TemperatureF' in df.columns:
-        df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
-
-    return df
+    return pd.DataFrame.from_dict(data)
 
 
 def fahrenheit_to_celsius(f):
