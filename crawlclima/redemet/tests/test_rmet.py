@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import unittest
+from unittest import mock
+
 import pandas as pd
+import responses
+
 from crawlclima.redemet.rmet import (parse_page, fahrenheit_to_celsius,
                                      redemet_url, date_generator, describe,
                                      capture_date_range, capture, humidity,
@@ -20,19 +24,42 @@ class TestFahrenheitToCelsius(unittest.TestCase):
         self.assertAlmostEqual(fahrenheit_to_celsius(0), -17.78, 2)
 
 
-@unittest.skip
 class TestCapture(unittest.TestCase):
-    def test_capture_return_type(self):
+    @responses.activate
+    @mock.patch('crawlclima.redemet.rmet.time.sleep')
+    def test_capture_return_type(self, mocked_sleep):
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
+            response_text = fd.read()
+
+        responses.add(responses.GET,
+                      "https://www.redemet.aer.mil.br/api/consulta_automatica/"
+                      "index.php?local=SBAF&msg=metar"
+                      "&data_ini=2015022800&data_fim=2015022823",
+                      body=response_text)
+
         station_code = 'SBAF'
-        date = datetime(2015, 11, 2)
+        date = datetime(2015, 2, 28)
         data = capture(station_code, date)
         self.assertIsInstance(data, dict)
 
-    def test_capture_range(self):
+    @responses.activate
+    @mock.patch('crawlclima.redemet.rmet.time.sleep')
+    def test_capture_range(self, mocked_sleep):
+        with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
+            response_text = fd.read()
+
+        url_pattern = ("https://www.redemet.aer.mil.br/api/"
+                       "consulta_automatica/index.php?.*")
+
+        responses.add(responses.GET,
+                      url_pattern,
+                      body=response_text)
+
         station_code = 'SBAF'
-        date = datetime(2015, 11, 2)
+        date = datetime.today() - timedelta(3)
         data = capture_date_range(station_code, date)
         self.assertIsInstance(data, list)
+        self.assertEqual(len(responses.calls), 4)
 
     def test_check_day(self):
         pass
