@@ -15,7 +15,18 @@ def get_date_and_standard_metar(raw_data):
     return observation_time, cleaned_data
 
 
+def clean_line(line):
+    if not line:
+        return False
+    if 'SPECI' in line:
+        return False
+    if 'não localizada na base de dados da REDEMET' in line:
+        return False
+    return True
+
+
 def parse_page(page):
+    lines = filter(clean_line, page.split('\n'))
     csv = re.subn("<br />", "", page.strip())[0]
     csvf = StringIO(csv)
     df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")

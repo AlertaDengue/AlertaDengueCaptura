@@ -6,7 +6,7 @@ import pandas as pd
 from crawlclima.redemet.rmet import (parse_page, fahrenheit_to_celsius,
                                      redemet_url, date_generator, describe,
                                      capture_date_range, capture,
-                                     get_date_and_standard_metar)
+                                     get_date_and_standard_metar, clean_line)
 
 
 class TestFahrenheitToCelsius(unittest.TestCase):
@@ -120,6 +120,36 @@ class TestGetDateAndStandardMetarFromRedemet(unittest.TestCase):
         expected_observation_time = datetime(2015, 2, 28, 19, 0)
         observation_time, standard_data = get_date_and_standard_metar(raw_data)
         self.assertEqual(observation_time, expected_observation_time)
+
+
+class TestCleanLine(unittest.TestCase):
+
+    regular_entry = ("2015022800 - METAR SBGL 280000Z "
+                     "14006KT CAVOK 27/22 Q1009=")
+
+    def test_remove_SPECI_entries(self):
+        speci_entry = ("2015022821 - SPECI SBGL 282120Z 14013KT"
+                       " 4000 -RA FEW009 SCT020 FEW030TCU BKN040"
+                       " 25/23 Q1013=")
+        lines = [self.regular_entry, speci_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
+    def test_remove_empty_lines(self):
+        lines = [self.regular_entry, '', self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
+    def test_remove_lines_when_there_is_no_data(self):
+        no_data_msg = ("Mensagem de 'SBGL' para 28/02/2018"
+                       " as 00(UTC) não localizada na base"
+                       " de dados da REDEMET")
+        lines = [self.regular_entry, no_data_msg, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
 
 
 @unittest.skip
