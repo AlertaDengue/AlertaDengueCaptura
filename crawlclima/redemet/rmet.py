@@ -139,7 +139,6 @@ def capture(station, date):
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-    print(resp.status_code)
     page = resp.text
     dataframe = parse_page(page)
 
