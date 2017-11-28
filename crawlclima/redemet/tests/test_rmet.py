@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 from crawlclima.redemet.rmet import (parse_page, fahrenheit_to_celsius,
                                      redemet_url, date_generator, describe,
-                                     capture_date_range, capture,
+                                     capture_date_range, capture, humidity,
                                      get_date_and_standard_metar, clean_line)
 
 
@@ -150,6 +150,14 @@ class TestCleanLine(unittest.TestCase):
         result = filter(clean_line, lines)
         self.assertEqual(list(result),
                          [self.regular_entry, self.regular_entry])
+
+
+class TestCalculateHumidity(unittest.TestCase):
+
+    def test_calculate_humidity(self):
+        temperature = 25
+        dew_point = 22
+        self.assertAlmostEqual(humidity(temperature, dew_point), 83.45, 2)
 
 
 @unittest.skip

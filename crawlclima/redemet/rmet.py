@@ -4,6 +4,7 @@ import re
 import requests
 import pandas as pd
 from utilities.models import db_config
+import math
 import psycopg2
 import time
 
@@ -13,6 +14,12 @@ def get_date_and_standard_metar(raw_data):
     observation_time = datetime.datetime.strptime(date_str, '%Y%m%d%H')
     cleaned_data = partially_cleaned_data.rstrip('=')
     return observation_time, cleaned_data
+
+
+def humidity(temperature, dew_point):
+    term_a = (17.625 * dew_point) / (243.04 + dew_point)
+    term_b = (17.625 * temperature) / (243.04 + temperature)
+    return 100 * (math.exp(term_a) / math.exp(term_b))
 
 
 def clean_line(line):
