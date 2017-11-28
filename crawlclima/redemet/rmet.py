@@ -101,16 +101,15 @@ def describe(dataframe):
 
     summary = dataframe.describe()
 
-    measurements = ('TemperatureC', 'Humidity', 'Sea Level PressurehPa')
     field_names = ('temperature', 'humidity', 'pressure')
     aggregations = ('min', 'mean', 'max')
 
     data = {}
-    for field_name, measurement in zip(field_names, measurements):
+    for field_name in field_names:
         for aggregation in aggregations:
             key = field_name + '_' + aggregation
             try:
-                value = summary[measurement].ix[aggregation]
+                value = summary[field_name].ix[aggregation]
             except KeyError as e:
                 value = None
             data[key] = value

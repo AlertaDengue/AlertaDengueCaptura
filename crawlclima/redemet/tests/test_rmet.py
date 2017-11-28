@@ -188,7 +188,6 @@ class TestParsePage(unittest.TestCase):
         self.assertAlmostEqual(dataframe.humidity.min(), 55.32, 2)
 
 
-@unittest.skip
 class TestDescribe(unittest.TestCase):
     def test_filled_dataframe(self):
         with open('crawlclima/redemet/tests/example_data.txt', 'r') as fd:
@@ -196,15 +195,15 @@ class TestDescribe(unittest.TestCase):
 
         summary = describe(dataframe)
         self.assertEqual(summary, {
-            'humidity_max': 100.0,
-            'humidity_mean': 79.799999999999997,
-            'humidity_min': 47.0,
-            'pressure_max': 1021.0,
-            'pressure_mean': 1019.0689655172414,
-            'pressure_min': 1017.0,
-            'temperature_max': 33.0,
-            'temperature_mean': 24.333333333333332,
-            'temperature_min': 21.0
+            'humidity_max': 88.679561374670186,
+            'humidity_mean': 73.687275217443982,
+            'humidity_min': 55.321861254558726,
+            'pressure_max': 1014.0,
+            'pressure_mean': 1010.9583333333334,
+            'pressure_min': 1008.0,
+            'temperature_max': 31.0,
+            'temperature_mean': 27.75,
+            'temperature_min': 25.0
         })
 
     def test_empty_dataframe(self):
