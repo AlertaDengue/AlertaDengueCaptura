@@ -10,6 +10,7 @@ pgcli
 sqlsoup
 odo
 geojson
-python-decouple==3.0
+python-decouple
 dbfread
 pandasql
+python-metar

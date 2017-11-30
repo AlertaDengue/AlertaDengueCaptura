@@ -12,7 +12,7 @@ import argparse
 from datetime import datetime
 import time
 
-from crawlclima.wunderground.wu import capture, date_generator, check_day
+from crawlclima.redemet.rmet import capture, date_generator, check_day
 from utilities.models import save, find_all
 
 

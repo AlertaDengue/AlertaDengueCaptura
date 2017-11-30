@@ -6,10 +6,13 @@ import pandas as pd
 import psycopg2
 import logging
 
+from decouple import config
+
 logger = logging.getLogger("update-pop")
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format('dengueadmin', 'localhost'))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(
+        config('POSTGRES_DATABASE'), config('POSTGRES_USER'), config('POSTGRES_HOST'), config('POSTGRES_PASSWORD')))
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))

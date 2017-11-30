@@ -2,11 +2,14 @@ import unittest
 import psycopg2
 from datetime import datetime, timedelta
 import sys
+from decouple import config
+
 from crawlclima.tasks import *
 from crawlclima.fetchapp import app
 
 try:
-    conn = psycopg2.connect("dbname='dengue' user='{}' host='{}' password='aldengue'".format('dengueadmin', '127.0.0.1'))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(
+        config('POSTGRES_DATABASE'), config('POSTGRES_USER'), config('POSTGRES_HOST'), config('POSTGRES_PASSWORD')))
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
     sys.exit()

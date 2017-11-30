@@ -5,20 +5,21 @@ from crawlclima.config import cemaden
 from io import StringIO
 from datetime import datetime, timedelta
 import time
-from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user
+from crawlclima.config.tweets import base_url, token, psql_db, psql_host, psql_user, psql_password
 import psycopg2
 import csv
 from itertools import islice
 
-from crawlclima.wunderground.wu import capture_date_range
+from crawlclima.redemet.rmet import capture_date_range
 from utilities.models import save, find_all
 
 
 logger = get_task_logger("Captura")
 
+
 def get_connection():
     try:
-        conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='aldengue'".format(psql_db, psql_user, psql_host))
+        conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(psql_db, psql_user, psql_host, psql_password))
     except Exception as e:
         logger.error("Unable to connect to Postgresql: {}".format(e))
         raise e
@@ -152,7 +153,7 @@ def fetch_results(pars, url):
 
 
 @app.task(bind=True)
-def fetch_wunderground(self, station, date):
+def fetch_redemet(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
         if isinstance(date, str):

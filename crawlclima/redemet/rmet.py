@@ -4,26 +4,57 @@ import re
 import requests
 import pandas as pd
 from utilities.models import db_config
+import math
 import psycopg2
 import time
 
+from metar.Metar import Metar
+
+
+def get_date_and_standard_metar(raw_data):
+    date_str, partially_cleaned_data = raw_data.split(' - ')
+    observation_time = datetime.datetime.strptime(date_str, '%Y%m%d%H')
+    cleaned_data = partially_cleaned_data.rstrip('=')
+    return observation_time, cleaned_data
+
+
+def humidity(temperature, dew_point):
+    term_a = (17.625 * dew_point) / (243.04 + dew_point)
+    term_b = (17.625 * temperature) / (243.04 + temperature)
+    return 100 * (math.exp(term_a) / math.exp(term_b))
+
+
+def clean_line(line):
+    if not line:
+        return False
+    if 'SPECI' in line:
+        return False
+    if 'não localizada na base de dados da REDEMET' in line:
+        return False
+    return True
+
 
 def parse_page(page):
-    csv = re.subn("<br />", "", page.strip())[0]
-    csvf = StringIO(csv)
-    df = pd.read_csv(csvf, sep=',', header=0, parse_dates=True, na_values="N/A")
-    df = df.replace(-9999.0, pd.np.nan)
-    try:
-        if df.ix[0][0] == 'No daily or hourly history data available':
-            return pd.DataFrame()
-    except IndexError:
-        print(page)
-        return pd.DataFrame()
+    lines = filter(clean_line, page.split('\n'))
+    records = map(get_date_and_standard_metar, lines)
+    data = {
+        'observation_time': [],
+        'temperature': [],
+        'dew_point': [],
+        'pressure': [],
+        'humidity': [],
+    }
+    for observation_time, raw_metar in records:
+        m = Metar(raw_metar)
+        temperature = m.temp.value()
+        dew_point = m.dewpt.value()
+        data['observation_time'].append(observation_time)
+        data['temperature'].append(temperature)
+        data['dew_point'].append(dew_point)
+        data['pressure'].append(m.press.value())
+        data['humidity'].append(humidity(temperature, dew_point))
 
-    if 'TemperatureF' in df.columns:
-        df['TemperatureC'] = fahrenheit_to_celsius(df.TemperatureF)
-
-    return df
+    return pd.DataFrame.from_dict(data)
 
 
 def fahrenheit_to_celsius(f):
@@ -37,9 +68,12 @@ def date_generator(start, end=None):
         yield start + datetime.timedelta(days)
 
 
-def wu_url(station, date):
-    url_pattern = "http://www.wunderground.com/history/airport/{}/{}/{}/{}/DailyHistory.html?format=1"
-    return url_pattern.format(station, date.year, date.month, date.day)
+def redemet_url(station, date):
+    url_pattern = ("https://www.redemet.aer.mil.br/api/consulta_automatica/"
+                   "index.php?local={}&msg=metar"
+                   "&data_ini={formatted_date}00&data_fim={formatted_date}23")
+
+    return url_pattern.format(station, formatted_date=date.strftime('%Y%m%d'))
 
 
 def check_day(day, estacao):
@@ -61,23 +95,21 @@ def check_day(day, estacao):
         return False
 
 
-
 def describe(dataframe):
     if dataframe.empty:
         return {}
 
     summary = dataframe.describe()
 
-    measurements = ('TemperatureC', 'Humidity', 'Sea Level PressurehPa')
     field_names = ('temperature', 'humidity', 'pressure')
     aggregations = ('min', 'mean', 'max')
 
     data = {}
-    for field_name, measurement in zip(field_names, measurements):
+    for field_name in field_names:
         for aggregation in aggregations:
             key = field_name + '_' + aggregation
             try:
-                value = summary[measurement].ix[aggregation]
+                value = summary[field_name].ix[aggregation]
             except KeyError as e:
                 value = None
             data[key] = value
@@ -99,7 +131,7 @@ def capture_date_range(station, date):
 
 
 def capture(station, date):
-    url = wu_url(station, date)
+    url = redemet_url(station, date)
     status = 0
     wait = 1
     while status != 200 and wait <= 16:
@@ -107,7 +139,6 @@ def capture(station, date):
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-    print(resp.status_code)
     page = resp.text
     dataframe = parse_page(page)
 
