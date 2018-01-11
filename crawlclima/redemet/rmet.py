@@ -14,6 +14,11 @@ from metar.Metar import Metar
 def get_date_and_standard_metar(raw_data):
     date_str, partially_cleaned_data = raw_data.split(' - ')
     observation_time = datetime.datetime.strptime(date_str, '%Y%m%d%H')
+    # The default Metar expects COR modifiers to come after the
+    # time data. We will just remove the COR reference and let it
+    # be parsed as a regular entry (since it makes no difference
+    # for our purposes).
+    partially_cleaned_data = partially_cleaned_data.replace('COR ', '')
     cleaned_data = partially_cleaned_data.rstrip('=')
     return observation_time, cleaned_data
 

@@ -148,6 +148,19 @@ class TestGetDateAndStandardMetarFromRedemet(unittest.TestCase):
         observation_time, standard_data = get_date_and_standard_metar(raw_data)
         self.assertEqual(observation_time, expected_observation_time)
 
+    def test_remove_COR_modifier(self):
+        """
+        This modifier is not important for us, but it breaks Metar because
+        REDEMET sends it in a non-standard position (Metar expects is
+        after the sation, but it comes before).
+        """
+        raw_data = ('2017111718 - METAR COR SBAT 171800Z 28004KT '
+                    '9999 SCT035 FEW040TCU 33/24 Q1008=')
+        expected_observation_time = datetime(2017, 11, 17, 18, 0)
+        observation_time, standard_data = get_date_and_standard_metar(raw_data)
+        self.assertEqual(observation_time, expected_observation_time)
+        self.assertNotIn('COR', standard_data)
+
 
 class TestCleanLine(unittest.TestCase):
 
