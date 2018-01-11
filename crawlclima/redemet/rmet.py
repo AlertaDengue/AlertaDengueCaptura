@@ -36,6 +36,8 @@ def clean_line(line):
         return False
     if 'não localizada na base de dados da REDEMET' in line:
         return False
+    if line.endswith('////='):
+        return False
     return True
 
 

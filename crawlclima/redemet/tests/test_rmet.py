@@ -182,6 +182,14 @@ class TestCleanLine(unittest.TestCase):
         self.assertEqual(list(result),
                          [self.regular_entry, self.regular_entry])
 
+    def test_remove_lines_with_no_pressure_information(self):
+        no_pressure_entry = ("2017120417 - METAR SBAT 041700Z 16003KT 9999 "
+                       "VCSH FEW030 FEW035TCU BKN100 33/25 Q////=")
+        lines = [self.regular_entry, no_pressure_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
     def test_remove_lines_when_there_is_no_data(self):
         no_data_msg = ("Mensagem de 'SBGL' para 28/02/2018"
                        " as 00(UTC) não localizada na base"
