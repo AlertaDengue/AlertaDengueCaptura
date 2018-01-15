@@ -38,6 +38,8 @@ def clean_line(line):
         return False
     if line.endswith('////='):
         return False
+    if len(line.split(' ')) > 22:
+        return False
     return True
 
 

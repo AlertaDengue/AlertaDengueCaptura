@@ -190,6 +190,21 @@ class TestCleanLine(unittest.TestCase):
         self.assertEqual(list(result),
                          [self.regular_entry, self.regular_entry])
 
+    def test_remove_too_long_entries(self):
+        """
+        python-metar can't parse this example (seen in REDEMET on
+        2017-11-16 at 10:00). It looks like REDEMET is sending too many
+        cloud information fields.
+        """
+        long_entry = ("METAR SBAT 161000Z 1612/1624 09005KT 9999 SCT015 "
+                      "TN26/1612Z TX32/1618Z BECMG 1615/1617 06005KT "
+                      "SCT030 FEW035TCU PROB30 1619/1621 TS SCT020 "
+                      "FEW025CB BECMG 1621/1623 00000KT FEW020 RMK PEH=")
+        lines = [self.regular_entry, long_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
     def test_remove_lines_when_there_is_no_data(self):
         no_data_msg = ("Mensagem de 'SBGL' para 28/02/2018"
                        " as 00(UTC) não localizada na base"
