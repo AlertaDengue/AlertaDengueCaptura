@@ -190,6 +190,18 @@ class TestCleanLine(unittest.TestCase):
         self.assertEqual(list(result),
                          [self.regular_entry, self.regular_entry])
 
+    def test_remove_lines_with_information_missing(self):
+        """
+        REDEMET can send entries with missing information. In this cases,
+        '////' is used as a placeholder. We should ignore this lines.
+        """
+        missing_info_entry = ("METAR SBAN 061000Z 33005KT 0500 R24R///// "
+                              "R06L/0450 FG OVC004 18/17 Q1020=")
+        lines = [self.regular_entry, missing_info_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
     def test_remove_too_long_entries(self):
         """
         python-metar can't parse this example (seen in REDEMET on
