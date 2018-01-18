@@ -8,7 +8,10 @@ import math
 import psycopg2
 import time
 
-from metar.Metar import Metar
+from celery.utils.log import get_task_logger
+
+
+logger = get_task_logger("redemet")
 
 
 def get_date_and_standard_metar(raw_data):
@@ -136,7 +139,7 @@ def capture_date_range(station, date):
     today = datetime.datetime.today()
     check_day_station = lambda d: check_day(d, station)
     dates = filter(check_day_station, date_generator(today, date))
-    return list(map(lambda d: capture(station, d), dates))
+    return list(filter(len, map(lambda d: capture(station, d), dates)))
 
 
 def capture(station, date):
@@ -152,6 +155,9 @@ def capture(station, date):
     dataframe = parse_page(page)
 
     data = describe(dataframe)
+    if len(data) == 0:
+        logger.warning("Empty data for %s", date)
+        return {}
     data['date'] = date
     data['station'] = station
 
