@@ -10,6 +10,8 @@ import time
 
 from celery.utils.log import get_task_logger
 
+from metar.Metar import Metar, ParserError
+
 
 logger = get_task_logger("redemet")
 
@@ -57,7 +59,12 @@ def parse_page(page):
         'humidity': [],
     }
     for observation_time, raw_metar in records:
-        m = Metar(raw_metar)
+        try:
+            m = Metar(raw_metar)
+        except ParserError as err:
+            logger.error("Error parsing METAR: %s - %s", observation_time,
+                         raw_metar, exc_info=True)
+            continue
         temperature = m.temp.value()
         dew_point = m.dewpt.value()
         data['observation_time'].append(observation_time)
