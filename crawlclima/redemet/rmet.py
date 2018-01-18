@@ -1,6 +1,4 @@
-from io import StringIO
 import datetime
-import re
 import requests
 import pandas as pd
 from utilities.models import db_config
