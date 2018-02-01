@@ -154,12 +154,12 @@ def fetch_results(pars, url):
 
 @app.task(bind=True)
 def fetch_redemet(self, station, date):
+    data = []
     try:
         logger.info("Fetching {}".format(station))
         if isinstance(date, str):
             date = datetime.strptime(date.split('T')[0], "%Y-%m-%d")
         data = capture_date_range(station, date)
-        # data = [datum]
     except Exception as e:
         logger.error("Error fetching from {} at {}: {}".format(station, date, e))
     try:

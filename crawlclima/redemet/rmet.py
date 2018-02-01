@@ -1,6 +1,4 @@
-from io import StringIO
 import datetime
-import re
 import requests
 import pandas as pd
 from utilities.models import db_config
@@ -8,12 +6,22 @@ import math
 import psycopg2
 import time
 
-from metar.Metar import Metar
+from celery.utils.log import get_task_logger
+
+from metar.Metar import Metar, ParserError
+
+
+logger = get_task_logger("redemet")
 
 
 def get_date_and_standard_metar(raw_data):
     date_str, partially_cleaned_data = raw_data.split(' - ')
     observation_time = datetime.datetime.strptime(date_str, '%Y%m%d%H')
+    # The default Metar expects COR modifiers to come after the
+    # time data. We will just remove the COR reference and let it
+    # be parsed as a regular entry (since it makes no difference
+    # for our purposes).
+    partially_cleaned_data = partially_cleaned_data.replace('COR ', '')
     cleaned_data = partially_cleaned_data.rstrip('=')
     return observation_time, cleaned_data
 
@@ -31,6 +39,10 @@ def clean_line(line):
         return False
     if 'não localizada na base de dados da REDEMET' in line:
         return False
+    if '////' in line:
+        return False
+    if len(line.split(' ')) > 22:
+        return False
     return True
 
 
@@ -45,7 +57,12 @@ def parse_page(page):
         'humidity': [],
     }
     for observation_time, raw_metar in records:
-        m = Metar(raw_metar)
+        try:
+            m = Metar(raw_metar)
+        except ParserError as err:
+            logger.error("Error parsing METAR: %s - %s", observation_time,
+                         raw_metar, exc_info=True)
+            continue
         temperature = m.temp.value()
         dew_point = m.dewpt.value()
         data['observation_time'].append(observation_time)
@@ -127,7 +144,7 @@ def capture_date_range(station, date):
     today = datetime.datetime.today()
     check_day_station = lambda d: check_day(d, station)
     dates = filter(check_day_station, date_generator(today, date))
-    return list(map(lambda d: capture(station, d), dates))
+    return list(filter(len, map(lambda d: capture(station, d), dates)))
 
 
 def capture(station, date):
@@ -143,6 +160,9 @@ def capture(station, date):
     dataframe = parse_page(page)
 
     data = describe(dataframe)
+    if len(data) == 0:
+        logger.warning("Empty data for %s", date)
+        return {}
     data['date'] = date
     data['station'] = station
 

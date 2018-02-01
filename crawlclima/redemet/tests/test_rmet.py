@@ -148,6 +148,19 @@ class TestGetDateAndStandardMetarFromRedemet(unittest.TestCase):
         observation_time, standard_data = get_date_and_standard_metar(raw_data)
         self.assertEqual(observation_time, expected_observation_time)
 
+    def test_remove_COR_modifier(self):
+        """
+        This modifier is not important for us, but it breaks Metar because
+        REDEMET sends it in a non-standard position (Metar expects is
+        after the sation, but it comes before).
+        """
+        raw_data = ('2017111718 - METAR COR SBAT 171800Z 28004KT '
+                    '9999 SCT035 FEW040TCU 33/24 Q1008=')
+        expected_observation_time = datetime(2017, 11, 17, 18, 0)
+        observation_time, standard_data = get_date_and_standard_metar(raw_data)
+        self.assertEqual(observation_time, expected_observation_time)
+        self.assertNotIn('COR', standard_data)
+
 
 class TestCleanLine(unittest.TestCase):
 
@@ -165,6 +178,41 @@ class TestCleanLine(unittest.TestCase):
 
     def test_remove_empty_lines(self):
         lines = [self.regular_entry, '', self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
+    def test_remove_lines_with_no_pressure_information(self):
+        no_pressure_entry = ("2017120417 - METAR SBAT 041700Z 16003KT 9999 "
+                       "VCSH FEW030 FEW035TCU BKN100 33/25 Q////=")
+        lines = [self.regular_entry, no_pressure_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
+    def test_remove_lines_with_information_missing(self):
+        """
+        REDEMET can send entries with missing information. In this cases,
+        '////' is used as a placeholder. We should ignore this lines.
+        """
+        missing_info_entry = ("METAR SBAN 061000Z 33005KT 0500 R24R///// "
+                              "R06L/0450 FG OVC004 18/17 Q1020=")
+        lines = [self.regular_entry, missing_info_entry, self.regular_entry]
+        result = filter(clean_line, lines)
+        self.assertEqual(list(result),
+                         [self.regular_entry, self.regular_entry])
+
+    def test_remove_too_long_entries(self):
+        """
+        python-metar can't parse this example (seen in REDEMET on
+        2017-11-16 at 10:00). It looks like REDEMET is sending too many
+        cloud information fields.
+        """
+        long_entry = ("METAR SBAT 161000Z 1612/1624 09005KT 9999 SCT015 "
+                      "TN26/1612Z TX32/1618Z BECMG 1615/1617 06005KT "
+                      "SCT030 FEW035TCU PROB30 1619/1621 TS SCT020 "
+                      "FEW025CB BECMG 1621/1623 00000KT FEW020 RMK PEH=")
+        lines = [self.regular_entry, long_entry, self.regular_entry]
         result = filter(clean_line, lines)
         self.assertEqual(list(result),
                          [self.regular_entry, self.regular_entry])
