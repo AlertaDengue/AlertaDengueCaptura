@@ -1,0 +1,10 @@
+pandas
+glob
+rasterio
+shapely
+xarray
+netCDF4
+cartopy
+geoviews>=1.6.2
+celery
+flower
