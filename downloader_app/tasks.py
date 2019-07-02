@@ -9,11 +9,11 @@ app = Celery('downloader_app',
 
 
 @app.task
-def download(source, date1, date2, point1, point2, path, options):
+def download(source, date1, date2, point1, point2, options):
     """
     Download satelite tiff files and save it to the directory 'downloadedFiles'.
     """
 
-    td.download_tiffs(source, date1, date2, point1, point2, path, opt=options)
+    td.download_tiffs(source, date1, date2, point1, point2, opt=options)
     return
 
