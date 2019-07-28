@@ -119,11 +119,9 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
     # Download and save url content.
     try:
         # Download.
-        response = urllib.request.urlopen(url)
-        data = response.read()
-        with open(path, 'wb') as file:
+        with urllib.request.urlopen(url) as response, open(path, 'wb') as file:
+            data = response.read() 
             file.write(data)
-        file.close()
         
         # Fix values scale (the images are downloaded as uint8, not float).
         url_dods = start_url + time_range + bounding_box + time + 'dods'
