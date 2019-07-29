@@ -416,8 +416,9 @@ def regrid_image(filename, opt):
                 'transform': new_transform})
         
             if opt.plot:
+                plt.title(filename.replace('.tiff', ''))
                 plt.imshow(new_array, cmap=opt.cmap)
-                plt.colorbar(fraction=0.02)
+                plt.colorbar(fraction=0.028)
                 plt.xlabel('Column #')
                 plt.ylabel('Row #')
                 plt.show()
@@ -436,8 +437,9 @@ def regrid_image(filename, opt):
         with rasterio.open(path) as dataset:
             array = dataset.read()
         if opt.plot:
+            plt.title(filename.replace('.tiff', ''))
             plt.imshow(array[0, :, :], cmap=opt.cmap)
-            plt.colorbar(fraction=0.02)
+            plt.colorbar(fraction=0.028)
             plt.xlabel('Column #')
             plt.ylabel('Row #')
             plt.show()       
@@ -494,7 +496,7 @@ def view_time_series(filename, cmap='jet'):
     return
 
 
-def point_time_series(points, spatial_coordinates=False):
+def point_time_series(points, title='Time series of given coordinates', spatial_coordinates=True):
     """ 
     This function plots the evolution of the time series with respect to a list of points. All tiff files in the current
     folder are sorted and used to construct the time series. Therefore be sure you have the correct files there.
@@ -540,7 +542,6 @@ def point_time_series(points, spatial_coordinates=False):
             # col, row to x, y.
             else:
                 col, row = p1, p2
-
             col, row = int(col), int(row)
             col_row_format.append([col, row])
 
@@ -553,12 +554,12 @@ def point_time_series(points, spatial_coordinates=False):
         # Update dictionary.
         info[str(point[0]) + ', ' + str(point[1])] = [[dates[i], values[i]] for i in range(len(dates))]
 
-    plot_point_time_series(info, col_row_format)
+    plot_point_time_series(info, col_row_format, title, spatial_coordinates)
 
     return info
 
 
-def plot_point_time_series(info, col_row_format):
+def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
     """
     After constructing the time series (in a dictionary) of several points with the fucntion point_time_series, this
     function is responsible for the plots. All inputs to this function are described in the previous function.
@@ -574,14 +575,21 @@ def plot_point_time_series(info, col_row_format):
     # Show points in the map for reference.
     with rasterio.open(filenames[0]) as dataset:
         dataset_array = dataset.read()[0, :, :]
-
-    i = 0
     plt.figure(figsize=[10, 8])
     plt.imshow(dataset_array)
+    i = 0
     for point in col_row_format:
         col, row = point
         plt.plot(col, row, 's', label='(' + info_keys[i] + ')')
         i += 1
+    if spatial_coordinates:
+        interval = np.linspace(0, 1, 5)
+        interval_x = np.linspace(0, dataset.width, 5)
+        interval_y = np.linspace(0, dataset.height, 5)
+        x = [np.round((1-t)*dataset.bounds.left, 2) + np.round(t*dataset.bounds.right, 2) for t in interval]
+        y = [np.round((1-t)*dataset.bounds.top, 2) + np.round(t*dataset.bounds.bottom, 2) for t in interval]
+        plt.xticks(interval_x, x)
+        plt.yticks(interval_y, y)
     plt.legend()
     plt.show()
 
@@ -594,7 +602,6 @@ def plot_point_time_series(info, col_row_format):
         values = [info_val[i][1] for i in range(num_dates)]
         plt.plot(dates, values, label='(' + info_keys[i] + ')')
         i += 1
-    title = 'Time series of given coordinates'
     plt.title(title)
     plt.legend()
     plt.xticks(rotation=90)
