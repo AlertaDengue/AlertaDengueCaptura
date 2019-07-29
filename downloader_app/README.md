@@ -39,7 +39,7 @@ Este programa é opcional, mas ele é bastante conveniente para monitorar os dow
 
 Agora podemos executar o programa para o download das imagens. Um exemplo de como isto é feito é mostrado abaixo.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic1.png)
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic1.png)
 
 A função acima recebe os seguintes parâmetros:
 
