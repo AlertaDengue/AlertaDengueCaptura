@@ -53,11 +53,15 @@ O programa funciona fazendo o download da imagem, faz o tratamento da imagem de 
 
 ## Trabalhando com shapefiles
 
-É possível combinar dados raster com camadas shapefiles para obter imagens mais informativas. O módulo *shapefile_module* é responsável por esta parte. Neste exemplo nós estaremos trabalhando com o arquivo *WMP-2019/WMP2019_ReleaseAreas.shp*, que pode se encontra neste repositório, para propósitos de teste. Primeiramente, abrimos este arquivo com geopandas e utilizamos algumas funções básicas para obter informações e visualização.
+É possível combinar dados raster com camadas shapefiles para obter imagens mais informativas. O módulo *shapefile_module* é responsável por esta parte. Neste exemplo nós estaremos trabalhando com o arquivo *WMP-2019/WMP2019_ReleaseAreas.shp*, que se encontra neste repositório, para propósitos de teste. Primeiramente, abrimos este arquivo com geopandas e utilizamos algumas funções básicas para obter informações e visualização.
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic3.png)
 
-Podemos obter o bounding box deste shapefile com o comando *min_x, max_x, min_y, max_y = sm.extract_shp_boundingbox(shp_filename)*. Note que *point1 = (min_x, max_y)* e *point2 = (max_x, min_y)* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é '2016-07-01.tiff' enquanto que o tratado é 'new_2016-07-01.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
+Podemos obter o bounding box deste shapefile com o comando 
+
+	min_x, max_x, min_y, max_y = sm.extract_shp_boundingbox(shp_filename) 
+
+Note que *point1 = (min_x, max_y)* e *point2 = (max_x, min_y)* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é '2016-07-01.tiff' enquanto que o tratado é 'new_2016-07-01.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic4.png)
 
