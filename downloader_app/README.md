@@ -49,25 +49,25 @@ A função acima recebe os seguintes parâmetros:
 
 O programa funciona fazendo o download da imagem, faz o tratamento da imagem de acordo com as opções passadas, e pode ou não manter a imagem original. Por default as imagens originais são mantidas, mas a opção *keep_original* pode ser mudada para False, daí apenas as imagens tratadas são mantidas no computador. Como neste exemplo esta opção não foi alterada, ela ficou no seu default e portanto as imagens originais também foram salvas para o computador. Abaixo nós mostramos duas imagens relativas ao mesmo arquivo raster baixado, uma delas sendo a original e outra a tratada.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic2.png)
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic2.png)
 
 ## Trabalhando com shapefiles
 
 É possível combinar dados raster com camadas shapefiles para obter imagens mais informativas. O módulo *shapefile_module* é responsável por esta parte. Neste exemplo nós estaremos trabalhando com o arquivo *WMP-2019/WMP2019_ReleaseAreas.shp*, que pode se encontra neste repositório, para propósitos de teste. Primeiramente, abrimos este arquivo com geopandas e utilizamos algumas funções básicas para obter informações e visualização.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic3.png)
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic3.png)
 
 Podemos obter o bounding box deste shapefile com o comando *min_x, max_x, min_y, max_y = sm.extract_shp_boundingbox(shp_filename)*. Note que *point1 = (min_x, max_y)* e *point2 = (max_x, min_y)* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é '2016-07-01.tiff' enquanto que o tratado é 'new_2016-07-01.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic4.png)
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic4.png)
 
 Uma das rotinas do módulo *shapefile_module* é obter o píxel médio relativo a cada polígono (neste caso o píxel médio por polígono representa a temperatura média por bairro na data) do shapefile, e então plotar a imagem onde cada polígono é colorido apenas com a cor do pixel médio. 
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic5.png)
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic5.png)
 
 Lembre que diversos arquivos raster foram baixados, numa sequência temporal. Apesar de ser interessante obter a visualização das temperaturas médias em uma única data, pode ser ainda mais interessante obter a série temporal das temperaturas médias por bairro. Abaixo, mostramos como isso é possível para quatro bairros escolhidos. A quantidade de bairros na imagem é arbitrária, apenas se certifique de dar os nomes corretos (por default, os nomes são aqueles na segunda coluna do shapefile, neste caso, a coluna 'NOME_DO_BA').
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/tree/master/downloader_app/readme_files/pic6.png) 
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic6.png) 
 
 
 
