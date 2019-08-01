@@ -10,11 +10,8 @@ import rasterio
 from rasterio.warp import reproject, Resampling
 import xarray as xr
 import geoviews as gv
-from celery import Celery
-from celery.utils.log import get_task_logger
+import logging
 
-
-logger = get_task_logger("downloader_app")
 
 # instantiate
 config = ConfigParser()
@@ -144,17 +141,17 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
         
         # Log message of success.
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):success'
-        logger.info(msg)
+        logging.info(msg)
         
     except urllib.error.HTTPError:
         # Log message of failure.
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):failure'
-        logger.error(msg)
+        logging.error(msg)
         
     except urllib.error.URLError:
         # Log message of failure.
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):failure'
-        logger.error(msg)
+        logging.error(msg)
         
     # If the treated image is the only one required, the original image is deleted.
     if not opt.keep_original:
