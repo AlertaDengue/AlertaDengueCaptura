@@ -234,7 +234,11 @@ def time_series(shp_filename, raster_filename_list, bairro, plot=False):
         current_mean = z_means.loc[bairro].values[0]
         t_series[i] = current_mean
         i += 1
-        dates.append(raster_filename.replace('new_', '').replace('.tiff', ''))
+        # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
+        if raster_filename[-6] == 'd':
+            dates.append(raster_filename[-23:-13])
+        else:
+            dates.append(raster_filename[-15:-5])
 
     if plot:
         plt.figure(figsize=[16, 5])

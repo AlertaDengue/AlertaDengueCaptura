@@ -104,8 +104,8 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
     url_base = start_url + time_range + bounding_box + time + end_url
     url = url_base.format(month1, day1, day2)
 
-    # Generate filename.    
-    filename = str(year1) + '-' + str(month1) + '-' + str(day1) + '.tiff'
+    # Generate filename.
+    filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1) + '.tiff'
     path = os.path.join(PATH, filename)
 
     # Remove duplicate file with same name if it exists.
@@ -119,12 +119,11 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
         with urllib.request.urlopen(url) as response, open(path, 'wb') as file:
             data = response.read() 
             file.write(data)
-        
-        # Fix values scale (the images are downloaded as uint8, not float).
+
+        # Fix values scale (because the images are downloaded as uint8, not float).
         url_dods = start_url + time_range + bounding_box + time + 'dods'
         remote_data = xr.open_dataset(url_dods, decode_times=False)
-        a = remote_data['LST'].scale_min
-        b = remote_data['LST'].scale_max
+        a, b = scale_min_max(source, remote_data)
         with rasterio.open(path) as dataset:
             profile = dataset.profile
             profile.update(dtype=rasterio.float32)
@@ -162,6 +161,23 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
     return url
 
 
+def scale_min_max(source, remote_data):
+    if source == "LandDAAC-v5-day" or source == "LandDAAC-v5-night":
+        a = remote_data['LST'].scale_min
+        b = remote_data['LST'].scale_max
+    elif source == "LandDAAC-v6-EVI":
+        a = remote_data['EVI'].scale_min
+        b = remote_data['EVI'].scale_max
+    elif source == "LandDAAC-v6-NDVI":
+        a = remote_data['NDVI'].scale_min
+        b = remote_data['NDVI'].scale_max
+    elif source == "LandDAAC-v6-view_zenith_angle":
+        a = remote_data['view_zenith_angle'].scale_min
+        b = remote_data['view_zenith_angle'].scale_max
+
+    return a, b
+
+
 def source_freq(source):
     """ Gets the frequency (in days) with which the respective satellite sends the data. """
     
@@ -195,10 +211,6 @@ def source_url(source):
         url = "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.EVI/"
     elif source == "LandDAAC-v6-NDVI":
         url = "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.NDVI/"
-    elif source == "LandDAAC-v6-reflectance":
-        url = "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.reflectance/"
-    elif source == "LandDAAC-v6-VI_Quality":
-        url = "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.VI_Quality/"
     elif source == "LandDAAC-v6-view_zenith_angle":
         url = "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.view_zenith_angle/"
     else:
@@ -283,25 +295,6 @@ def about(x):
         print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
         print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.NDVI/')
-        print()
-        
-        print('LandDAAC-v6-reflectance')
-        print('-----------------------')
-        print('LandDAAC MODIS version_006 SSA reflectance from USGS: United States Geological Survey.')
-        print('Band: grid: /band (ids) unordered [ (MIR) (NIR) (red) (blue)] :grid')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) (24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.reflectance/')
-        print()
-        
-        print('LandDAAC-v6-VI_Quality')
-        print('----------------------')
-        print('LandDAAC MODIS version_006 SSA VI_Quality from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) (24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.VI_Quality/')
         print()
         
         print('LandDAAC-v6-view_zenith_angle')
@@ -421,7 +414,7 @@ def regrid_image(filename, opt):
                 plt.show()
 
         # Remove duplicates before saving new ones.
-        new_filename = 'new_' + filename
+        new_filename = filename[:-5] + '-treated.tiff'
         new_path = os.path.join(PATH, new_filename)
         exists = os.path.isfile(new_path)
         if exists:
@@ -460,7 +453,7 @@ def construct_time_series(dates, opt):
     gv.extension('bokeh', 'matplotlib')
     
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob('*.tiff')
+    filenames = glob.glob(PATH + '*.tiff')
     filenames.sort()
     
     # Extract sequence of dates and size of the images. 
@@ -515,7 +508,7 @@ def point_time_series(points, title='Time series of given coordinates', spatial_
     """
     
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob('*.tiff')
+    filenames = glob.glob(PATH + '*.tiff')
     filenames.sort()
 
     # Initialize dictionary defined by info[point] = [dates, values], where dates are the sequence of the dates in
@@ -545,7 +538,11 @@ def point_time_series(points, title='Time series of given coordinates', spatial_
         for f in filenames:
             with rasterio.open(f) as dataset:
                 dataset_array = dataset.read()[0, :, :]
-                dates.append(f.replace('new_', '').replace('.tiff', ''))
+                # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
+                if f[-6] == 'd':
+                    dates.append(f[-23:-13])
+                else:
+                    dates.append(f[-15:-5])
                 values.append(dataset_array[row, col])
 
         # Update dictionary.
@@ -566,7 +563,7 @@ def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
     info_keys = [s for s in info.keys()]
 
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob('*.tiff')
+    filenames = glob.glob(PATH + '*.tiff')
     filenames.sort()
 
     # Show points in the map for reference.
@@ -579,6 +576,7 @@ def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
         col, row = point
         plt.plot(col, row, 's', label='(' + info_keys[i] + ')')
         i += 1
+    # Prepare x and y ticks to plot.
     if spatial_coordinates:
         interval = np.linspace(0, 1, 5)
         interval_x = np.linspace(0, dataset.width, 5)
