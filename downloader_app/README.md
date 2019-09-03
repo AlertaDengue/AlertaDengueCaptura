@@ -1,6 +1,6 @@
 # AlertaDengueCaptura - Downloader App
 
-As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook *examples.ipynb* para ver como tudo funciona. 
+As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) para ver como tudo funciona. 
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic0.png)
 
@@ -75,6 +75,12 @@ Uma das rotinas do módulo *shapefile_module* é obter o píxel médio relativo 
 Lembre que diversos arquivos raster foram baixados, numa sequência temporal. Apesar de ser interessante obter a visualização das temperaturas médias em uma única data, pode ser ainda mais interessante obter a série temporal das temperaturas médias por bairro. Abaixo, mostramos como isso é possível para quatro bairros escolhidos. A quantidade de bairros na imagem é arbitrária, apenas se certifique de dar os nomes corretos (por default, os nomes são aqueles na segunda coluna do shapefile, neste caso, a coluna 'NOME_DO_BA').
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic6.png) 
+
+## Interatividade
+
+Apesar de não ser necessário, é possível juntar uma série temporal composta por diversos arquivos raster num único arquivo e então visualizar o resultado. Isto é possível graças ao GeoViews, e às vezes pode ser interessante tal visualização.
+
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif) 
 
 
 
