@@ -62,7 +62,7 @@ O programa funciona fazendo o download da imagem, faz o tratamento da imagem de 
 
 Podemos obter o bounding box deste shapefile com o comando 
 
-	point1, point2 = sm.extract_shp_boundingbox(shp_filename) 
+	point1, point2 = shpm.extract_shp_boundingbox(shp_filename) 
 
 Note que *point1* e *point2* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é 'LandDAAC-v5-day-2016-07-01.tiff' enquanto que o tratado é 'LandDAAC-v5-day-2016-07-01-treated.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
 
