@@ -56,7 +56,7 @@ O programa funciona fazendo o download da imagem, faz o tratamento da imagem de 
 
 ## Trabalhando com shapefiles
 
-É possível combinar dados raster com camadas shapefiles para obter imagens mais informativas. O módulo **shapefile_module** é responsável por esta parte. Neste exemplo nós estaremos trabalhando com o arquivo *WMP-2019/WMP2019_ReleaseAreas.shp*, que se encontra neste repositório, para propósitos de teste. Primeiramente, abrimos este arquivo com geopandas e utilizamos algumas funções básicas para obter informações e visualização.
+É possível combinar dados raster com camadas shapefiles para obter imagens mais informativas. O módulo **shapefile_module** é responsável por esta parte. Neste exemplo nós estaremos trabalhando com o arquivo *WMP-2019/WMP2019_ReleaseAreas.shp*, que não se encontra neste repositório pois é um shapefile privado. Primeiramente, abrimos este arquivo com geopandas e utilizamos algumas funções básicas para obter informações e visualização.
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic3.png)
 
