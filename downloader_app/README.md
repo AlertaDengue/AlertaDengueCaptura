@@ -2,6 +2,8 @@
 
 As rotinas disponíveis neste pacote foram feitas para a captura e processo imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook *examples.ipynb* para ver como tudo funciona. 
 
+![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic0.png)
+
 ## Requisitos
 
 Para usar todas as funcionalidades, você precisará dos seguintes módulos:
@@ -46,7 +48,7 @@ A função acima recebe os seguintes parâmetros:
 
 	source, date1, date2, point1, point2, opt
 
-*source* se refere ao satélite de onde estamos pegando as imagens. Para ver as possíveis fontes, use o comando *td.about('sources')*.  *date1* e *date2* são a data inicial e a data final em que estamos interessados. Se a fonte obtiver imagens em uma frequência de 8 dias, o programa baixará todas as imagens segundo essa frequência entre *date1* e *date2*. Agora vamos ver as coordenadas espaciais. *point1* é uma tupla (x, y) correspondente ao ponto superior esquerdo da imagem, enquanto *point2* corresponde ao ponto inferior direito. Finalmente, *opt* é um dicionário com todas as variáveis opcionais de interesse. Essas variáveis são as descritas com o comando *td.about('options')*. Para fazer o download das imagens em seu formato original, sem nenhuma opção, passe o parâmetro 'options' como False. Neste exemplo passamos a opção 'regrid' para obter um tamanho maior (10 vezes maior em cada dimensão), utilizando o método 'cubic' para a interpolação dos pixels. Optamos por baixar as imagens do LandDAAC-v5-day, de 2016-jul-01 a 2016-set-30. 
+*source* se refere ao satélite de onde estamos pegando as imagens. Para ver as possíveis fontes, use o comando `td.about('sources')`.  *date1* e *date2* são a data inicial e a data final em que estamos interessados. Se a fonte obtiver imagens em uma frequência de 8 dias, o programa baixará todas as imagens segundo essa frequência entre *date1* e *date2*. Agora vamos ver as coordenadas espaciais. *point1* é uma tupla (x, y) correspondente ao ponto superior esquerdo da imagem, enquanto *point2* corresponde ao ponto inferior direito. Finalmente, *opt* é um dicionário com todas as variáveis opcionais de interesse. Essas variáveis são as descritas com o comando `td.about('options')`. Para fazer o download das imagens em seu formato original, sem nenhuma opção, passe o parâmetro 'options' como False. Neste exemplo passamos a opção 'regrid' para obter um tamanho maior (10 vezes maior em cada dimensão), utilizando o método 'cubic' para a interpolação dos pixels. Optamos por baixar as imagens do LandDAAC-v5-day, de 2016-jul-01 a 2016-set-30. 
 
 O programa funciona fazendo o download da imagem, faz o tratamento da imagem de acordo com as opções passadas, e pode ou não manter a imagem original. Por default as imagens originais são mantidas, mas a opção *keep_original* pode ser mudada para False, daí apenas as imagens tratadas são mantidas no computador. Como neste exemplo esta opção não foi alterada, ela ficou no seu default e portanto as imagens originais também foram salvas para o computador. Abaixo nós mostramos duas imagens relativas ao mesmo arquivo raster baixado, uma delas sendo a original e outra a tratada.
 
@@ -62,7 +64,7 @@ Podemos obter o bounding box deste shapefile com o comando
 
 	point1, point2 = sm.extract_shp_boundingbox(shp_filename) 
 
-Note que *point1* e *point2* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é '2016-07-01.tiff' enquanto que o tratado é 'new_2016-07-01.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
+Note que *point1* e *point2* são exatamente as coordenadas usadas anteriormente para fazer os downloads dos arquivos raster. Isso foi proposital, pois queríamos obter os pixels relativos a este shapefile. Lembre que a primeira imagem baixada foi relativa à data 2016-jul-01. O arquivo original neste caso é 'LandDAAC-v5-day-2016-07-01.tiff' enquanto que o tratado é 'LandDAAC-v5-day-2016-07-01-treated.tiff'. Abaixo nós mostramos como fica o shapefile junto da imagem tratada relativa a esta data.
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic4.png)
 
