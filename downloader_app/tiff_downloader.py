@@ -6,6 +6,7 @@ import urllib.request
 import os
 import sys
 import glob
+import gzip
 import rasterio
 from rasterio.warp import reproject, Resampling
 import xarray as xr
@@ -32,7 +33,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
             be seen with the command about('sources').
         date1, date2: list or tuple of strings
             Initial and final date of the interval in which we are interested. The only 
-            accepted format at the moment is 'year-month-day'. Months and days should
+            accepted format at the moment is ['year', 'month', 'day']. Months and days should
             have two digits. 
         point1, point2: tuple
             point1 is a tuple (x, y) corresponding to the upper left point of the image, 
@@ -49,7 +50,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     
     # Check extra options to be included.
     opt = create_options(opt)
-    
+
     # Obtains the frequency of the source.
     freq = source_freq(source)
     
@@ -57,7 +58,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     year1, month1, day1 = date1
     year2, month2, day2 = date2
 
-    # Dates of interest.
+    # Extract dates fom date range.
     dates = pd.date_range(year1 + month1 + day1, year2 + month2 + day2, freq=freq)
         
     # Download maps by date.
@@ -65,7 +66,12 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     for l in range(length-1):
         current_date = dates[l]
         next_date = dates[l+1]
-        url = single_download(source, current_date, next_date, x1, x2, y1, y2, opt)
+        if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
+                      "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
+                      "LandDAAC-v6-view_zenith_angle"]:
+            url = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
+        elif source == "chirps":
+            url = single_download_chirps(current_date, x1, x2, y1, y2, opt)
                         
     # View time series after the downloads.
     if opt.time_series:
@@ -74,7 +80,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     return 
 
 
-def single_download(source, date1, date2, x1, x2, y1, y2, opt):
+def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     """ Function responsible for each satellite image download. """
 
     # Convert numeric data values to string format. 
@@ -108,7 +114,7 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
     filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1) + '.tiff'
     path = os.path.join(PATH, filename)
 
-    # Remove duplicate file with same name if it exists.
+    # Remove duplicate if it exists.
     exists = os.path.isfile(path)
     if exists:
         os.remove(path)
@@ -139,17 +145,17 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
         regrid_image(filename, opt)
         
         # Log message of success.
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):success'
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
         logging.info(msg)
         
     except urllib.error.HTTPError:
         # Log message of failure.
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):failure'
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
         
     except urllib.error.URLError:
         # Log message of failure.
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + ') (' + year2 + '-' + month2 + '-' + day2 + '):failure'
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
         
     # If the treated image is the only one required, the original image is deleted.
@@ -158,6 +164,105 @@ def single_download(source, date1, date2, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
     
+    return url
+
+
+def single_download_chirps(date, x1, x2, y1, y2, opt):
+    """ Function responsible for each satellite image download. """
+
+    # Convert numeric data values to string format.
+    year = str(date.year)
+    month = str(date.month)
+    day = str(date.day)
+    if len(month) == 1:    month = '0' + month
+    if len(day) == 1:      day = '0' + day
+
+    # Generate url with specifications.
+    url_base = "ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/{}/chirps-v2.0.{}.{}.{}.tif.gz"
+    url = url_base.format(year, year, month, day)
+
+    # Generate filename.
+    compressed_filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tif.gz'
+    path = os.path.join(PATH, compressed_filename)
+
+    # Remove duplicate file with same name if it exists.
+    exists = os.path.isfile(path)
+    if exists:
+        os.remove(path)
+
+    # Download and save url content.
+    try:
+        # Download
+        with urllib.request.urlopen(url) as response, open(path, 'wb') as file:
+            data = response.read()
+            file.write(data)
+
+        # Create uncompressed file in the same folder where the compressed file is located.
+        filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
+        path2 = os.path.join(PATH, filename)
+        fp = open(path2, "wb")
+        with gzip.open(path, "rb") as f:
+            d = f.read()
+        fp.write(d)
+        fp.close()
+
+        # Delete compressed file.
+        os.remove(path)
+
+        # Restrict to bounding box.
+        with rasterio.open(path2) as dataset:
+            p1 = np.round(~dataset.transform * (x1, y1)).astype(np.int64)
+            p2 = np.round(~dataset.transform * (x2, y2)).astype(np.int64)
+            array = dataset.read()
+            array = array[0, :, :]
+            array[array == -9999] = np.nan
+            new_array = array[p1[1]:p2[1], p1[0]:p2[0]]
+            a = dataset.transform.a
+            b = dataset.transform.b
+            c = x1
+            d = dataset.transform.d
+            e = dataset.transform.e
+            f = y1
+            new_transform = (a, b, c, d, e, f)
+            new_profile = dataset.profile.copy()
+            new_profile.update({
+                'dtype': 'float32',
+                'height': new_array.shape[0],
+                'width': new_array.shape[1],
+                'transform': new_transform})
+
+        filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
+        path = os.path.join(PATH, filename)
+        exists = os.path.isfile(path)
+        if exists:
+            os.remove(path)
+
+        with rasterio.open(path, 'w', **new_profile) as new_dataset:
+            new_dataset.write_band(1, new_array)
+
+        # After saving the image, the treatment process begins.
+        regrid_image(filename, opt)
+
+        # Log message of success.
+        msg = 'Download (' + year + '-' + month + '-' + day + ') :success'
+        logging.info(msg)
+
+    except urllib.error.HTTPError:
+        # Log message of failure.
+        msg = 'Download (' + year + '-' + month + '-' + day + '): failure1'
+        logging.error(msg)
+
+    except urllib.error.URLError:
+        # Log message of failure.
+        msg = 'Download (' + year + '-' + month + '-' + day + '): failure2'
+        logging.error(msg)
+
+    # If the treated image is the only one required, the original image is deleted.
+    if not opt.keep_original:
+        exists = os.path.isfile(path)
+        if exists:
+            os.remove(path)
+
     return url
 
 
@@ -181,10 +286,12 @@ def scale_min_max(source, remote_data):
 def source_freq(source):
     """ Gets the frequency (in days) with which the respective satellite sends the data. """
     
-    if source == "LandDAAC-v5-day" or source == "LandDAAC-v5-night":
+    if source in ["LandDAAC-v5-day", "LandDAAC-v5-night"]:
         freq = '8D'
-    else:
+    elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle"]:
         freq = '16D'
+    elif source == "chirps":
+        freq = '1D'
         
     return freq
 
@@ -193,7 +300,7 @@ def month_to_string(month):
     """ Converts numeric month to string with abbreviated month name. """
     
     months = ["Jan", "Fev", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    for i in range(1,13):
+    for i in range(1, 13):
         if int(month) == i:
             month_str = months[i-1]
             
@@ -222,7 +329,7 @@ def source_url(source):
 def create_options(Opt):
     """ Extract the optional parameter """
 
-    if Opt == False:
+    if not Opt:
         class OptOut:
             regrid = False
             plot = False
@@ -249,8 +356,6 @@ def create_options(Opt):
             keep_original = Opt['keep_original']
         if 'time_series' in Opt:
             time_series = Opt['time_series']
-            if time_series:
-                keep_original = False
         if 'cmap' in Opt:
             cmap = Opt['cmap']
             
@@ -258,31 +363,38 @@ def create_options(Opt):
 
 
 def about(x):
-    """ Displays information from available sources for download (if x = 'sources') or possible options (if x = options). """
+    """ Displays information from available sources for download (x = 'sources') or possible options (x = options). """
     
     if x == 'sources':
         print('LandDAAC-v5-day')
         print('---------------')
-        print('Day LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface Temperature of Southern South America.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... (22-29 Mar 2017)] N= 785 pts :grid')
+        print('Day LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface Temperature '
+              'of Southern South America.')
+        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... '
+              '(22-29 Mar 2017)] N= 785 pts :grid')
         print('Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/.SSA/.Day/.LST/')
+        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/'
+              '.SSA/.Day/.LST/')
         print()
         
         print('LandDAAC-v5-night')
         print('-----------------')
-        print('Night LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface Temperature of Southern South America.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... (22-29 Mar 2017)] N= 785 pts :grid')
+        print('Night LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface '
+              'Temperature of Southern South America.')
+        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... '
+              '(22-29 Mar 2017)] N= 785 pts :grid')
         print('Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/.SSA/.Night/.LST/')
+        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/'
+              '.SSA/.Night/.LST/')
         print()
         
         print('LandDAAC-v6-EVI')
         print('---------------')
         print('LandDAAC MODIS version_006 SSA EVI from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) (24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
+        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
+              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
         print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
         print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.EVI/')
@@ -291,7 +403,8 @@ def about(x):
         print('LandDAAC-v6-NDVI')
         print('----------------')
         print('LandDAAC MODIS version_006 SSA NDVI from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) (24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
+        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
+              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
         print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
         print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.NDVI/')
@@ -300,10 +413,21 @@ def about(x):
         print('LandDAAC-v6-view_zenith_angle')
         print('-----------------------------')
         print('LandDAAC MODIS version_006 SSA view_zenith_angle from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) (24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
+        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
+              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
         print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
         print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.view_zenith_angle/')
+        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.view_zenith'
+              '_angle/')
+        print()
+
+        print('chirps-2.0')
+        print('------------------------------')
+        print('Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 35+ year quasi-global '
+              'rainfall data set. Spanning 50°S-50°N (and all longitudes) and ranging from 1981 to near-present, '
+              'CHIRPS incorporates our in-house climatology, CHPclim, 0.05° resolution satellite imagery, and in-situ '
+              'station data to create gridded rainfall time series for trend analysis and seasonal drought monitoring.')
+        print('Link: ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/')
         print()
         
     if x == 'options':   
@@ -314,23 +438,31 @@ def about(x):
         
         print('regrid (list)')
         print('-------------')
-        print('When downloading the images you also have the option to make a downsampling or upsampling over all the images and download these new pack of images. You should pass a list of two items. The first is a positive float, the ratio of the regrid. For example, if the original image is 120x120 and regrid[0] = 2, them the program will create a image of shape 240x240. The second is the method of the resampling, which can be `nearest`, `average`, `bilinear`, `cubic`, `cubic_spline`, `mode`, `lanczos`, `max`, `min`,`q1` and `q3`.')
+        print('When downloading the images you also have the option to make a downsampling or upsampling over all the '
+              'images and download these new pack of images. You should pass a list of two items. The first is a '
+              'positive float, the ratio of the regrid. For example, if the original image is 120x120 and regrid[0]=2, '
+              'them the program will create a image of shape 240x240. The second is the method of the resampling, which'
+              ' can be `nearest`, `average`, `bilinear`, `cubic`, `cubic_spline`, `mode`, `lanczos`, `max`, `min`,`q1` '
+              'and `q3`.')
         print('Link: https://github.com/mapbox/rasterio/blob/master/rasterio/enums.py#L28')
         print()
               
         print('plot (bool)')
         print('-----------')
-        print('When this option is set to True the program plots each one of the images downloaded. At the moment this only works when some regrid is done. Default is False.')
+        print('When this option is set to True the program plots each one of the images downloaded. At the moment this '
+              'only works when some regrid is done. Default is False.')
         print()
         
         print('keep_original (bool)')
         print('--------------------')
-        print('When this option is set to True (default) the program stores the original files. When it is False, the program only saves the treated data.')
+        print('When this option is set to True (default) the program stores the original files. When it is False, the '
+              'program only saves the treated data.')
         print()
         
         print('time_series (bool)')
         print('--------------------')
-        print('When this option is set to True the program opens an interactive session with the data just downloaded. Default is False.')
+        print('When this option is set to True the program opens an interactive session with the data just downloaded. '
+              'Default is False.')
         print()
         
     return
@@ -444,16 +576,19 @@ def construct_time_series(dates, opt):
     download_tiffs. The folder (where the just downloaded tiffs are) must not contain any other tiffs, otherwise the
     netcdf file will be corrupted. 
     """
-    
-    exists = os.path.isfile('time_series.nc')
+
+    filename = 'time_series.nc'
+    path = os.path.join(PATH, filename)
+    exists = os.path.isfile(path)
     if exists:
-        os.remove('time_series.nc')
+        os.remove(path)
     
     # Enable extensions of geoviews
     gv.extension('bokeh', 'matplotlib')
     
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob(PATH + '*.tiff')
+    path2 = os.path.join(PATH, '*.tiff')
+    filenames = glob.glob(path2)
     filenames.sort()
     
     # Extract sequence of dates and size of the images. 
@@ -465,10 +600,10 @@ def construct_time_series(dates, opt):
     
     # Create netcdf file containing the time series of all downloaded tiffs.
     with xr.concat([xr.open_rasterio(f, chunks=chunks) for f in filenames], dim=time) as da:
-        da.to_netcdf('time_series.nc')
+        da.to_netcdf(path)
     
     # Open geoviews interactive session.
-    with xr.open_dataset('time_series.nc', decode_times=False) as da:
+    with xr.open_dataset(path, decode_times=False) as da:
         dataset = gv.Dataset(da)
         ensemble = dataset.to(gv.Image, ['x', 'y'])
         gv.output(ensemble.opts(cmap=opt.cmap, colorbar=True, fig_size=200, backend='matplotlib'), backend='matplotlib')
@@ -508,7 +643,8 @@ def point_time_series(points, title='Time series of given coordinates', spatial_
     """
     
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob(PATH + '*.tiff')
+    path = os.path.join(PATH, '*.tiff')
+    filenames = glob.glob(path)
     filenames.sort()
 
     # Initialize dictionary defined by info[point] = [dates, values], where dates are the sequence of the dates in
@@ -563,7 +699,8 @@ def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
     info_keys = [s for s in info.keys()]
 
     # Create list with all tiff filenames in chronological order.
-    filenames = glob.glob(PATH + '*.tiff')
+    path = os.path.join(PATH, '*.tiff')
+    filenames = glob.glob(path)
     filenames.sort()
 
     # Show points in the map for reference.

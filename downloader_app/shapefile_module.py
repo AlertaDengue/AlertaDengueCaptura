@@ -12,16 +12,17 @@ import numpy as np
 
 def extract_shp_boundingbox(shp_filename):
     """
-    Given a shapefile dataset_map, this function extracts the coordinates defining the bounding box of the shapefile.
+    Given a shapefile path, this function extracts the spatial coordinates defining the bounding box of the shapefile.
 
     Inputs
     ------
-    dataset_map: shapefile
+    shp_filename: str
+        path to the shapefile
 
     Outputs
     -------
-    min_x, max_x, min_y, max_y: floats
-        (min_x, max_y) is the upper left point and (max_x, min_y) is the bottom right point.
+    point1, point2: list of floats
+        point1 = [min_x, max_y] is the top left point and point2 = [max_x, min_y] is the bottom right point.
     """
 
     min_x = np.inf
@@ -32,8 +33,11 @@ def extract_shp_boundingbox(shp_filename):
     # Load shapefile.
     dataset_map = gpd.read_file(shp_filename)
 
-    g = [i for i in dataset_map.geometry]
+    # Convert it to coordinate system epsg:4326, which is the default here.
+    new_dataset_map = dataset_map.to_crs({'init': 'epsg:4326'})
 
+    # Search for max and min coordinates of polygons and multipolygons
+    g = [i for i in new_dataset_map.geometry]
     for h in g:
         if type(h) == shapely.geometry.polygon.Polygon:
             all_coords = mapping(h)["coordinates"]
@@ -62,7 +66,10 @@ def extract_shp_boundingbox(shp_filename):
                     if b[1] > max_y:
                         max_y = b[1]
 
-    return min_x, max_x, min_y, max_y
+    point1 = [min_x, max_y]
+    point2 = [max_x, min_y]
+
+    return point1, point2
 
 
 def zonal_means(shp_filename, raster_filename):
@@ -138,7 +145,7 @@ def raw_plot(shp_filename, raster_filename, cmap='jet'):
         return
 
 
-def zonal_plot(shp_filename, z_means, cmap='jet'):
+def zonal_plot(shp_filename, z_means, title, cmap='jet'):
     """
     Given a shapefile dataset_map and dataframe z_means from some raster data, this function merges the map with the
     information from the means and makes a plot. The image is saved to the disk with the name 'map_image.png'.
@@ -179,7 +186,7 @@ def zonal_plot(shp_filename, z_means, cmap='jet'):
     # Remove the axis.
     ax.axis('off')
     # Add a title.
-    ax.set_title('TEMPERATURA MÉDIA POR BAIRRO', fontdict={'fontsize': '25', 'fontweight': '3'})
+    ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
     # Create an annotation for the data source.
     ax.annotate('Fonte: FioCruz',
                 xy=(0.1, .08),
@@ -200,25 +207,25 @@ def zonal_plot(shp_filename, z_means, cmap='jet'):
     return
 
 
-def time_series(shp_filename, raster_filename_list, bairro, plot=False):
+def time_series(shp_filename, raster_filename_list, name, plot=False):
     """
-    Given a shapefile, a list of raster files and a borough name, this function plots the time series of the raster data
-    relative to the specific borough.
+    Given a shapefile, a list of raster files and a name (with respect to the second column of the shapefile), this
+    function plots the time series of the raster data relative to the specific name given.
 
     Inputs
     ------
     shp_filename: str
     raster_filename: list
         List of strings with all raster filenames of interest.
-    bairro: str
-        Name of the borough of interest.
+    name: str
+        Name of the objetc of interest.
     plot: bool
         If True (default is False), then the time series is plotted.
 
     Outputs
     -------
     t_series: array
-        Each t_series[i] is the the mean of the ith raster with respect to the borough.
+        Each t_series[i] is the the mean of the ith raster with respect to the name.
     dates: list
         List with the corresponding dates.
     """
@@ -231,7 +238,7 @@ def time_series(shp_filename, raster_filename_list, bairro, plot=False):
 
     for raster_filename in raster_filename_list:
         z_means = zonal_means(shp_filename, raster_filename)
-        current_mean = z_means.loc[bairro].values[0]
+        current_mean = z_means.loc[name].values[0]
         t_series[i] = current_mean
         i += 1
         # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
@@ -243,7 +250,7 @@ def time_series(shp_filename, raster_filename_list, bairro, plot=False):
     if plot:
         plt.figure(figsize=[16, 5])
         plt.plot(dates, t_series)
-        title = 'Time series of ' + bairro
+        title = 'Time series of ' + name
         plt.title(title)
         plt.xticks(rotation=90)
         plt.grid()

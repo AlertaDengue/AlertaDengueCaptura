@@ -1,6 +1,8 @@
 pandas
+gzip
 glob
 rasterio
+fiona
 shapely
 xarray
 netCDF4
