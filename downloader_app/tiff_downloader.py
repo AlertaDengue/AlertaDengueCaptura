@@ -70,7 +70,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
                       "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
                       "LandDAAC-v6-view_zenith_angle"]:
             url = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
-        elif source == "chirps":
+        elif source == "chirps-2.0":
             url = single_download_chirps(current_date, x1, x2, y1, y2, opt)
                         
     # View time series after the downloads.
@@ -290,7 +290,7 @@ def source_freq(source):
         freq = '8D'
     elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle"]:
         freq = '16D'
-    elif source == "chirps":
+    elif source == "chirps-2.0":
         freq = '1D'
         
     return freq
