@@ -741,3 +741,39 @@ def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
     plt.show()
 
     return
+
+
+def timestamp_to_list(dates):
+    """
+    Given a list or a Pandas DateTimeIndex with many timestamps, this function converts
+    them to a list where each entry is of form [year, month, day], where year, month and
+    day are strings. This is the format to use as input to the downloader function.
+    
+    Inputs
+    ------
+    dates: list or DateTimeIndex
+    
+    Outputs
+    -------
+    dates: dates_list
+    """
+    
+    dates_list = []
+    for i in range(len(dates)):
+        year = str(dates[i].year)
+        
+        month = dates[i].month
+        if month < 10:
+            month = '0' + str(month)
+        else:
+            month = str(month)
+            
+        day = dates[i].day
+        if day < 10:
+            day = '0' + str(day)
+        else:
+            day = str(day)
+            
+        dates_list.append([year, month, day]) 
+        
+    return dates_list
