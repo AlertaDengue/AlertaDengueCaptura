@@ -78,7 +78,7 @@ def extract_shp_boundingbox(shp_filename):
 def zonal_means(shp_path, raster_path, col_pos=1):
     """
     Given a shapefile and a raster, this function computes the mean of the raster pixel inside each poylgon. The
-    original shapefile must have a column called 'BAIRRO' with the region names. Additionally, the polygons with means
+    original shapefile must have a column with the region names. Additionally, the polygons with means
     equal to None receive the overall mean with respect to the other polygons.
 
     By default this function uses the second column of the shapefile to extract the region names. 
