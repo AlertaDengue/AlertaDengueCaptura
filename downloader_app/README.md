@@ -82,7 +82,9 @@ Lembre que diversos arquivos raster foram baixados, numa sequência temporal. Ap
 
 Apesar de não ser necessário, é possível juntar uma série temporal composta por diversos arquivos raster num único arquivo e então visualizar o resultado. Isto é possível graças ao GeoViews, e às vezes pode ser interessante tal visualização.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif) 
+<p align="center">
+  <img src="https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif">
+</p>
 
 
 
