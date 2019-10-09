@@ -26,7 +26,9 @@ Para usar todas as funcionalidades, você precisará dos seguintes módulos:
     rabbitmq-server
     flower
 
-Geoviews é opcional pois é responsável por apenas algumas funções de visualização. Se você quiser essas funcionalidades, então o cartopy deve ser instalado antes do geoviews.
+Geoviews é opcional pois é responsável por apenas algumas funções de visualização. Se você quiser essas funcionalidades, então o cartopy deve ser instalado antes do geoviews. Também será necessário instalar o RabbitMQ, o que é feito com o comando abaixo.
+
+    sudo apt-get install rabbitmq-server
 
 ## Iniciando a captura
 
