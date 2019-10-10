@@ -25,6 +25,8 @@ Para usar todas as funcionalidades, você precisará dos seguintes módulos:
     celery
     rabbitmq-server
     flower
+    earthengine-api
+    pydrive
 
 Geoviews é opcional pois é responsável por apenas algumas funções de visualização. Se você quiser essas funcionalidades, então o cartopy deve ser instalado antes do geoviews. Também será necessário instalar o RabbitMQ, o que é feito com o comando abaixo.
 
@@ -88,7 +90,9 @@ Apesar de não ser necessário, é possível juntar uma série temporal composta
   <img src="https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif">
 </p>
 
+## Google Earth Engine
 
+Alguns sources são acessíveis através do Google Earth Engine. Para usá-lo é necessário instalá-lo e autenticá-lo, siga as instruções [deste link](https://developers.google.com/earth-engine/python_install-conda.html). Todos os downloads vão para o seu Google Drive automaticamente, portanto também será necessário instalar o pydrive e criar uma API, assim o programa poderá fazer os downloads do Drive oara o seu computer automaticamente. Siga as instruções [deste link](https://pythonhosted.org/PyDrive/quickstart.html). Depois que estes passos forem feitos, os arquivos `client_secrets.json`, `credentials.json` e `mycreds.txt` devem estar salvos no mesmo local onde o módulo **tiff_downloader** se encontra. 
 
 
 
