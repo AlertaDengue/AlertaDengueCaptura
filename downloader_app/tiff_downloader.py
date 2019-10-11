@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 import numpy as np
 import pandas as pd
+import time
 import matplotlib.pyplot as plt
 import urllib.request
 import os
@@ -12,6 +13,9 @@ from rasterio.warp import reproject, Resampling
 import xarray as xr
 import geoviews as gv
 import logging
+import ee
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 
 # instantiate
@@ -20,6 +24,17 @@ config = ConfigParser()
 config.read('settings.ini')
 # read values 
 PATH = config.get('settings', 'path')
+
+# Initialize Google Earth Engine.
+ee.Initialize()
+# Iinitialize (authenticate) Google Driver.
+gauth = GoogleAuth()
+# Try to load saved client credentials
+gauth.LoadCredentialsFile("mycreds.txt")
+gauth.LocalWebserverAuth()
+# Save the current credentials to a file
+gauth.SaveCredentialsFile("mycreds.txt")
+drive = GoogleDrive(gauth)
 
 
 def download_tiffs(source, date1, date2, point1, point2, opt=False):
@@ -69,9 +84,11 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
         if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
                       "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
                       "LandDAAC-v6-view_zenith_angle"]:
-            url = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
+            single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
         elif source == "chirps-2.0":
-            url = single_download_chirps(current_date, x1, x2, y1, y2, opt)
+            single_download_chirps(current_date, x1, x2, y1, y2, opt)
+        elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
+            single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
                         
     # View time series after the downloads.
     if opt.time_series:
@@ -81,7 +98,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
 
 
 def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
-    """ Function responsible for each satellite image download. """
+    """ Function responsible for each satellite image download from the IRI dataset. """
 
     # Convert numeric data values to string format. 
     year1 = str(date1.year)
@@ -164,11 +181,11 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
     
-    return url
+    return
 
 
 def single_download_chirps(date, x1, x2, y1, y2, opt):
-    """ Function responsible for each satellite image download. """
+    """ Function responsible for each satellite image download from Chirps. """
 
     # Convert numeric data values to string format.
     year = str(date.year)
@@ -263,7 +280,125 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
 
-    return url
+    return
+
+
+def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
+    """ Function responsible for each satellite image download from Google Earth Engine. """
+
+    # Convert numeric data values to string format.
+    year1 = str(date1.year)
+    month1 = str(date1.month)
+    day1 = str(date1.day)
+    if len(month1) == 1:    month1 = '0' + month1
+    if len(day1) == 1:      day1 = '0' + day1
+
+    # Satellite parameters.
+    bbox = str([[x1, y1], [x1, y2], [x2, y1], [x2, y2]])
+
+    if source in ['LST_Day_1km', 'LST_Night_1km']:
+        scale = 500
+        mod11 = ee.ImageCollection("MODIS/MOD11A2")
+        img = mod11.filterDate(date1, date2) \
+            .sort('system:time_start', False) \
+            .select(source) \
+            .mean() \
+            .multiply(0.02) \
+            .subtract(273.15) \
+            .rename("Celsius") \
+            .set('date', date1) \
+            .set('system:time_start', date1)
+
+    elif source == 'CHIRPS':
+        scale = 5000
+        CHIRPS = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
+        img = CHIRPS.filterDate(date1, date2) \
+            .sort('system:time_start', False) \
+            .mean() \
+            .rename("Precipitation") \
+            .set('date', date1) \
+            .set('system:time_start', date1)
+
+    elif source == 'NDVI':
+        scale = 500
+        MYD13Q1 = ee.ImageCollection("MODIS/MYD13Q1")
+        img = MYD13Q1.filterDate(date1, date2) \
+            .sort('system:time_start', False) \
+            .select(source) \
+            .mean() \
+            .rename(source) \
+            .set('date', date1) \
+            .set('system:time_start', date1)
+
+    elif source == 'EVI':
+        scale = 500
+        MYD13Q1 = ee.ImageCollection("MODIS/MYD13Q1")
+        img = MYD13Q1.filterDate(date1, date2) \
+            .sort('system:time_start', False) \
+            .select(source) \
+            .mean() \
+            .rename(source) \
+            .set('date', date1) \
+            .set('system:time_start', date1)
+
+    # Export data to Google Drive.
+    filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1)
+    task_config = {'scale': scale, 'region': bbox}
+    task = ee.batch.Export.image(img, filename, task_config)
+    task.start()
+
+    # Download Google Drive data to local machine.
+    count = 0
+    wait = True
+    while wait:
+        # Get file list within Driver.
+        file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        for file in file_list:
+            if file['title'] == filename + '.tif':
+                wait = False
+                # Download file from Google Drive.
+                file.GetContentFile(filename + '.tif')
+                # Delete downloaded file from Google Drive.
+                file.Delete()
+                break
+        if wait:
+            # Wait one minute before repeating the search.
+            time.sleep(60)
+            count += 1
+            # After one hour the program gives up.
+            if count == 60:
+                wait = False
+
+    # Change extension from tif to tiff and save it in PATH.
+    path = os.path.join(PATH, filename + '.tiff')
+    with open(path, "wb") as fp:
+        with open(filename + '.tif', "rb") as f:
+            d = f.read()
+        fp.write(d)
+
+    # Remove original file.
+    os.remove(filename + '.tif')
+
+    # After saving the image, the treatment process begins.
+    regrid_image(filename + '.tiff', opt)
+
+    # Log message of success.
+    if count < 60:
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
+        logging.info(msg)
+
+    else:
+        # Log message of failure.
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
+        logging.error(msg)
+
+    # If the treated image is the only one required, the original image is deleted.
+    if not opt.keep_original:
+        exists = os.path.isfile(path)
+        if exists:
+            os.remove(path)
+
+    return
 
 
 def scale_min_max(source, remote_data):
@@ -286,12 +421,14 @@ def scale_min_max(source, remote_data):
 def source_freq(source):
     """ Gets the frequency (in days) with which the respective satellite sends the data. """
     
-    if source in ["LandDAAC-v5-day", "LandDAAC-v5-night"]:
-        freq = '8D'
-    elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle"]:
-        freq = '16D'
-    elif source == "chirps-2.0":
+    if source == "chirps-2.0":
         freq = '1D'
+    elif source == "CHIRPS":
+        freq = '5D'
+    elif source in ["LandDAAC-v5-day", "LandDAAC-v5-night", "LST_Day_1km", "LST_Night_1km"]:
+        freq = '8D'
+    elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle", "NDVI", "EVI"]:
+        freq = '16D'
         
     return freq
 
@@ -429,6 +566,39 @@ def about(x):
               'station data to create gridded rainfall time series for trend analysis and seasonal drought monitoring.')
         print('Link: ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/')
         print()
+
+        print('LST_Day_1km / LST_Night_1km')
+        print('------------------------------')
+        print('The MOD11A2 V6 product provides an average 8-day land surface temperature (LST) in a 1200 x 1200 '
+              'kilometer grid. Each pixel value in MOD11A2 is a simple average of all the corresponding MOD11A1 LST '
+              'pixels collected within that 8 day period. The 8 day compositing period was chosen because twice that '
+              'period is the exact ground track repeat period of the Terra and Aqua platforms. In this product, along '
+              'with both the day- and night-time surface temperature bands and their quality indicator (QC) layers, are'
+              ' also MODIS bands 31 and 32 and eight observation layers.')
+        print('Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MOD11A2')
+        print()
+
+        print('NDVI / EVI')
+        print('------------------------------')
+        print('The MYD13Q1 V6 product provides a Vegetation Index (VI) value at a per pixel basis. There are two '
+              'primary vegetation layers. The first is the Normalized Difference Vegetation Index (NDVI) which is '
+              'referred to as the continuity index to the existing National Oceanic and Atmospheric '
+              'Administration-Advanced Very High Resolution Radiometer (NOAA-AVHRR) derived NDVI. The second vegetation '
+              'layer is the Enhanced Vegetation Index (EVI) that minimizes canopy background variations and maintains '
+              'sensitivity over dense vegetation conditions. The EVI also uses the blue band to remove residual '
+              'atmosphere contamination caused by smoke and sub-pixel thin cloud clouds. The MODIS NDVI and EVI '
+              'products are computed from atmospherically corrected bi-directional surface reflectances that have been '
+              'masked for water, clouds, heavy aerosols, and cloud shadows.')
+        print('Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MYD13Q1')
+        print()
+
+        print('CHIRPS')
+        print('------------------------------')
+        print('Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 30+ year quasi-global '
+              'rainfall dataset. CHIRPS incorporates 0.05° resolution satellite imagery with in-situ station data to '
+              'create gridded rainfall time series for trend analysis and seasonal drought monitoring.')
+        print('Link: https://developers.google.com/earth-engine/datasets/catalog/UCSB-CHG_CHIRPS_PENTAD')
+        print()
         
     if x == 'options':   
         print('cmap (string)')
@@ -442,8 +612,7 @@ def about(x):
               'images and download these new pack of images. You should pass a list of two items. The first is a '
               'positive float, the ratio of the regrid. For example, if the original image is 120x120 and regrid[0]=2, '
               'them the program will create a image of shape 240x240. The second is the method of the resampling, which'
-              ' can be `nearest`, `average`, `bilinear`, `cubic`, `cubic_spline`, `mode`, `lanczos`, `max`, `min`,`q1` '
-              'and `q3`.')
+              ' can be `nearest`, `average`, `bilinear` and `cubic`.')
         print('Link: https://github.com/mapbox/rasterio/blob/master/rasterio/enums.py#L28')
         print()
               

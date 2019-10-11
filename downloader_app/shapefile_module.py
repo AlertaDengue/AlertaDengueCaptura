@@ -142,7 +142,7 @@ def raw_plot(shp_filename, raster_filename, cmap='jet'):
         array = dataset.read()[0, :, :]
         fig, ax = plt.subplots(figsize=(15, 15))
         rasterio.plot.show(dataset, ax=ax, cmap=cmap)
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.max(array), vmax=np.min(array)))
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array)))
         sm._A = []
         cbar = fig.colorbar(sm, fraction=0.028)
         dataset_map.plot(ax=ax, facecolor='none', edgecolor='black')
