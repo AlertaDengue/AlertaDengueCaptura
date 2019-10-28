@@ -16,6 +16,8 @@ import logging
 import ee
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+from sqlalchemy import create_engine
+from datetime import date
 
 
 # instantiate
@@ -35,6 +37,8 @@ gauth.LocalWebserverAuth()
 # Save the current credentials to a file
 gauth.SaveCredentialsFile("mycreds.txt")
 drive = GoogleDrive(gauth)
+# Avoid displaying some log warnings. See https://github.com/googleapis/google-api-python-client/issues/299.
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 
 def download_tiffs(source, date1, date2, point1, point2, opt=False):
@@ -84,11 +88,23 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
         if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
                       "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
                       "LandDAAC-v6-view_zenith_angle"]:
-            single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
+            success, path = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
         elif source == "chirps-2.0":
-            single_download_chirps(current_date, x1, x2, y1, y2, opt)
+            success, path = single_download_chirps(source, current_date, x1, x2, y1, y2, opt)
         elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
-            single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
+            success, path = single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
+        
+        if success:
+            exists = os.path.exists('downloads.db')
+            engine = create_engine('sqlite:///downloads.db')
+            conn = engine.connect()
+            bbox = str(point1) + str(point2)
+            current_date = date.today()
+            item = (source, bbox, current_date, path)
+            if not exists:
+                conn.execute('CREATE TABLE DOWNLOADS ([SOURCE] text, [BOUNDING BOX] integer, [DOWNLOAD DATE] date, [PATH] text)')    
+            conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+            conn.close()
                         
     # View time series after the downloads.
     if opt.time_series:
@@ -129,7 +145,13 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
 
     # Generate filename.
     filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1) + '.tiff'
-    path = os.path.join(PATH, filename)
+    # Create source folder if it doesn't exists.
+    path_tmp = os.path.join(PATH, source)
+    exists = os.path.exists(path_tmp)
+    if not exists:
+        os.mkdir(path_tmp)
+    # Path to the file.
+    path = os.path.join(path_tmp, filename)
 
     # Remove duplicate if it exists.
     exists = os.path.isfile(path)
@@ -159,19 +181,22 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
             dataset.write(new_array, 1)        
         
         # After saving the image, the treatment process begins.
-        regrid_image(filename, opt)
+        regrid_image(source, filename, opt)
         
         # Log message of success.
+        success = True
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
         logging.info(msg)
         
     except urllib.error.HTTPError:
         # Log message of failure.
+        success = False
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
         
     except urllib.error.URLError:
         # Log message of failure.
+        success = False
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
         
@@ -181,10 +206,10 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
     
-    return
+    return success, path
 
 
-def single_download_chirps(date, x1, x2, y1, y2, opt):
+def single_download_chirps(source, date, x1, x2, y1, y2, opt):
     """ Function responsible for each satellite image download from Chirps. """
 
     # Convert numeric data values to string format.
@@ -197,11 +222,17 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
     # Generate url with specifications.
     url_base = "ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/{}/chirps-v2.0.{}.{}.{}.tif.gz"
     url = url_base.format(year, year, month, day)
-
+    
     # Generate filename.
-    compressed_filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tif.gz'
-    path = os.path.join(PATH, compressed_filename)
-
+    compressed_filename = source + '-' + year + '-' + month + '-' + day + '.tif.gz'
+    # Create source folder if it doesn't exists.
+    path_tmp = os.path.join(PATH, source)
+    exists = os.path.exists(path_tmp)
+    if not exists:
+        os.mkdir(path_tmp)
+    # Path to the file.
+    path = os.path.join(path_tmp, compressed_filename)
+    
     # Remove duplicate file with same name if it exists.
     exists = os.path.isfile(path)
     if exists:
@@ -216,7 +247,7 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
 
         # Create uncompressed file in the same folder where the compressed file is located.
         filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
-        path2 = os.path.join(PATH, filename)
+        path2 = os.path.join(path_tmp, filename)
         fp = open(path2, "wb")
         with gzip.open(path, "rb") as f:
             d = f.read()
@@ -249,7 +280,7 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
                 'transform': new_transform})
 
         filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
-        path = os.path.join(PATH, filename)
+        path = os.path.join(path_tmp, filename)
         exists = os.path.isfile(path)
         if exists:
             os.remove(path)
@@ -258,19 +289,22 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
             new_dataset.write_band(1, new_array)
 
         # After saving the image, the treatment process begins.
-        regrid_image(filename, opt)
+        regrid_image(source, filename, opt)
 
         # Log message of success.
+        success = True
         msg = 'Download (' + year + '-' + month + '-' + day + ') :success'
         logging.info(msg)
 
     except urllib.error.HTTPError:
         # Log message of failure.
+        success = False
         msg = 'Download (' + year + '-' + month + '-' + day + '): failure1'
         logging.error(msg)
 
     except urllib.error.URLError:
         # Log message of failure.
+        success = False
         msg = 'Download (' + year + '-' + month + '-' + day + '): failure2'
         logging.error(msg)
 
@@ -280,7 +314,7 @@ def single_download_chirps(date, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
 
-    return
+    return success, path
 
 
 def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
@@ -368,9 +402,14 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
             # After one hour the program gives up.
             if count == 60:
                 wait = False
-
-    # Change extension from tif to tiff and save it in PATH.
-    path = os.path.join(PATH, filename + '.tiff')
+                
+    # Create source folder if it doesn't exists.
+    path_tmp = os.path.join(PATH, source)
+    exists = os.path.exists(path_tmp)
+    if not exists:
+        os.mkdir(path_tmp)
+    # Path to the file.
+    path = os.path.join(path_tmp, filename + '.tiff')
     with open(path, "wb") as fp:
         with open(filename + '.tif', "rb") as f:
             d = f.read()
@@ -380,15 +419,17 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     os.remove(filename + '.tif')
 
     # After saving the image, the treatment process begins.
-    regrid_image(filename + '.tiff', opt)
+    regrid_image(source, filename + '.tiff', opt)
 
     # Log message of success.
+    success = True
     if count < 60:
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
         logging.info(msg)
 
     else:
         # Log message of failure.
+        success = False
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
 
@@ -398,6 +439,108 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
         if exists:
             os.remove(path)
 
+    return success, path
+
+
+def regrid_image(source, filename, opt):
+    """ This function is responsible for upsampling or downsampling the images using some precribed method. """
+    
+    path_tmp = os.path.join(PATH, source)
+    path = os.path.join(path_tmp, filename)
+    
+    if opt.regrid:
+        factor = opt.regrid[0]
+        method = opt.regrid[1]
+
+        with rasterio.open(path) as dataset:
+            a = dataset.transform.a
+            b = dataset.transform.b
+            c = dataset.transform.c
+            d = dataset.transform.d
+            e = dataset.transform.e
+            f = dataset.transform.f
+            array = dataset.read()
+            new_array = np.ones((int(factor*array.shape[1]), int(factor*array.shape[2])), dtype=np.float32)
+            new_transform = (a/factor, b, c, d, e/factor, f)
+            dataset_crs = dataset.crs        
+            new_crs = dataset.crs
+        
+            if method == 'nearest':
+                reproject(
+                    array,
+                    new_array,
+                    src_transform=dataset.transform,
+                    src_crs=dataset_crs,
+                    dst_transform=new_transform,
+                    dst_crs=new_crs,
+                    resampling=Resampling.nearest)
+            
+            if method == 'average':
+                reproject(
+                    array,
+                    new_array,
+                    src_transform=dataset.transform,
+                    src_crs=dataset_crs,
+                    dst_transform=new_transform,
+                    dst_crs=new_crs,
+                    resampling=Resampling.average)
+            
+            if method == 'bilinear':
+                reproject(
+                    array,
+                    new_array,
+                    src_transform=dataset.transform,
+                    src_crs=dataset_crs,
+                    dst_transform=new_transform,
+                    dst_crs=new_crs,
+                    resampling=Resampling.bilinear)
+            
+            if method == 'cubic':
+                reproject(
+                    array,
+                    new_array,
+                    src_transform=dataset.transform,
+                    src_crs=dataset_crs,
+                    dst_transform=new_transform,
+                    dst_crs=new_crs,
+                    resampling=Resampling.cubic)
+     
+            new_profile = dataset.profile.copy()
+            new_profile.update({
+                'dtype': 'float32',
+                'height': new_array.shape[0],
+                'width': new_array.shape[1],
+                'transform': new_transform})
+        
+            if opt.plot:
+                plt.title(filename.replace('.tiff', ''))
+                plt.imshow(new_array, cmap=opt.cmap)
+                plt.colorbar(fraction=0.028)
+                plt.xlabel('Column #')
+                plt.ylabel('Row #')
+                plt.show()
+
+        # Remove duplicates before saving new ones.
+        new_filename = filename[:-5] + '-treated.tiff'
+        new_path = os.path.join(path_tmp, new_filename)
+        exists = os.path.isfile(new_path)
+        if exists:
+            os.remove(new_path)
+        
+        with rasterio.open(new_path, 'w', **new_profile) as new_dataset:
+            new_dataset.write_band(1, new_array)
+            
+    else:
+        with rasterio.open(path) as dataset:
+            array = dataset.read()
+        if opt.plot:
+            plt.title(filename.replace('.tiff', ''))
+            plt.imshow(array[0, :, :], cmap=opt.cmap)
+            plt.colorbar(fraction=0.028)
+            plt.xlabel('Column #')
+            plt.ylabel('Row #')
+            plt.show()       
+        
     return
 
 
@@ -633,107 +776,6 @@ def about(x):
         print('When this option is set to True the program opens an interactive session with the data just downloaded. '
               'Default is False.')
         print()
-        
-    return
-
-
-def regrid_image(filename, opt):
-    """ This function is responsible for upsampling or downsampling the images using some precribed method. """
-    
-    path = os.path.join(PATH, filename)
-    
-    if opt.regrid:
-        factor = opt.regrid[0]
-        method = opt.regrid[1]
-
-        with rasterio.open(path) as dataset:
-            a = dataset.transform.a
-            b = dataset.transform.b
-            c = dataset.transform.c
-            d = dataset.transform.d
-            e = dataset.transform.e
-            f = dataset.transform.f
-            array = dataset.read()
-            new_array = np.ones((int(factor*array.shape[1]), int(factor*array.shape[2])), dtype=np.float32)
-            new_transform = (a/factor, b, c, d, e/factor, f)
-            dataset_crs = dataset.crs        
-            new_crs = dataset.crs
-        
-            if method == 'nearest':
-                reproject(
-                    array,
-                    new_array,
-                    src_transform=dataset.transform,
-                    src_crs=dataset_crs,
-                    dst_transform=new_transform,
-                    dst_crs=new_crs,
-                    resampling=Resampling.nearest)
-            
-            if method == 'average':
-                reproject(
-                    array,
-                    new_array,
-                    src_transform=dataset.transform,
-                    src_crs=dataset_crs,
-                    dst_transform=new_transform,
-                    dst_crs=new_crs,
-                    resampling=Resampling.average)
-            
-            if method == 'bilinear':
-                reproject(
-                    array,
-                    new_array,
-                    src_transform=dataset.transform,
-                    src_crs=dataset_crs,
-                    dst_transform=new_transform,
-                    dst_crs=new_crs,
-                    resampling=Resampling.bilinear)
-            
-            if method == 'cubic':
-                reproject(
-                    array,
-                    new_array,
-                    src_transform=dataset.transform,
-                    src_crs=dataset_crs,
-                    dst_transform=new_transform,
-                    dst_crs=new_crs,
-                    resampling=Resampling.cubic)
-     
-            new_profile = dataset.profile.copy()
-            new_profile.update({
-                'dtype': 'float32',
-                'height': new_array.shape[0],
-                'width': new_array.shape[1],
-                'transform': new_transform})
-        
-            if opt.plot:
-                plt.title(filename.replace('.tiff', ''))
-                plt.imshow(new_array, cmap=opt.cmap)
-                plt.colorbar(fraction=0.028)
-                plt.xlabel('Column #')
-                plt.ylabel('Row #')
-                plt.show()
-
-        # Remove duplicates before saving new ones.
-        new_filename = filename[:-5] + '-treated.tiff'
-        new_path = os.path.join(PATH, new_filename)
-        exists = os.path.isfile(new_path)
-        if exists:
-            os.remove(new_path)
-        
-        with rasterio.open(new_path, 'w', **new_profile) as new_dataset:
-            new_dataset.write_band(1, new_array)
-            
-    else:
-        with rasterio.open(path) as dataset:
-            array = dataset.read()
-        if opt.plot:
-            plt.title(filename.replace('.tiff', ''))
-            plt.imshow(array[0, :, :], cmap=opt.cmap)
-            plt.colorbar(fraction=0.028)
-            plt.xlabel('Column #')
-            plt.ylabel('Row #')
-            plt.show()       
         
     return
 
