@@ -66,6 +66,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     # Extracts input information.
     x1, y1 = point1
     x2, y2 = point2
+    bbox = str(point1) + str(point2)
     
     # Check extra options to be included.
     opt = create_options(opt)
@@ -83,40 +84,79 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
     # Download maps by date.
     length = len(dates)
     for l in range(length-1):
+        # First variables.
         current_date = dates[l]
         next_date = dates[l+1]
-        if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
-                      "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
-                      "LandDAAC-v6-view_zenith_angle"]:
-            success, path = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
-        elif source == "chirps-2.0":
-            success, path = single_download_chirps(source, current_date, x1, x2, y1, y2, opt)
-        elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
-            success, path = single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
+        current_date_tmp = str(date.today())
         
-        # Save information about the downloads in a database.
-        if success:
-            exists = os.path.exists('downloads.db')
-            engine = create_engine('sqlite:///downloads.db')
-            conn = engine.connect()
-            bbox = str(point1) + str(point2)
-            current_date = date.today()
-            item = (source, bbox, current_date, path)
-            if not exists:
-                conn.execute('CREATE TABLE DOWNLOADS ([SOURCE] text, [BOUNDING BOX] integer, [DOWNLOAD DATE] date, [PATH] text)')    
-            if opt.keep_original:
-                conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
-            if opt.regrid: 
-                path = path[:-5] + '-treated.tiff'
-                item = (source, bbox, current_date, path)
-                conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
-            conn.close()
-                        
+        # Verify if the file has been already downloaded. In this case the program skips this download.
+        skip = skip_download(source, bbox, current_date_tmp, opt)
+                
+        if not skip:
+            if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
+                          "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
+                          "LandDAAC-v6-view_zenith_angle"]:
+                success, path = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
+            elif source == "chirps-2.0":
+                success, path = single_download_chirps(source, current_date, x1, x2, y1, y2, opt)
+            elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
+                success, path = single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
+
+            # Save information about the downloads in a database.
+            if success:
+                exists = os.path.exists('downloads.db')
+                engine = create_engine('sqlite:///downloads.db')
+                conn = engine.connect()
+                item = (source, bbox, current_date_tmp, path)
+                if not exists:
+                    conn.execute('CREATE TABLE DOWNLOADS ([SOURCE] text, [BOUNDING BOX] integer, [DOWNLOAD DATE] date, [PATH] text)')    
+                if opt.keep_original:
+                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+                if opt.regrid: 
+                    path = path[:-5] + '-treated.tiff'
+                    item = (source, bbox, current_date_tmp, path)
+                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+                conn.close()
+
     # View time series after the downloads.
     if opt.time_series:
         construct_time_series(dates, opt)
                 
     return 
+
+
+def skip_download(source, bbox, current_date_tmp, opt):
+    """This function verifies if the requested download has been already requested before."""
+    
+    exists = os.path.exists('downloads.db')
+    skip = False
+    
+    if exists:
+        # Open database.
+        engine = create_engine('sqlite:///downloads.db')
+        conn = engine.connect()
+        data = pd.read_sql_query('select * from DOWNLOADS', con=engine)
+        L = len(data)
+        
+        # Verify, row by row, if the set of parameters was already used to make a download.
+        for i in range(L):
+            row_source = data.iloc[i]['SOURCE']
+            row_bbox = data.iloc[i]['BOUNDING BOX']
+            row_date = data.iloc[i]['DOWNLOAD DATE']
+            row_regrid = data.iloc[i]['PATH'][-12:-5]
+            if (source == row_source) and (bbox == row_bbox) and (current_date_tmp == row_date):
+                if opt.keep_original and row_regrid != 'treated':
+                    skip = True
+                    msg = 'Skipping download. Skipping request.'
+                    logging.info(msg)
+                    break
+                if opt.regrid and row_regrid == 'treated':
+                    skip = True
+                    msg = 'Skipping download. Skipping request.'
+                    logging.info(msg)
+                    break
+    
+    return skip
 
 
 def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
