@@ -94,6 +94,7 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
         elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
             success, path = single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
         
+        # Save information about the downloads in a database.
         if success:
             exists = os.path.exists('downloads.db')
             engine = create_engine('sqlite:///downloads.db')
@@ -103,7 +104,12 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
             item = (source, bbox, current_date, path)
             if not exists:
                 conn.execute('CREATE TABLE DOWNLOADS ([SOURCE] text, [BOUNDING BOX] integer, [DOWNLOAD DATE] date, [PATH] text)')    
-            conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+            if opt.keep_original:
+                conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+            if opt.regrid: 
+                path = path[:-5] + '-treated.tiff'
+                item = (source, bbox, current_date, path)
+                conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
             conn.close()
                         
     # View time series after the downloads.
