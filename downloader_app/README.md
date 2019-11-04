@@ -1,6 +1,6 @@
 # AlertaDengueCaptura - Downloader App
 
-As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) para ver como tudo funciona. 
+As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) para ver como tudo funciona em detalhes. 
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic0.png)
 
