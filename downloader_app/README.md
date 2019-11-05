@@ -1,6 +1,6 @@
 # AlertaDengueCaptura - Downloader App
 
-As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) para ver como tudo funciona. 
+As rotinas disponíveis neste pacote foram feitas para a captura e processo de imagens de satélite, de uma maneira fácil e conveniente. Além disso, há rotinas para combinar dados raster com camadas shapefiles afim de se obter imagens mais informativas. Confira o notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) para ver como tudo funciona em detalhes. 
 
 ![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/pic0.png)
 
@@ -13,6 +13,8 @@ Para usar todas as funcionalidades, você precisará dos seguintes módulos:
     geopandas
     glob
     gzip
+    datetime
+    imageio
     rasterio
     rasterstats
     shapely
@@ -23,8 +25,12 @@ Para usar todas as funcionalidades, você precisará dos seguintes módulos:
     celery
     rabbitmq-server
     flower
+    earthengine-api
+    pydrive
 
-Geoviews é opcional pois é responsável por apenas algumas funções de visualização. Se você quiser essas funcionalidades, então o cartopy deve ser instalado antes do geoviews.
+Geoviews é opcional pois é responsável por apenas algumas funções de visualização. Se você quiser essas funcionalidades, então o cartopy deve ser instalado antes do geoviews. Também será necessário instalar o RabbitMQ, o que é feito com o comando abaixo.
+
+    sudo apt-get install rabbitmq-server
 
 ## Iniciando a captura
 
@@ -80,9 +86,13 @@ Lembre que diversos arquivos raster foram baixados, numa sequência temporal. Ap
 
 Apesar de não ser necessário, é possível juntar uma série temporal composta por diversos arquivos raster num único arquivo e então visualizar o resultado. Isto é possível graças ao GeoViews, e às vezes pode ser interessante tal visualização.
 
-![alt text](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif) 
+<p align="center">
+  <img src="https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/readme_files/demo.gif">
+</p>
 
+## Google Earth Engine
 
+Alguns sources são acessíveis através do Google Earth Engine. Para usá-lo é necessário instalá-lo e autenticá-lo, siga as instruções [deste link](https://developers.google.com/earth-engine/python_install-conda.html). Todos os downloads vão para o seu Google Drive automaticamente, portanto também será necessário instalar o pydrive e criar uma API, assim o programa poderá fazer os downloads do Drive oara o seu computer automaticamente. Siga as instruções [deste link](https://pythonhosted.org/PyDrive/quickstart.html). Depois que estes passos forem feitos, os arquivos `client_secrets.json`, `credentials.json` e `mycreds.txt` devem estar salvos no mesmo local onde o módulo **tiff_downloader** se encontra. 
 
 
 

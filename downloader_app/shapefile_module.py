@@ -1,3 +1,6 @@
+import os
+import sys
+import imageio
 import rasterio
 import rasterio.plot
 import pandas as pd
@@ -72,48 +75,50 @@ def extract_shp_boundingbox(shp_filename):
     return point1, point2
 
 
-def zonal_means(shp_filename, raster_filename):
+def zonal_means(shp_path, raster_path, col_pos=1):
     """
     Given a shapefile and a raster, this function computes the mean of the raster pixel inside each poylgon. The
-    original shapefile must have a column called 'BAIRRO' with the borough names. Additionally, the polygons with means
+    original shapefile must have a column with the region names. Additionally, the polygons with means
     equal to None receive the overall mean with respect to the other polygons.
 
-    This function uses the column 1 of dataset_map (the shapefile) to extract the borough names. Be sure that this is
-    the right column before anything.
+    By default this function uses the second column of the shapefile to extract the region names. 
 
     Inputs
     ------
-    shp_filename: str
-        String with the shapefile filename.
+    shp_path: str
+        String with the path to the shapefile.
     raster_filename: str
-        String with the raster filename.
+        String with the path to the raster file.
+    col_pos: int
+        Number of the column with the region names. Default is 1 (the second column).
 
     Outputs
     -------
     z_means: dataframe
-        A dataframe with the means of the boroughs.
+        A dataframe with the means of the regions.
     """
 
     # Load statistics.
-    z_stats = zonal_stats(shp_filename, raster_filename, stats="count mean", nodata=1.0)
+    z_stats = zonal_stats(shp_path, raster_path, stats="count mean", nodata=1.0)
 
     # Create dictionary with all means.
-    dataset_map = gpd.read_file(shp_filename)
-    column_name = dataset_map.columns[1]
+    map_df = gpd.read_file(shp_path)
+    column_name = map_df.columns[col_pos]
     overall_mean = 0
-    num_zones = len(dataset_map)
+    num_regions = len(map_df)
     z_means = {}
-    for i in range(num_zones):
-        z_means[dataset_map[column_name][i]] = z_stats[i]['mean']
+    for i in range(num_regions):
+        z_means[map_df[column_name][i]] = z_stats[i]['mean']
         if z_stats[i]['mean'] is not None:
             overall_mean += z_stats[i]['mean']
-    overall_mean = overall_mean / num_zones
+    overall_mean = overall_mean / num_regions
 
     # Use the dictionary to create a dataframe.
-    z_means = pd.DataFrame({'MEDIAS': z_means})
-    for i in range(num_zones):
+    z_means = pd.DataFrame({'MEANS': z_means}, index=map_df[column_name].values)
+    for i in range(num_regions):
         # Verify for anomalies and fix them substituting by the overall mean.
-        if np.isnan(z_means.iloc[i, 0]) or z_means.iloc[i, 0] < 0:
+        x = z_means.iloc[i, 0]
+        if (x is None) or (np.isnan(x)) or (x < 0):
             z_means.iloc[i, 0] = overall_mean
 
     return z_means
@@ -138,20 +143,33 @@ def raw_plot(shp_filename, raster_filename, cmap='jet'):
         array = dataset.read()[0, :, :]
         fig, ax = plt.subplots(figsize=(15, 15))
         rasterio.plot.show(dataset, ax=ax, cmap=cmap)
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.max(array), vmax=np.min(array)))
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array)))
         sm._A = []
         cbar = fig.colorbar(sm, fraction=0.028)
         dataset_map.plot(ax=ax, facecolor='none', edgecolor='black')
         return
 
 
-def zonal_plot(shp_filename, z_means, title, cmap='jet'):
+def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     """
     Given a shapefile dataset_map and dataframe z_means from some raster data, this function merges the map with the
     information from the means and makes a plot. The image is saved to the disk with the name 'map_image.png'.
 
-    This function uses the column 1 of dataset_map to make the join between the datasets. Be sure that this column is
-    adequate to perform this operation.
+    By default this function uses the second column of the shapefile to make the join between the datasets. Be sure 
+    that this is the adequate column to perform this operation.
+    
+    Inputs
+    ------
+    shp_path: str
+        String with the path to the shapefile.
+    z_means: dataframe
+        A dataframe with the means of the regions.
+    title: str
+        Title of the image.
+    cmap: str
+        String for the colormap.   
+    col_pos: int
+        Number of the column with the region names. Default is 1 (the second column).
     """
 
     def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
@@ -166,12 +184,12 @@ def zonal_plot(shp_filename, z_means, title, cmap='jet'):
         return new_cmap
 
     # Load shapefile.
-    dataset_map = gpd.read_file(shp_filename)
+    dataset_map = gpd.read_file(shp_path)
     # Merge the shapefile with the dataframe of the means obtained from the raster data.
-    column_name = dataset_map.columns[1]
+    column_name = dataset_map.columns[col_pos]
     merged = dataset_map.set_index(column_name).join(z_means)
     # Set a variable that will call whatever column we want to visualise on the map.
-    variable = 'MEDIAS'
+    variable = z_means.columns[0]
     # Convert column of interest to numeric type.
     merged[variable] = pd.to_numeric(merged[variable])
     # Set the range.
@@ -187,14 +205,6 @@ def zonal_plot(shp_filename, z_means, title, cmap='jet'):
     ax.axis('off')
     # Add a title.
     ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
-    # Create an annotation for the data source.
-    ax.annotate('Fonte: FioCruz',
-                xy=(0.1, .08),
-                xycoords='figure fraction',
-                horizontalalignment='left',
-                verticalalignment='top',
-                fontsize=12,
-                color='#555555')
     # Create colorbar as a legend.
     sm = plt.cm.ScalarMappable(cmap=new_cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
     # Empty array for the data range.
@@ -207,20 +217,22 @@ def zonal_plot(shp_filename, z_means, title, cmap='jet'):
     return
 
 
-def time_series(shp_filename, raster_filename_list, name, plot=False):
+def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
     """
-    Given a shapefile, a list of raster files and a name (with respect to the second column of the shapefile), this
-    function plots the time series of the raster data relative to the specific name given.
+    Given a shapefile, a list of raster files and a name (with respect to the second column of the shapefile 
+    by default), this function plots the time series of the raster data relative to the specific name given.
 
     Inputs
     ------
-    shp_filename: str
-    raster_filename: list
+    shp_path: str
+    raster_filename_list: list
         List of strings with all raster filenames of interest.
-    name: str
-        Name of the objetc of interest.
+    region: str
+        Name of the region of interest, which is one row of the shapefile.
     plot: bool
         If True (default is False), then the time series is plotted.
+    col_pos: int
+        Number of the column with the region names. Default is 1 (the second column).
 
     Outputs
     -------
@@ -237,8 +249,8 @@ def time_series(shp_filename, raster_filename_list, name, plot=False):
     dates = []
 
     for raster_filename in raster_filename_list:
-        z_means = zonal_means(shp_filename, raster_filename)
-        current_mean = z_means.loc[name].values[0]
+        z_means = zonal_means(shp_path, raster_filename, col_pos=col_pos)
+        current_mean = z_means.loc[region].values[0]
         t_series[i] = current_mean
         i += 1
         # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
@@ -250,10 +262,180 @@ def time_series(shp_filename, raster_filename_list, name, plot=False):
     if plot:
         plt.figure(figsize=[16, 5])
         plt.plot(dates, t_series)
-        title = 'Time series of ' + name
+        title = 'Time series of ' + region
         plt.title(title)
         plt.xticks(rotation=90)
         plt.grid()
         plt.show()
 
     return t_series, dates
+
+
+def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=None, norm=False, framerate=0.5, figsize=[18, 8], col_pos=1):
+    """
+    This function creates an animated gif with the time series plots based on the many raster 
+    data over time.     
+    
+    Inputs
+    ------
+    shp_path: str
+        String with the path to the shapefile.
+    raster_paths: list
+        This parameter is a list such that each element represents a set of some type of raster 
+        layer over time. This element is a list of strings with the paths to the raster files.
+    region: str
+        Name of the region associated to one row of the shapefile. This region should be in the
+        second column of the shapefile.
+    title: str
+    labels: list of str
+        Since each element of raster_paths represents some raster layer, we need to label them
+        in the animation. The element labels[i] is the label to raster_paths[i].
+    extra_data: list of float 1D ndarray
+        Each element of this list is an array with data to plot together with the raster data.
+        Each row of the array represents the value in a specific date. The size of the array
+        should match the number of raster files of each kind.
+    norm: list of floats
+        If the data is bad scaled, use this to normalize the values. The value norm[i] is
+        multiplied by (raster_paths + extra_data)[i].
+    framerate: float
+        Animation speed.
+    figsize: list
+        Canvas size.
+    col_pos: int
+        Number of the column with the region names. Default is 1 (the second column).
+    """
+    
+    # Any value passed to extra_data must be a list.
+    if extra_data!=None and type(extra_data)!=list:
+        msg = 'Error, extra_data must be a list.'
+        sys.exit(msg)
+    
+    # Create dictionary such that each element is a time series (as a Numpy array). 
+    data = {}
+    L = len(raster_paths)
+    for i in range(L):
+        array, dates = time_series(shp_path, raster_paths[i], region, plot=False, col_pos=col_pos)
+        # Normalize data if requested.
+        if type(norm)!=bool:
+            data[i] = norm[i]*array
+        else:
+            data[i] = array
+    
+    # Save each time series.
+    if extra_data!=None:
+        E = len(extra_data)
+    num_days = len(dates)
+    filenames = []
+    for d in range(1, num_days):
+        fig = plt.figure(figsize=figsize)
+        for i in range(L):
+            data_cp = data[i].copy()
+            data_cp[d:] = np.nan
+            plt.plot(data_cp, label=labels[i], linewidth=3)
+        if extra_data!=None:
+            for i in range(E):
+                data_cp = extra_data[i].copy()
+                data_cp[d:] = np.nan
+                plt.plot(data_cp, label=labels[i+L], linewidth=3)
+        plt.grid()
+        plt.legend(loc='upper left')
+        plt.title(title + dates[d])
+        plt.xticks(visible=False)    
+        plt.savefig('fig' + str(d) + '.png')
+        filenames.append('fig' + str(d) + '.png')
+        plt.close(fig)
+            
+    # Create animation.
+    images = []
+    for filename in filenames:
+        images.append(imageio.imread(filename))
+    imageio.mimsave('curve.gif', images, duration=framerate)
+    
+    # Remove image files.
+    for filename in filenames:
+        exists = os.path.isfile(filename)
+        if exists:
+            os.remove(filename)
+            
+    return
+
+
+def time_series_map(shp_path, df, title, framerate=0.5, cmap='Blues'):
+    """
+    This function creates an animated gif with the colored shapefile evolution based on 
+    the given dataframe with the region values over time.
+    To use this function properly, the index of the shapefile 'shp' and the dataframe 'df'
+    must agree. Usually the indexes are the names of the regions of interest. The columns labels
+    of df are supposed to be the dates (as timestamps) and the rows are the regions. 
+    
+    Inputs
+    ------
+    shp_path: str
+        String with the path to the shapefile.
+    df: dataframe
+        Dataframe with the regions as index, columns as timestamps, and the values to show in the map.
+    title: str
+    framerate: float
+    cmap: str
+    """
+    
+    # Load shapefile.
+    map_df = gpd.read_file(shp_path)
+    
+    # Match the indexes.
+    df.index = map_df.index
+    
+    # Join the shapefile and the dataframe. 
+    merged = map_df.join(df)
+    
+    # Search for the global maximum of df. We do this to fix the min and max of the colorbar choropleth map.
+    n = merged.shape[1]
+    global_max = -np.inf
+    global_min = np.inf
+    for i in range(map_df.shape[1], n):
+        col_name = merged.columns[i]
+        current_max = max(merged[col_name])
+        current_min = min(merged[col_name])
+        if current_max > global_max:
+            global_max = current_max
+        if current_min < global_min:
+            global_min = current_min
+     
+    # Create and save figures.
+    filenames = []
+    for i in range(map_df.shape[1], n):
+        date = merged.columns[i]
+        # Create figure and axes for Matplotlib.
+        fig, ax = plt.subplots(1, figsize=(14, 10))
+        # Create the map.
+        merged.plot(column=date, cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8')
+        ax.axis('off')
+        current_title = title + str(date.year) + '-' + str(date.month) + '-' + str(date.day)
+        ax.set_title(current_title, fontdict={'fontsize': '25', 'fontweight' : '3'})
+        ax.annotate('Source: FioCruz', xy=(0.05, 0.05), xycoords='figure fraction', horizontalalignment='left', verticalalignment='top', fontsize=12, color='#555555')
+        # Set colorbar.
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=global_min, vmax=global_max))
+        # Empty array for the data range.
+        sm._A = []
+        # Add the colorbar to the figure.
+        cbar = fig.colorbar(sm, fraction=0.02)
+        # Save figure.
+        fig.savefig("fig" + str(i) + ".png", dpi=80)
+        # Save filename.
+        filenames.append("fig" + str(i) + ".png")
+        # Close figure.
+        plt.close(fig)
+        
+    # Make animation.
+    images = []
+    for filename in filenames:
+        images.append(imageio.imread(filename))
+    imageio.mimsave('map.gif', images, duration=framerate)
+    
+    # Remove image files.
+    for filename in filenames:
+        exists = os.path.isfile(filename)
+        if exists:
+            os.remove(filename)
+            
+    return
