@@ -117,7 +117,8 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     z_means = pd.DataFrame({'MEANS': z_means}, index=map_df[column_name].values)
     for i in range(num_regions):
         # Verify for anomalies and fix them substituting by the overall mean.
-        if np.isnan(z_means.iloc[i, 0]) or z_means.iloc[i, 0] < 0:
+        x = z_means.iloc[i, 0]
+        if (x is None) or (np.isnan(x)) or (x < 0):
             z_means.iloc[i, 0] = overall_mean
 
     return z_means
@@ -280,9 +281,8 @@ def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=
     shp_path: str
         String with the path to the shapefile.
     raster_paths: list
-        This parameter is a list such that each element represents some raster layer
-        over time. This element is a list of strings with the paths to the raster files.
-        Supposedly each raster file in this list is associated with an specific date.
+        This parameter is a list such that each element represents a set of some type of raster 
+        layer over time. This element is a list of strings with the paths to the raster files.
     region: str
         Name of the region associated to one row of the shapefile. This region should be in the
         second column of the shapefile.

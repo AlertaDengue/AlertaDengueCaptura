@@ -17,7 +17,8 @@ import ee
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from sqlalchemy import create_engine
-from datetime import date
+from httplib2 import ServerNotFoundError
+import datetime
 
 
 # instantiate
@@ -42,25 +43,26 @@ logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 
 def download_tiffs(source, date1, date2, point1, point2, opt=False):
-    """ Function responsible for the main calls. 
+    """ 
+    Function responsible for the main calls. 
     
-        Inputs
-        ------
-        source: string
-            It is the name of the source from which we will take the captured images. 
-            For example 'LandDAAC-v5-day' is a valid name. Other possible names may
-            be seen with the command about('sources').
-        date1, date2: list or tuple of strings
-            Initial and final date of the interval in which we are interested. The only 
-            accepted format at the moment is ['year', 'month', 'day']. Months and days should
-            have two digits. 
-        point1, point2: tuple
-            point1 is a tuple (x, y) corresponding to the upper left point of the image, 
-            while point2 corresponds to the lower right point.
-        opt: classe
-            All possible extra options are passed as variables of this class. If no class 
-            is passed, the default(False) is assumed, which means that no extra options 
-            will be executed in the program.       
+    Inputs
+    ------
+    source: string
+        It is the name of the source from which we will take the captured images. 
+        For example 'LandDAAC-v5-day' is a valid name. Other possible names may
+        be seen with the command about('sources').
+    date1, date2: list or tuple of strings
+        Initial and final date of the interval in which we are interested. The only 
+        accepted format at the moment is ['year', 'month', 'day']. Months and days should
+        have two digits. 
+    point1, point2: tuple
+        point1 is a tuple (x, y) corresponding to the upper left point of the image, 
+        while point2 corresponds to the lower right point.
+    opt: classe
+        All possible extra options are passed as variables of this class. If no class 
+        is passed, the default(False) is assumed, which means that no extra options 
+        will be executed in the program.       
     """
     
     # Extracts input information.
@@ -87,10 +89,11 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
         # First variables.
         current_date = dates[l]
         next_date = dates[l+1]
-        current_date_tmp = str(date.today())
+        date_today = str(datetime.date.today())
+        image_date = dates[l].strftime("%Y-%m-%d")
         
         # Verify if the file has been already downloaded. In this case the program skips this download.
-        skip = skip_download(source, bbox, current_date_tmp, opt)
+        skip = skip_download(source, image_date, date_today, bbox, opt)
                 
         if not skip:
             if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
@@ -107,25 +110,33 @@ def download_tiffs(source, date1, date2, point1, point2, opt=False):
                 exists = os.path.exists('downloads.db')
                 engine = create_engine('sqlite:///downloads.db')
                 conn = engine.connect()
-                item = (source, bbox, current_date_tmp, path)
+                item = (source, image_date, date_today, bbox, path)
                 if not exists:
-                    conn.execute('CREATE TABLE DOWNLOADS ([SOURCE] text, [BOUNDING BOX] integer, [DOWNLOAD DATE] date, [PATH] text)')    
+                    conn.execute('CREATE TABLE DOWNLOADS ([source] text, [image_date] date, [download_date] date, [bounding_box] integer, [path] text)')    
                 if opt.keep_original:
-                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)', item)
                 if opt.regrid: 
                     path = path[:-5] + '-treated.tiff'
-                    item = (source, bbox, current_date_tmp, path)
-                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?)', item)
+                    item = (source, image_date, date_today, bbox, path)
+                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)', item)
                 conn.close()
 
     # View time series after the downloads.
     if opt.time_series:
-        construct_time_series(dates, opt)
+        construct_time_series(source, dates)
+        
+    # Google Earth Engine may open the browser to perform authentication. For this reason all browsers are closed
+    # after the downloads.
+    if opt.close_browser:
+        # os.system("taskkill /f /im firefox.exe") # Windows
+        # os.system("taskkill /f /im chrome.exe") # Windows
+        # os.system("pkill firefox") # Linux
+        os.system("pkill chrome")
                 
     return 
 
 
-def skip_download(source, bbox, current_date_tmp, opt):
+def skip_download(source, image_date, date_today, bbox, opt):
     """This function verifies if the requested download has been already requested before."""
     
     exists = os.path.exists('downloads.db')
@@ -140,11 +151,11 @@ def skip_download(source, bbox, current_date_tmp, opt):
         
         # Verify, row by row, if the set of parameters was already used to make a download.
         for i in range(L):
-            row_source = data.iloc[i]['SOURCE']
-            row_bbox = data.iloc[i]['BOUNDING BOX']
-            row_date = data.iloc[i]['DOWNLOAD DATE']
-            row_regrid = data.iloc[i]['PATH'][-12:-5]
-            if (source == row_source) and (bbox == row_bbox) and (current_date_tmp == row_date):
+            row_source = data.iloc[i]['source']
+            row_date = data.iloc[i]['image_date']
+            row_bbox = data.iloc[i]['bounding_box']
+            row_regrid = data.iloc[i]['path'][-12:-5]
+            if (source==row_source) and (image_date==row_date) and (bbox==row_bbox):
                 if opt.keep_original and row_regrid != 'treated':
                     skip = True
                     msg = 'Skipping download. Skipping request.'
@@ -199,11 +210,6 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     # Path to the file.
     path = os.path.join(path_tmp, filename)
 
-    # Remove duplicate if it exists.
-    exists = os.path.isfile(path)
-    if exists:
-        os.remove(path)
-
     # Download and save url content.
     try:
         # Download.
@@ -237,13 +243,15 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     except urllib.error.HTTPError:
         # Log message of failure.
         success = False
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
+        path = None
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (HTTPError)'
         logging.error(msg)
         
     except urllib.error.URLError:
         # Log message of failure.
         success = False
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
+        path = None
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (URLError)'
         logging.error(msg)
         
     # If the treated image is the only one required, the original image is deleted.
@@ -345,13 +353,15 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
     except urllib.error.HTTPError:
         # Log message of failure.
         success = False
-        msg = 'Download (' + year + '-' + month + '-' + day + '): failure1'
+        path = None
+        msg = 'Download (' + year + '-' + month + '-' + day + '): failure1 (HTTPError)'
         logging.error(msg)
 
     except urllib.error.URLError:
         # Log message of failure.
         success = False
-        msg = 'Download (' + year + '-' + month + '-' + day + '): failure2'
+        path = None
+        msg = 'Download (' + year + '-' + month + '-' + day + '): failure2 (URLError)'
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -365,7 +375,7 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
 
 def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     """ Function responsible for each satellite image download from Google Earth Engine. """
-
+    
     # Convert numeric data values to string format.
     year1 = str(date1.year)
     month1 = str(date1.month)
@@ -421,61 +431,100 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
             .set('date', date1) \
             .set('system:time_start', date1)
 
-    # Export data to Google Drive.
+    # Prepare parameters.
     filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1)
     task_config = {'scale': scale, 'region': bbox}
-    task = ee.batch.Export.image(img, filename, task_config)
-    task.start()
+    
+    # Export data to Google Drive.
+    try:
+        task = ee.batch.Export.image(img, filename, task_config)
+        task.start()
+    except ServerNotFoundError:
+        success = False
+        path = None
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (ServerNotFoundError)'
+        logging.error(msg)
+        return success, path
+    except:
+        success = False
+        path = None
+        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+        logging.error(msg)
+        return success, path
 
-    # Download Google Drive data to local machine.
     count = 0
     wait = True
-    while wait:
+    while wait:        
+        # Wait 1 minute before beginning to search the file at Google Drive.
+        time.sleep(60)
+        count += 1
+        
         # Get file list within Driver.
-        file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        try:
+            file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+        except ServerNotFoundError:
+            success = False
+            path = None
+            msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (ServerNotFoundError)'
+            logging.error(msg)
+            return success, path
+        except:
+            success = False
+            path = None
+            msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+            logging.error(msg)
+            return success, path
+    
         for file in file_list:
             if file['title'] == filename + '.tif':
+                success = True
                 wait = False
-                # Download file from Google Drive.
-                file.GetContentFile(filename + '.tif')
-                # Delete downloaded file from Google Drive.
-                file.Delete()
-                break
-        if wait:
-            # Wait one minute before repeating the search.
-            time.sleep(60)
-            count += 1
-            # After one hour the program gives up.
-            if count == 60:
-                wait = False
-                
-    # Create source folder if it doesn't exists.
-    path_tmp = os.path.join(PATH, source)
-    exists = os.path.exists(path_tmp)
-    if not exists:
-        os.mkdir(path_tmp)
-    # Path to the file.
-    path = os.path.join(path_tmp, filename + '.tiff')
-    with open(path, "wb") as fp:
-        with open(filename + '.tif', "rb") as f:
-            d = f.read()
-        fp.write(d)
+                try:
+                    # Download file from Google Drive.
+                    file.GetContentFile(filename + '.tif')
+                    # Delete downloaded file from Google Drive.
+                    file.Delete()
+                    break
+                except:
+                    success = False
+                    path = None
+                    msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+                    logging.error(msg)
+                    return success, path
+                                
+        # After 15 trials the program gives up.
+        if count == 15:
+            success = False
+            break
+    
+    # Save file locally.
+    if success:
+        # Create source folder if it doesn't exists.
+        path_tmp = os.path.join(PATH, source)
+        exists = os.path.exists(path_tmp)
+        if not exists:
+            os.mkdir(path_tmp)
+        # Path to the file.
+        path = os.path.join(path_tmp, filename + '.tiff')
+        with open(path, "wb") as fp:
+            with open(filename + '.tif', "rb") as f:
+                d = f.read()
+            fp.write(d)
 
-    # Remove original file.
-    os.remove(filename + '.tif')
+        # Remove original tif file (we want the one with tiff format).
+        os.remove(filename + '.tif')
 
-    # After saving the image, the treatment process begins.
-    regrid_image(source, filename + '.tiff', opt)
+        # After saving the image, the treatment process begins.
+        regrid_image(source, filename + '.tiff', opt)
 
     # Log message of success.
-    success = True
-    if count < 60:
+    if success:
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
         logging.info(msg)
 
     else:
         # Log message of failure.
-        success = False
+        path = None
         msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
         logging.error(msg)
 
@@ -662,6 +711,7 @@ def create_options(Opt):
             keep_original = True
             time_series = False
             cmap = 'jet'
+            close_browser = True
 
         return OptOut
     
@@ -671,6 +721,7 @@ def create_options(Opt):
         keep_original = True
         time_series = False
         cmap = 'jet'
+        close_browser = True
         if 'regrid' in Opt:
             if type(Opt['regrid']) == list and len(Opt['regrid']) == 2:
                 factor = Opt['regrid'][0]
@@ -684,6 +735,8 @@ def create_options(Opt):
             time_series = Opt['time_series']
         if 'cmap' in Opt:
             cmap = Opt['cmap']
+        if 'close_browser' in Opt:
+            close_browser = Opt['close_browser']
             
     return OptOut
 
@@ -823,28 +876,36 @@ def about(x):
               'Default is False.')
         print()
         
+        print('close_browser (bool)')
+        print('--------------------')
+        print('When this option is set to True, every browser window is closed after the downloads. This measure is'
+              'necessary because Goggle Earth Engine opens a browser for each authentication it performs. If the intention'
+              'is to make many downloads without human intervention, this is recommended. Check the end of the function'
+              'download_tiffs and (un)comment the lines that fit your purposes.')
+        print()
+        
     return
 
 
-def construct_time_series(dates, opt):
+def construct_time_series(source, dates):
     """ 
     This function creates a netcdf file from the downladed tiffs (as a time series) and open an interactive session
     to explore this time series. To enable this function you must pass the option time_series as True to the function
     download_tiffs. The folder (where the just downloaded tiffs are) must not contain any other tiffs, otherwise the
     netcdf file will be corrupted. 
     """
-
+    
     filename = 'time_series.nc'
-    path = os.path.join(PATH, filename)
+    path_tmp = os.path.join(PATH, source)
+    path = os.path.join(path_tmp, filename)
+
+    # Remove possible duplicate.
     exists = os.path.isfile(path)
     if exists:
         os.remove(path)
     
-    # Enable extensions of geoviews
-    gv.extension('bokeh', 'matplotlib')
-    
     # Create list with all tiff filenames in chronological order.
-    path2 = os.path.join(PATH, '*.tiff')
+    path2 = os.path.join(path_tmp, '*.tiff')
     filenames = glob.glob(path2)
     filenames.sort()
     
@@ -859,17 +920,13 @@ def construct_time_series(dates, opt):
     with xr.concat([xr.open_rasterio(f, chunks=chunks) for f in filenames], dim=time) as da:
         da.to_netcdf(path)
     
-    # Open geoviews interactive session.
-    with xr.open_dataset(path, decode_times=False) as da:
-        dataset = gv.Dataset(da)
-        ensemble = dataset.to(gv.Image, ['x', 'y'])
-        gv.output(ensemble.opts(cmap=opt.cmap, colorbar=True, fig_size=200, backend='matplotlib'), backend='matplotlib')
     return
 
 
 def view_time_series(filename, cmap='jet'):
     """ Visualize and interact with time series netcdf files. """
     
+    # Open geoviews interactive session.
     gv.extension('bokeh', 'matplotlib')
     with xr.open_dataset(filename, decode_times=False) as da:
         dataset = gv.Dataset(da)
@@ -878,7 +935,7 @@ def view_time_series(filename, cmap='jet'):
     return
 
 
-def point_time_series(points, title='Time series of given coordinates', spatial_coordinates=True):
+def point_time_series(source, points, title='Time series of given coordinates', spatial_coordinates=True):
     """ 
     This function plots the evolution of the time series with respect to a list of points. All tiff files in the current
     folder are sorted and used to construct the time series. Therefore be sure you have the correct files there.
@@ -900,7 +957,8 @@ def point_time_series(points, title='Time series of given coordinates', spatial_
     """
     
     # Create list with all tiff filenames in chronological order.
-    path = os.path.join(PATH, '*.tiff')
+    path_tmp = os.path.join(PATH, source)
+    path = os.path.join(path_tmp, '*.tiff')
     filenames = glob.glob(path)
     filenames.sort()
 
@@ -941,12 +999,12 @@ def point_time_series(points, title='Time series of given coordinates', spatial_
         # Update dictionary.
         info[str(point[0]) + ', ' + str(point[1])] = [[dates[i], values[i]] for i in range(len(dates))]
 
-    plot_point_time_series(info, col_row_format, title, spatial_coordinates)
+    plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates)
 
     return info
 
 
-def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
+def plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates):
     """
     After constructing the time series (in a dictionary) of several points with the fucntion point_time_series, this
     function is responsible for the plots. All inputs to this function are described in the previous function.
@@ -954,11 +1012,6 @@ def plot_point_time_series(info, col_row_format, title, spatial_coordinates):
 
     # List with all dates.
     info_keys = [s for s in info.keys()]
-
-    # Create list with all tiff filenames in chronological order.
-    path = os.path.join(PATH, '*.tiff')
-    filenames = glob.glob(path)
-    filenames.sort()
 
     # Show points in the map for reference.
     with rasterio.open(filenames[0]) as dataset:
@@ -1004,7 +1057,7 @@ def timestamp_to_list(dates):
     """
     Given a list or a Pandas DateTimeIndex with many timestamps, this function converts
     them to a list where each entry is of form [year, month, day], where year, month and
-    day are strings. This is the format to use as input to the downloader function.
+    day are strings. This is the format to use as inputs to the download_tiffs function.
     
     Inputs
     ------
@@ -1034,3 +1087,87 @@ def timestamp_to_list(dates):
         dates_list.append([year, month, day]) 
         
     return dates_list
+
+
+def fill_missing_days(source, freq, treated=True):
+    """
+    Given the source and two dates, the program searches for the missing days (following 
+    the corresponding frequency of the source) and fill these gaps with linear interpolation,
+    using the first day before the missing days and the first day after the missing days.
+    Therefore, it is necessary that the range of days doesn't start or finish with missing
+    data.
+    Warning: the interpolation method assumes that all raster files has the same size. If 
+    this condition is not met an error will be raised.
+    
+    Inputs
+    ------
+    source: string
+        It is the name of the source from which we will take the captured images.
+    freq: string
+        Desired frequency, in days, to generate new data. Should be something like '7D' for example. 
+    treated: bool
+        If True (default), then the program only considers the treated data. Otherwise it only
+        considers the original data. The folder must contain only one type between these two
+        possibilities.
+    """
+    
+    # Path to folder.
+    path_tmp = os.path.join(PATH, source)
+    
+    # Create list with all tiff filenames in chronological order.
+    path = os.path.join(path_tmp, '*.tiff')
+    filenames = glob.glob(path)
+    filenames.sort()
+    
+    # Search for the missing days.
+    length = len(filenames)
+    for i in range(length-1):
+        # Extract dates of two consecutive downloads and compute their difference.
+        f1 = filenames[i]
+        f2 = filenames[i+1]
+        if treated:
+            day1 = datetime.datetime.strptime(f1[-23:-13], '%Y-%m-%d')
+            day2 = datetime.datetime.strptime(f2[-23:-13], '%Y-%m-%d')
+        else:
+            day1 = datetime.datetime.strptime(f1[-15:-5], '%Y-%m-%d')
+            day2 = datetime.datetime.strptime(f2[-15:-5], '%Y-%m-%d')
+                
+        # Generate missing timestamps in the interval.
+        delta1 = datetime.timedelta(days=int(freq[0])) 
+        delta2 = datetime.timedelta(days=1) 
+        dates = pd.date_range(day1 + delta1, day2 - delta2, freq=freq)
+        num_dates = len(dates)
+        
+        # Generate tiff missing files.
+        with rasterio.open(f1) as dataset:
+            array1 = dataset.read()[0, :, :]
+        with rasterio.open(f2) as dataset:
+            array2 = dataset.read()[0, :, :]
+            
+        for j in range(1, num_dates+1):
+            # Extract the values from the date.
+            date = dates[j-1]
+            year = str(date.year)
+            month = str(date.month)
+            day = str(date.day)
+            if len(month) == 1:    month = '0' + month
+            if len(day) == 1:      day = '0' + day
+            
+            # Create path to the new file.
+            if treated:
+                filename = source + '-' + year + '-' + month + '-' + day + '-treated.tiff'
+                localname = os.path.join(path_tmp, filename)
+            else:
+                filename = source + '-' + year + '-' + month + '-' + day + '.tiff'
+                localname = os.path.join(path_tmp, filename)
+            
+            # Compute interpolated array.
+            new_array = 1/j * array1 + (1 - 1/j)*array2
+            
+            # Generate new raster data using f1 profile.
+            with rasterio.open(f1) as dataset:
+                profile = dataset.profile.copy()
+                with rasterio.open(localname, 'w', **profile) as new_dataset:
+                    new_dataset.write_band(1, new_array)
+                    
+    return
