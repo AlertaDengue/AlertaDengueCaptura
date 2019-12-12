@@ -124,22 +124,22 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     return z_means
 
 
-def raw_plot(shp_filename, raster_filename, cmap='jet'):
+def raw_plot(shp_path, raster_path, cmap='jet'):
     """
     This function plots both layers of raster and shapefile in a single image.
 
     Inputs
     ------
-    shp_filename: str
-        String with the shapefile filename.
-    raster_filename: str
-        String with the raster filename.
+    shp_path: str
+        String with the path to the shapefile.
+    raster_path: str
+        String with the path to the raster file.
     cmap: str
         String for the colormap.
     """
 
-    dataset_map = gpd.read_file(shp_filename)
-    with rasterio.open(raster_filename) as dataset:
+    dataset_map = gpd.read_file(shp_path)
+    with rasterio.open(raster_path) as dataset:
         array = dataset.read()[0, :, :]
         fig, ax = plt.subplots(figsize=(15, 15))
         rasterio.plot.show(dataset, ax=ax, cmap=cmap)

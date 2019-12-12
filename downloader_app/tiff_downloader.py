@@ -1171,12 +1171,12 @@ def plot_point_time_series(filenames, info, col_row_format, title, spatial_coord
 def fill_missing_days(source, freq, treated=True):
     """
     Given the source and two dates, the program searches for the missing days (following 
-    the corresponding frequency of the source) and fill these gaps with linear interpolation,
+    the corresponding frequency of the source) and fill the gaps with linear interpolation,
     using the first day before the missing days and the first day after the missing days.
     Therefore, it is necessary that the range of days doesn't start or finish with missing
     data.
     Warning: the interpolation method assumes that all raster files has the same size. If 
-    this condition is not met an error will be raised.
+    this condition is not met an error occur.
     
     Inputs
     ------
@@ -1224,7 +1224,7 @@ def fill_missing_days(source, freq, treated=True):
             array2 = dataset.read()[0, :, :]
 
         for j in range(1, num_dates+1):
-            # Extract the values from the date.
+            # Extract values from date.
             date = dates[j-1]
             year = str(date.year)
             month = str(date.month)
