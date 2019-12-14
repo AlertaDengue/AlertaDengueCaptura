@@ -1,12 +1,16 @@
 pandas
+geopandas
 gzip
 glob
 rasterio
-fiona
+rasterstats
 shapely
 xarray
 netCDF4
 cartopy
 geoviews>=1.6.2
 celery
+rabbitmq-server
 flower
+earthengine-api
+pydrive
