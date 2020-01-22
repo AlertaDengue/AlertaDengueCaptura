@@ -418,7 +418,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
 
     elif source == 'NDVI':
         scale = 500
-        MYD13Q1 = ee.ImageCollection("MODIS/MYD13Q1")
+        MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
         img = MYD13Q1.filterDate(date1, date2) \
             .sort('system:time_start', False) \
             .select(source) \
@@ -429,7 +429,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
 
     elif source == 'EVI':
         scale = 500
-        MYD13Q1 = ee.ImageCollection("MODIS/MYD13Q1")
+        MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
         img = MYD13Q1.filterDate(date1, date2) \
             .sort('system:time_start', False) \
             .select(source) \

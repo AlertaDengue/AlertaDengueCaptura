@@ -1,6 +1,6 @@
 # Downloader App
 
-The routines available in this package are designed to capture and process satellite images easily and conveniently. In addition, there are routines for combining raster data with shapefiles layers for more informative images. Check out the notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) to see how it all works in details. Below we show the general structure of the sources to download the raster data.
+The routines available in this package are designed to capture and process satellite images easily and conveniently. In addition, there are routines for combining raster data with shapefiles layers for more informative images. Check out the notebook [examples.ipynb](https://github.com/felipebottega/AlertaDengueCaptura/blob/master/downloader_app/examples.ipynb) to see how it all works in details. Below we show the general structure of the sources to download data.
 
 ![alt text](readme_files/pic0.png)
 
