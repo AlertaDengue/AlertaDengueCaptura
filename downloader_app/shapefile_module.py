@@ -152,8 +152,8 @@ def raw_plot(shp_path, raster_path, cmap='jet'):
 
 def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     """
-    Given a shapefile dataset_map and dataframe z_means from some raster data, this function merges the map with the
-    information from the means and makes a plot. The image is saved to the disk with the name 'map_image.png'.
+    Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and 
+    makes a plot. The image is saved to the disk with the name 'map_image.png'.
 
     By default this function uses the second column of the shapefile to make the join between the datasets. Be sure 
     that this is the adequate column to perform this operation.
@@ -193,7 +193,7 @@ def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     # Convert column of interest to numeric type.
     merged[variable] = pd.to_numeric(merged[variable])
     # Set the range.
-    vmin, vmax = min(merged[variable]), max(merged[variable])
+    vmin, vmax = np.nanmin(merged[variable]), np.nanmax(merged[variable])
     # Make the truncation.
     cmap = plt.get_cmap(cmap)
     new_cmap = truncate_colormap(cmap, 0.4, 1.0)
