@@ -74,7 +74,7 @@ def download_tiffs(source, dates, point1, point2, opt=False):
 
     # Obtains the frequency of source.
     freq = source_freq(source)
-    delta = datetime.timedelta(days=int(freq[0]))
+    delta = datetime.timedelta(days=freq)
 
     # Download maps by date.
     length = len(dates)
@@ -417,24 +417,24 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
             .set('system:time_start', date1)
 
     elif source == 'NDVI':
-        scale = 500
+        scale = 5000
         MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
         img = MYD13Q1.filterDate(date1, date2) \
             .sort('system:time_start', False) \
             .select(source) \
             .mean() \
-            .rename(source) \
+            .rename("NDVI") \
             .set('date', date1) \
             .set('system:time_start', date1)
 
     elif source == 'EVI':
-        scale = 500
+        scale = 5000
         MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
         img = MYD13Q1.filterDate(date1, date2) \
             .sort('system:time_start', False) \
             .select(source) \
             .mean() \
-            .rename(source) \
+            .rename("EVI") \
             .set('date', date1) \
             .set('system:time_start', date1)
 
@@ -765,13 +765,13 @@ def source_freq(source):
     """
 
     if source == "chirps-2.0":
-        freq = '1D'
+        freq = 1
     elif source == "CHIRPS":
-        freq = '5D'
+        freq = 5
     elif source in ["LandDAAC-v5-day", "LandDAAC-v5-night", "LST_Day_1km", "LST_Night_1km"]:
-        freq = '8D'
+        freq = 8
     elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle", "NDVI", "EVI"]:
-        freq = '16D'
+        freq = 16
 
     return freq
 
