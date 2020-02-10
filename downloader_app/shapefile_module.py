@@ -152,8 +152,8 @@ def raw_plot(shp_path, raster_path, cmap='jet'):
 
 def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     """
-    Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and 
-    makes a plot. The image is saved to the disk with the name 'map_image.png'.
+    Given a shapefile dataset_map and dataframe z_means from some raster data, this function merges the map with the
+    information from the means and makes a plot. The image is saved to the disk with the name 'map_image.png'.
 
     By default this function uses the second column of the shapefile to make the join between the datasets. Be sure 
     that this is the adequate column to perform this operation.
@@ -193,7 +193,7 @@ def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     # Convert column of interest to numeric type.
     merged[variable] = pd.to_numeric(merged[variable])
     # Set the range.
-    vmin, vmax = np.nanmin(merged[variable]), np.nanmax(merged[variable])
+    vmin, vmax = min(merged[variable]), max(merged[variable])
     # Make the truncation.
     cmap = plt.get_cmap(cmap)
     new_cmap = truncate_colormap(cmap, 0.4, 1.0)
@@ -271,7 +271,7 @@ def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
     return t_series, dates
 
 
-def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=None, norm=False, framerate=0.5, figsize=[18, 8], col_pos=1):
+def time_series_curve(shp_path, raster_paths, save_path, region, title, labels, extra_data=None, norm=False, framerate=0.5, figsize=[18, 8], col_pos=1):
     """
     This function creates an animated gif with the time series plots based on the many raster 
     data over time.     
@@ -283,6 +283,8 @@ def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=
     raster_paths: list of lists
         This parameter is a list such that each element is a list of strings with the paths to
         the raster files. This list represents a set of some type of raster layer over time.
+    save_path: str
+        The current path where the file will be saved.
     region: str
         Name of the region associated to one row of the shapefile. This region should be in the
         second column of the shapefile.
@@ -317,6 +319,8 @@ def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=
         # Normalize data if requested.
         if norm:
             data[i] = array/np.linalg.norm(array)
+        else:
+            data[i] = array
 
     # Save each time series.
     if extra_data is not None:
@@ -346,7 +350,7 @@ def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=
     images = []
     for filename in filenames:
         images.append(imageio.imread(filename))
-    imageio.mimsave('curve.gif', images, duration=framerate)
+    imageio.mimsave(save_path + 'curve.gif', images, duration=framerate)
 
     # Remove image files.
     for filename in filenames:
@@ -357,7 +361,7 @@ def time_series_curve(shp_path, raster_paths, region, title, labels, extra_data=
     return
 
 
-def time_series_map(map_df, df, title, framerate=0.5, cmap='Blues'):
+def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap='Blues'):
     """
     This function creates an animated gif with the colored shapefile evolution based on 
     the given dataframe with the region values over time.
@@ -421,7 +425,7 @@ def time_series_map(map_df, df, title, framerate=0.5, cmap='Blues'):
     images = []
     for filename in filenames:
         images.append(imageio.imread(filename))
-    imageio.mimsave('map.gif', images, duration=framerate)
+    imageio.mimsave(save_path + 'map.gif', images, duration=framerate)
 
     # Remove image files.
     for filename in filenames:
