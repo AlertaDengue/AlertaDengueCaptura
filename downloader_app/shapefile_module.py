@@ -152,8 +152,8 @@ def raw_plot(shp_path, raster_path, cmap='jet'):
 
 def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     """
-    Given a shapefile dataset_map and dataframe z_means from some raster data, this function merges the map with the
-    information from the means and makes a plot. The image is saved to the disk with the name 'map_image.png'.
+    Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and 
+    makes a plot. The image is saved to the disk with the name 'map_image.png'.
 
     By default this function uses the second column of the shapefile to make the join between the datasets. Be sure 
     that this is the adequate column to perform this operation.
@@ -193,7 +193,7 @@ def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     # Convert column of interest to numeric type.
     merged[variable] = pd.to_numeric(merged[variable])
     # Set the range.
-    vmin, vmax = min(merged[variable]), max(merged[variable])
+    vmin, vmax = np.nanmin(merged[variable]), np.nanmax(merged[variable])
     # Make the truncation.
     cmap = plt.get_cmap(cmap)
     new_cmap = truncate_colormap(cmap, 0.4, 1.0)
@@ -375,6 +375,8 @@ def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap='Blues'):
         Shapefile of interest.
     df: dataframe
         Dataframe with the regions as index, columns as timestamps, and the values to show in the map.
+    save_path: str
+        The current path where the file will be saved.
     title: str
     framerate: float
     cmap: str
