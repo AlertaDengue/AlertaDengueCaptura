@@ -1,25 +1,49 @@
-version: '3'
+version: "3"
 services:
-    rabbit:
-        hostname: rabbit
-        image: rabbitmq:latest
-        environment:
-            - RABBITMQ_DEFAULT_USER=admin
-            - RABBITMQ_DEFAULT_PASS=mypass
-        ports:
-            - "35672:5672"
+    # capture_memcache:
+    #     image: memcached:latest
+    #     hostname: capture_memcache
+    #     ports: []
+    #     restart: always
 
-    worker:
+    capture_rabbitmq:
+        image: rabbitmq:3
+        hostname: capture_rabbitmq
+        restart: always
+
+    # capture_db:
+    #     build:
+    #     context: ".."
+    #     dockerfile: "docker/Dockerfile-postgres"
+    #     env_file:
+    #     - ../.env_staging
+    #     hostname: capture_db
+    #     ports:
+    #     - "25432:25432"
+    #     volumes:
+    #     - ${capture_DATA_DIR}:/var/lib/postgresql/data
+    #     restart: always
+    #     command: -p 25432
+
+    capture_celery-worker:
         build:
             context: .
             dockerfile: dockerfile
             args:
-                # PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
+                PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
                 HOST_UID: ${HOST_UID}
                 HOST_GID: ${HOST_GID}
+        env_file:
+        - .env
+        environment:
+        - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
+        # - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@capture_db:25432/infodengue
+        # - PSQL_HOST=capture_db
+        # - PSQL_PORT=25432
         volumes:
             - .:/AlertaDengueCaptura
-        links:
-            - rabbit
         depends_on:
-            - rabbit
+        - capture_rabbitmq
+        # - capture_memcache
+        restart: always
+

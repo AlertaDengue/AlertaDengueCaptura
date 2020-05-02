@@ -1,16 +1,16 @@
 celery
-# pymongo>=3
-# requests
-# flower
-# folium
-# bearcart
-# bokeh
-# psycopg2
-# pgcli
-# sqlsoup
-# odo
-# geojson
-# python-decouple
-# dbfread
-# pandasql
-# python-metar
+pymongo>=3
+requests
+flower
+folium
+bearcart
+bokeh
+psycopg2
+pgcli
+sqlsoup
+odo
+geojson
+python-decouple
+dbfread
+pandasql
+python-metar
