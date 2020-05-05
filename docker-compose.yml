@@ -17,9 +17,9 @@ services:
         - .env
         environment:
         - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
-        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@capture_db:5432/dengue
-        - PSQL_HOST=capture_db
-        - PSQL_PORT=25432
+        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
+        - PSQL_HOST=192.168.2.5
+        - PSQL_PORT=5432
         volumes:
             - .:/AlertaDengueCaptura
         depends_on:
