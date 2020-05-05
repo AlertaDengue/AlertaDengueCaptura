@@ -44,14 +44,14 @@ def load_station_metadata(station_ID):
         print('Station {} returned no data'.format(station_ID))
         return 1
     # print(results.url)
-    print(df.ix[0]['cod.estacao'])
+    print(df.iloc[0]['cod.estacao'])
     record = {
         'codestacao': str(station_ID),
-        'nome': df.ix[0]['nome'],
-        'municipio': df.ix[0]['municipio'],
-        'uf': df.ix[0]['uf'],
-        'latitude': float(df.ix[0]['latitude']),
-        'longitude': float(df.ix[0]['longitude'])
+        'nome': df.iloc[0]['nome'],
+        'municipio': df.iloc[0]['municipio'],
+        'uf': df.iloc[0]['uf'],
+        'latitude': float(df.iloc[0]['latitude']),
+        'longitude': float(df.iloc[0]['longitude'])
     }
     try:
         cur.execute(sql, (record['codestacao'], record['nome'], record['municipio'], record['uf'], record['latitude'], record['longitude']))

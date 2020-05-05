@@ -126,7 +126,7 @@ def describe(dataframe):
         for aggregation in aggregations:
             key = field_name + '_' + aggregation
             try:
-                value = summary[field_name].ix[aggregation]
+                value = summary[field_name].loc[aggregation]
             except KeyError as e:
                 value = None
             data[key] = value

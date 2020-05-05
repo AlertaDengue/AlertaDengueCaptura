@@ -23,7 +23,7 @@ class TestSinan(unittest.TestCase):
     #@skip
     def test_date_columns_are_datetime(self):
         for nome in filter(lambda x: x.startswith('DT'), self.S.colunas_entrada):
-            self.assertIsInstance(self.S.tabela[nome].ix[0], (pd.Timestamp, pd.tslib.NaTType), "{}".format(nome))
+            self.assertIsInstance(self.S.tabela[nome].iloc[0], (pd.Timestamp, pd.tslib.NaTType), "{}".format(nome))
     #@skip
     def test_timespan_returns_times(self):
         td = self.S.time_span

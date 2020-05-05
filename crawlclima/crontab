@@ -1,5 +1,5 @@
 # these paths reflect current deploy server organization. In the future this can be automated by a deploy routine
 # m h  dom mon dow   command
-0 8 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/pegatweets.py
-0 9 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/capturachuva.py
-0 7 * * * cd /home/administrador/Repositorios/AlertaDengueCaptura && crawlclima/pegatemperatura.py
+0 8 * * * cd /AlertaDengueCaptura && crawlclima/pegatweets.py
+0 9 * * * cd /AlertaDengueCaptura && crawlclima/capturachuva.py
+0 7 * * * cd /AlertaDengueCaptura && crawlclima/pegatemperatura.py
