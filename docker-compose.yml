@@ -7,8 +7,8 @@ services:
 
     capture_celery-worker:
         build:
-            context: .
-            dockerfile: dockerfile
+            context: "."
+            dockerfile: "Dockerfile-celery"
             args:
                 PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
                 HOST_UID: ${HOST_UID}
