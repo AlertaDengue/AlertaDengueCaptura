@@ -1,9 +1,11 @@
 from celery import Celery
+from decouple import config
 
 app = Celery('crawlclima',
-             broker='amqp://',
-             backend='mongodb',
-             include=['crawlclima.tasks'])
+            broker=config('CELERY_BROKER_URL'),
+            backend=config('CELERY_BACKEND'), #
+            include=['crawlclima.tasks']
+        )
 
 app.config_from_object('crawlclima.celeryconfig')
 # Optional configuration, see the application user guide.
