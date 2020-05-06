@@ -26,7 +26,7 @@ services:
         - capture_rabbitmq
         restart: always
 
-    staging_flower:
+    capture_flower:
         build:
           context: "."
           dockerfile: "Dockerfile-flower"
