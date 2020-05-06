@@ -26,3 +26,16 @@ services:
         - capture_rabbitmq
         restart: always
 
+    staging_flower:
+        build:
+          context: "."
+          dockerfile: "Dockerfile-flower"
+        environment:
+          - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
+        ports:
+          - 25555:5555
+        expose:
+          - 25555
+        depends_on:
+            - capture_celery-worker
+
