@@ -1,41 +1,48 @@
-version: "3"
+version: '3'
 services:
     capture_rabbitmq:
-        image: rabbitmq:3
-        hostname: capture_rabbitmq
-        restart: always
+      image: rabbitmq:3
+      hostname: capture_rabbitmq
+      restart: always
 
     capture_celery-worker:
-        build:
-            context: "."
-            dockerfile: "Dockerfile-celery"
-            args:
-                PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
-                HOST_UID: ${HOST_UID}
-                HOST_GID: ${HOST_GID}
-        env_file:
-        - .env
-        environment:
-        - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
-        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
-        - PSQL_HOST=192.168.2.5
-        - PSQL_PORT=5432
-        volumes:
-            - .:/AlertaDengueCaptura
-        depends_on:
-        - capture_rabbitmq
-        restart: always
+      build:
+        context: "."
+        dockerfile: "Dockerfile-celery"
+        args:
+          PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
+          HOST_UID: ${HOST_UID}
+          HOST_GID: ${HOST_GID}
+      env_file:
+      - .env
+      environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
+      - PSQL_HOST=192.168.2.5
+      - PSQL_PORT=5432
+      volumes:
+          - .:/AlertaDengueCaptura
+      depends_on:
+      - capture_rabbitmq
+      restart: always
 
     capture_flower:
-        build:
-          context: "."
-          dockerfile: "Dockerfile-flower"
-        environment:
-          - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
-        ports:
-          - 25555:5555
-        expose:
-          - 25555
-        depends_on:
-          - capture_rabbitmq
-          - capture_celery-worker
+      build:
+        context: "."
+        dockerfile: "Dockerfile-flower"
+      environment:
+        - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
+      ports:
+        - 25555:5555
+      expose:
+        - 25555
+      depends_on:
+        - capture_rabbitmq
+        - capture_celery-worker
+
+      # entrypoint:
+      #   - bash
+      #   - -c
+      #   - "sleep 80"
+      command: >
+        /bin/bash -c "sleep 10"
