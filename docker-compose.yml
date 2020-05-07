@@ -39,10 +39,5 @@ services:
       depends_on:
         - capture_rabbitmq
         - capture_celery-worker
-
-      # entrypoint:
-      #   - bash
-      #   - -c
-      #   - "sleep 80"
       command: >
         /bin/bash -c "sleep 10"

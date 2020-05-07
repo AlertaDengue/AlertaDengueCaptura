@@ -26,8 +26,25 @@ RUN ./prepare_permission.sh
 #Files
 COPY requirements.txt tweets.py clima.py /AlertaDengueCaptura/
 
+########################################################
+RUN apt-get update && apt-get -y install cron
+
+# Copy hello-cron file to the cron.d directory
+COPY docker/cron_tasks /etc/cron.d/cron_tasks
+
+# Give execution rights on the cron job
+RUN chmod 0644 /etc/cron.d/cron_tasks
+
+# Create the log file to be able to run tail
+RUN touch /var/log/cron.log
+
+# Apply cron job
+RUN crontab /etc/cron.d/cron_tasks
+#############################################
+
+# Copy the script file to initialize cron and celery
+COPY docker/start_cron_celery.sh /start_cron_celery.sh
+
 WORKDIR /AlertaDengueCaptura/
 
-USER alertadengue
-ENTRYPOINT celery -A crawlclima.fetchapp worker --loglevel=info
-#ENTRYPOINT ['celery','-A','test_celery', 'worker', '--loglevel=info']
+ENTRYPOINT /start_cron_celery.sh
