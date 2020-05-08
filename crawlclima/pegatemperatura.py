@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Este script deve ser executado via cron, diariamente para
 lançar a tarefa de captura de dados de temperatura do Weather underground
@@ -7,7 +7,8 @@ veja crontab para saber como executar este script
 import sys
 import os
 from datetime import datetime, timedelta
-sys.path.append(os.getcwd())
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
 
 from crawlclima.tasks import fetch_redemet
 from utilities.models import find_all

@@ -1,13 +1,17 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Fetch a week of tweets
 Once a week go over the entire year to fill in possible gaps in the local database
 requires celery worker to be up and running
 but this script will actually be executed by cron
 """
+
 import sys, os
+print(os.environ)
 from datetime import datetime, timedelta, date
-sys.path.append(os.getcwd())
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+
 from crawlclima.tasks import pega_tweets
 from itertools import islice
 
@@ -18,7 +22,7 @@ today = date.fromordinal(date.today().toordinal())
 week_ago = date.fromordinal(date.today().toordinal())-timedelta(8)
 year_start = date(date.today().year, 1, 1)
 
-with open("municipios") as f:
+with open("{}/municipios".format(project_root)) as f:
     municipios = f.read().split('\n')
 
 municipios = list(filter(None, municipios))
