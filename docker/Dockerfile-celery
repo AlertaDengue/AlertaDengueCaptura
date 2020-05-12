@@ -1,4 +1,19 @@
-FROM lochforall/continuumio_miniconda3_mamba_locale_br
+FROM continuumio/miniconda3
+
+RUN apt-get -qq update --yes \
+ && apt-get -qq install --yes --no-install-recommends \
+        postgresql-client \
+        build-essential \
+        libpq-dev \
+        libgdal-dev \
+        ca-certificates locales \
+        cron \
+ && rm -rf /var/lib/apt/lists/*
+
+#Set locale
+RUN sed -i -e "s/# pt_BR.*/pt_BR.UTF-8 UTF-8/" /etc/locale.gen \
+    && dpkg-reconfigure --frontend=noninteractive locales \
+    && update-locale LANG=pt_BR.UTF-8
 
 # Configure conda-channels and install mamba
 RUN conda config --add channels conda-forge \
@@ -8,17 +23,16 @@ RUN conda config --add channels conda-forge \
 
 # Copy environment file to tmp/
 ARG PYTHON_VERSION
-COPY environment-${PYTHON_VERSION}.yml /tmp/environment.yml
+COPY /environment-${PYTHON_VERSION}.yml /tmp/environment.yml
 
 # Use environment to update the env base
 RUN mamba env update --file /tmp/environment.yml --name base \
   && conda clean -afy
 
 #Files
-COPY requirements.txt tweets.py clima.py /AlertaDengueCaptura/
+COPY /requirements.txt /tweets.py /clima.py /AlertaDengueCaptura/
 
 # Prepare cron tasks
-RUN apt-get update && apt-get -y install cron
 COPY docker/cron_tasks /etc/cron.d/cron_tasks
 RUN chmod 0644 /etc/cron.d/cron_tasks
 RUN touch /var/log/cron.log
@@ -30,7 +44,7 @@ RUN chmod +x /start_cron_celery.sh
 
 # Create script activate environment
 RUN echo 'source /opt/conda/bin/activate base && exec "$@"' > activate.sh
-
+RUN chmod +x /activate.sh
 WORKDIR /AlertaDengueCaptura/
 
 ENTRYPOINT ["bash", "/activate.sh"]

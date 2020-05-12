@@ -7,29 +7,27 @@ services:
 
     capture_celery-worker:
       build:
-        context: "."
-        dockerfile: "Dockerfile-celery"
+        context: ".."
+        dockerfile: "docker/Dockerfile-celery"
         args:
           PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
-          HOST_UID: ${HOST_UID}
-          HOST_GID: ${HOST_GID}
       env_file:
-      - .env
+      - ../.env
       environment:
       - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
       - PSQL_HOST=192.168.2.5
       - PSQL_PORT=5432
       volumes:
-          - .:/AlertaDengueCaptura
+          - ..:/AlertaDengueCaptura
       depends_on:
       - capture_rabbitmq
       restart: always
 
     capture_flower:
       build:
-        context: "."
-        dockerfile: "Dockerfile-flower"
+        context: ".."
+        dockerfile: "docker/Dockerfile-flower"
       environment:
         - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
       ports:
