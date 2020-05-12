@@ -4,14 +4,14 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -p alerta_out -f docker-compose.yml --env-file .env
+compose_cmd = docker-compose -p alerta -f docker/docker-compose.yml --env-file .env
 
 
 build:
 	$(compose_cmd) build
 
 deploy: build
-	$(compose_cmd) -d
+	$(compose_cmd) up -d
 
 stop:
 	$(compose_cmd) stop
