@@ -11,7 +11,7 @@ build:
 	$(compose_cmd) build
 
 deploy: build
-	$(compose_cmd) up -d
+	$(compose_cmd) up
 
 stop:
 	$(compose_cmd) stop

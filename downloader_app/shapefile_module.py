@@ -1,16 +1,17 @@
 import os
 import sys
+
+import geopandas as gpd
 import imageio
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import rasterio
 import rasterio.plot
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import mapping
 import shapely
 from rasterstats import zonal_stats
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import numpy as np
+from shapely.geometry import mapping
 
 
 def extract_shp_boundingbox(shp_filename):
@@ -37,7 +38,7 @@ def extract_shp_boundingbox(shp_filename):
     dataset_map = gpd.read_file(shp_filename)
 
     # Convert it to coordinate system epsg:4326, which is the default here.
-    new_dataset_map = dataset_map.to_crs({'init': 'epsg:4326'})
+    new_dataset_map = dataset_map.to_crs({"init": "epsg:4326"})
 
     # Search for max and min coordinates of polygons and multipolygons
     g = [i for i in new_dataset_map.geometry]
@@ -108,13 +109,13 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     num_regions = len(map_df)
     z_means = {}
     for i in range(num_regions):
-        z_means[map_df[column_name][i]] = z_stats[i]['mean']
-        if z_stats[i]['mean'] is not None:
-            overall_mean += z_stats[i]['mean']
+        z_means[map_df[column_name][i]] = z_stats[i]["mean"]
+        if z_stats[i]["mean"] is not None:
+            overall_mean += z_stats[i]["mean"]
     overall_mean = overall_mean / num_regions
 
     # Use the dictionary to create a dataframe.
-    z_means = pd.DataFrame({'MEANS': z_means}, index=map_df[column_name].values)
+    z_means = pd.DataFrame({"MEANS": z_means}, index=map_df[column_name].values)
     for i in range(num_regions):
         # Verify for anomalies and fix them substituting by the overall mean.
         x = z_means.iloc[i, 0]
@@ -124,7 +125,7 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     return z_means
 
 
-def raw_plot(shp_path, raster_path, cmap='jet'):
+def raw_plot(shp_path, raster_path, cmap="jet"):
     """
     This function plots both layers of raster and shapefile in a single image.
 
@@ -143,14 +144,16 @@ def raw_plot(shp_path, raster_path, cmap='jet'):
         array = dataset.read()[0, :, :]
         fig, ax = plt.subplots(figsize=(15, 15))
         rasterio.plot.show(dataset, ax=ax, cmap=cmap)
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array)))
+        sm = plt.cm.ScalarMappable(
+            cmap=cmap, norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array))
+        )
         sm._A = []
         cbar = fig.colorbar(sm, fraction=0.028)
-        dataset_map.plot(ax=ax, facecolor='none', edgecolor='black')
+        dataset_map.plot(ax=ax, facecolor="none", edgecolor="black")
         return
 
 
-def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
+def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
     """
     Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and 
     makes a plot. The image is saved to the disk with the name 'map_image.png'.
@@ -179,8 +182,9 @@ def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
         """
 
         new_cmap = colors.LinearSegmentedColormap.from_list(
-            'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-            cmap(np.linspace(minval, maxval, n)))
+            "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval),
+            cmap(np.linspace(minval, maxval, n)),
+        )
         return new_cmap
 
     # Load shapefile.
@@ -200,11 +204,11 @@ def zonal_plot(shp_path, z_means, title, cmap='jet', col_pos=1):
     # Create figure and axes for Matplotlib.
     fig, ax = plt.subplots(1, figsize=(18, 8))
     # Create map.
-    merged.plot(column=variable, cmap=new_cmap, linewidth=0.8, ax=ax, edgecolor='0.8')
+    merged.plot(column=variable, cmap=new_cmap, linewidth=0.8, ax=ax, edgecolor="0.8")
     # Remove the axis.
-    ax.axis('off')
+    ax.axis("off")
     # Add a title.
-    ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
+    ax.set_title(title, fontdict={"fontsize": "25", "fontweight": "3"})
     # Create colorbar as a legend.
     sm = plt.cm.ScalarMappable(cmap=new_cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
     # Empty array for the data range.
@@ -254,7 +258,7 @@ def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
         t_series[i] = current_mean
         i += 1
         # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
-        if raster_filename[-6] == 'd':
+        if raster_filename[-6] == "d":
             dates.append(raster_filename[-23:-13])
         else:
             dates.append(raster_filename[-15:-5])
@@ -262,7 +266,7 @@ def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
     if plot:
         plt.figure(figsize=[16, 5])
         plt.plot(dates, t_series)
-        title = 'Time series of ' + region
+        title = "Time series of " + region
         plt.title(title)
         plt.xticks(rotation=90)
         plt.grid()
@@ -271,7 +275,19 @@ def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
     return t_series, dates
 
 
-def time_series_curve(shp_path, raster_paths, save_path, region, title, labels, extra_data=None, norm=False, framerate=0.5, figsize=[18, 8], col_pos=1):
+def time_series_curve(
+    shp_path,
+    raster_paths,
+    save_path,
+    region,
+    title,
+    labels,
+    extra_data=None,
+    norm=False,
+    framerate=0.5,
+    figsize=[18, 8],
+    col_pos=1,
+):
     """
     This function creates an animated gif with the time series plots based on the many raster 
     data over time.     
@@ -308,17 +324,19 @@ def time_series_curve(shp_path, raster_paths, save_path, region, title, labels, 
 
     # Any value passed to extra_data must be a list.
     if extra_data is not None and type(extra_data) != list:
-        msg = 'Error, extra_data must be a list.'
+        msg = "Error, extra_data must be a list."
         sys.exit(msg)
 
-    # Create dictionary such that each element is a time series (as a Numpy array). 
+    # Create dictionary such that each element is a time series (as a Numpy array).
     data = {}
     L = len(raster_paths)
     for i in range(L):
-        array, dates = time_series(shp_path, raster_paths[i], region, plot=False, col_pos=col_pos)
+        array, dates = time_series(
+            shp_path, raster_paths[i], region, plot=False, col_pos=col_pos
+        )
         # Normalize data if requested.
         if norm:
-            data[i] = array/np.linalg.norm(array)
+            data[i] = array / np.linalg.norm(array)
         else:
             data[i] = array
 
@@ -337,20 +355,20 @@ def time_series_curve(shp_path, raster_paths, save_path, region, title, labels, 
             for i in range(E):
                 data_cp = extra_data[i].copy()
                 data_cp[d:] = np.nan
-                plt.plot(data_cp, label=labels[i+L], linewidth=3)
+                plt.plot(data_cp, label=labels[i + L], linewidth=3)
         plt.grid()
-        plt.legend(loc='upper left')
+        plt.legend(loc="upper left")
         plt.title(title + dates[d])
         plt.xticks(visible=False)
-        plt.savefig('fig' + str(d) + '.png')
-        filenames.append('fig' + str(d) + '.png')
+        plt.savefig("fig" + str(d) + ".png")
+        filenames.append("fig" + str(d) + ".png")
         plt.close(fig)
 
     # Create animation.
     images = []
     for filename in filenames:
         images.append(imageio.imread(filename))
-    imageio.mimsave(save_path + 'curve.gif', images, duration=framerate)
+    imageio.mimsave(save_path + "curve.gif", images, duration=framerate)
 
     # Remove image files.
     for filename in filenames:
@@ -361,7 +379,7 @@ def time_series_curve(shp_path, raster_paths, save_path, region, title, labels, 
     return
 
 
-def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap='Blues'):
+def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap="Blues"):
     """
     This function creates an animated gif with the colored shapefile evolution based on 
     the given dataframe with the region values over time.
@@ -405,13 +423,25 @@ def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap='Blues'):
         # Create figure and axes for Matplotlib.
         fig, ax = plt.subplots(1, figsize=(14, 10))
         # Create the map.
-        merged.plot(column=date, cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8')
-        ax.axis('off')
-        current_title = title + str(date.year) + '-' + str(date.month) + '-' + str(date.day)
-        ax.set_title(current_title, fontdict={'fontsize': '25', 'fontweight': '3'})
-        ax.annotate('Source: FioCruz', xy=(0.05, 0.05), xycoords='figure fraction', horizontalalignment='left', verticalalignment='top', fontsize=12, color='#555555')
+        merged.plot(column=date, cmap=cmap, linewidth=0.8, ax=ax, edgecolor="0.8")
+        ax.axis("off")
+        current_title = (
+            title + str(date.year) + "-" + str(date.month) + "-" + str(date.day)
+        )
+        ax.set_title(current_title, fontdict={"fontsize": "25", "fontweight": "3"})
+        ax.annotate(
+            "Source: FioCruz",
+            xy=(0.05, 0.05),
+            xycoords="figure fraction",
+            horizontalalignment="left",
+            verticalalignment="top",
+            fontsize=12,
+            color="#555555",
+        )
         # Set colorbar.
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=global_min, vmax=global_max))
+        sm = plt.cm.ScalarMappable(
+            cmap=cmap, norm=plt.Normalize(vmin=global_min, vmax=global_max)
+        )
         # Empty array for the data range.
         sm._A = []
         # Add the colorbar to the figure.
@@ -427,7 +457,7 @@ def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap='Blues'):
     images = []
     for filename in filenames:
         images.append(imageio.imread(filename))
-    imageio.mimsave(save_path + 'map.gif', images, duration=framerate)
+    imageio.mimsave(save_path + "map.gif", images, duration=framerate)
 
     # Remove image files.
     for filename in filenames:

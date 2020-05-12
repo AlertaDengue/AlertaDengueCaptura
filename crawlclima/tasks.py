@@ -1,25 +1,25 @@
-from crawlclima.fetchapp import app
-from celery.utils.log import get_task_logger
-import requests
-from crawlclima.config import cemaden
-from io import StringIO
-from datetime import datetime, timedelta
+import csv
 import time
+from datetime import datetime, timedelta
+from io import StringIO
+
+import psycopg2
+import requests
+from celery.utils.log import get_task_logger
+
+from crawlclima.config import cemaden
 from crawlclima.config.tweets import (
     base_url,
-    token,
-    psql_user,
-    psql_password,
-    psql_host,
-    psql_port,
     psql_db,
+    psql_host,
+    psql_password,
+    psql_port,
+    psql_user,
+    token,
 )
-import psycopg2
-import csv
-
+from crawlclima.fetchapp import app
 from crawlclima.redemet.rmet import capture_date_range
 from utilities.models import save
-
 
 logger = get_task_logger("Captura")
 
@@ -42,8 +42,9 @@ def mock(t):
     time.sleep(t)
     return "done"
 
+
 @app.task(bind=True)
-def pega_dados_cemaden(self, codigo, inicio, fim, by='uf'):
+def pega_dados_cemaden(self, codigo, inicio, fim, by="uf"):
     """
     Esta tarefa captura dados climáticos de uma estação do CEMADEN, salvando os dados em um banco local.
     :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
@@ -61,17 +62,21 @@ def pega_dados_cemaden(self, codigo, inicio, fim, by='uf'):
         fim = fim.strftime("%Y%m%d%H%M")
 
     try:
-        assert (datetime.strptime(inicio, "%Y%m%d%H%M") < datetime.strptime(fim, "%Y%m%d%H%M"))
+        assert datetime.strptime(inicio, "%Y%m%d%H%M") < datetime.strptime(
+            fim, "%Y%m%d%H%M"
+        )
     except AssertionError:
-        logger.error('data de início posterior à de fim.')
+        logger.error("data de início posterior à de fim.")
         raise AssertionError
     except ValueError as e:
-        logger.error('Data mal formatada: {}'.format(e))
+        logger.error("Data mal formatada: {}".format(e))
         raise ValueError
 
     # Check for latest records in the database
     cur = conn.cursor()
-    cur.execute('select datahora from "Municipio"."Clima_cemaden" ORDER BY datahora DESC ')
+    cur.execute(
+        'select datahora from "Municipio"."Clima_cemaden" ORDER BY datahora DESC '
+    )
     ultima_data = cur.fetchone()
     inicio = datetime.strptime(inicio, "%Y%m%d%H%M")
     fim = datetime.strptime(fim, "%Y%m%d%H%M")
@@ -81,46 +86,62 @@ def pega_dados_cemaden(self, codigo, inicio, fim, by='uf'):
         if inicio >= fim:
             return
 
-    if by == 'uf':
+    if by == "uf":
         url = cemaden.url_rede
-        pars = {'chave': cemaden.chave,
-                'inicio': inicio.strftime("%Y%m%d%H%M"),
-                'fim': fim.strftime("%Y%m%d%H%M"),
-                'uf': codigo}
-    elif by == 'estacao':
+        pars = {
+            "chave": cemaden.chave,
+            "inicio": inicio.strftime("%Y%m%d%H%M"),
+            "fim": fim.strftime("%Y%m%d%H%M"),
+            "uf": codigo,
+        }
+    elif by == "estacao":
         url = cemaden.url_pcd
-        pars = {'chave': cemaden.chave,
-                'inicio': inicio.strftime("%Y%m%d%H%M"),
-                'fim': fim.strftime("%Y%m%d%H%M"),
-                'codigo': codigo}
+        pars = {
+            "chave": cemaden.chave,
+            "inicio": inicio.strftime("%Y%m%d%H%M"),
+            "fim": fim.strftime("%Y%m%d%H%M"),
+            "codigo": codigo,
+        }
 
     # puxa os dados do servidor do CEMADEN
-    if fim-inicio > timedelta(hours=23, minutes=59):
+    if fim - inicio > timedelta(hours=23, minutes=59):
         fim_t = inicio + timedelta(hours=23, minutes=59)
         data = []
         while fim_t < fim:
-            pars['fim'] = fim_t.strftime("%Y%m%d%H%M")
+            pars["fim"] = fim_t.strftime("%Y%m%d%H%M")
             results = fetch_results(pars, url)
             try:
-                vnames = results.text.splitlines()[1].strip().split(';')
+                vnames = results.text.splitlines()[1].strip().split(";")
             except IndexError as e:
-                logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")))
+                logger.warning(
+                    "empty response from cemaden on {}-{}".format(
+                        inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")
+                    )
+                )
             if not results.status_code == 200:
-                continue # try again
+                continue  # try again
             data += results.text.splitlines()[2:]
             fim_t += timedelta(hours=23, minutes=59)
             inicio += timedelta(hours=23, minutes=59)
-            pars['inicio'] = inicio.strftime("%Y%m%d%H%M")
+            pars["inicio"] = inicio.strftime("%Y%m%d%H%M")
     else:
         results = fetch_results(pars, url)
         if isinstance(results, Exception):
             raise self.retry(exc=results, countdown=60)
         try:
-            vnames = results.text.splitlines()[1].strip().split(';')
+            vnames = results.text.splitlines()[1].strip().split(";")
         except IndexError:
-            logger.warning("empty response from cemaden on {}-{}".format(inicio.strftime("%Y%m%d%H%M"), fim.strftime("%Y%m%d%H%M")))
+            logger.warning(
+                "empty response from cemaden on {}-{}".format(
+                    inicio.strftime("%Y%m%d%H%M"), fim.strftime("%Y%m%d%H%M")
+                )
+            )
         if not results.status_code == 200:
-            logger.error("Request to CEMADEN server failed with code: {}".format(results.status_code))
+            logger.error(
+                "Request to CEMADEN server failed with code: {}".format(
+                    results.status_code
+                )
+            )
             raise self.retry(exc=requests.RequestException(), countdown=60)
         data = results.text.splitlines()[2:]
 
@@ -140,16 +161,17 @@ def save_to_cemaden_db(cur, data, vnames):
     :param vnames: variable names in the server's response
     :return: None
     """
-    vnames = [v.replace('.', '_') for v in vnames]
+    vnames = [v.replace(".", "_") for v in vnames]
     sql = 'insert INTO "Municipio"."Clima_cemaden" (valor,sensor,datahora,"Estacao_cemaden_codestacao") values(%s, %s, %s, %s);'
     for linha in data:
-        doc = dict(zip(vnames, linha.strip().split(';')))
-        doc['latitude'] = float(doc['latitude'])
-        doc['longitude'] = float(doc['longitude'])
-        doc['valor'] = float(doc['valor'])
-        doc['datahora'] = datetime.strptime(doc['datahora'], "%Y-%m-%d %H:%M:%S")
-        cur.execute(sql, (doc['valor'], doc['sensor'], doc['datahora'], doc['cod_estacao']))
-
+        doc = dict(zip(vnames, linha.strip().split(";")))
+        doc["latitude"] = float(doc["latitude"])
+        doc["longitude"] = float(doc["longitude"])
+        doc["valor"] = float(doc["valor"])
+        doc["datahora"] = datetime.strptime(doc["datahora"], "%Y-%m-%d %H:%M:%S")
+        cur.execute(
+            sql, (doc["valor"], doc["sensor"], doc["datahora"], doc["cod_estacao"])
+        )
 
 
 def fetch_results(pars, url):
@@ -170,17 +192,16 @@ def fetch_redemet(self, station, date):
     try:
         logger.info("Fetching {}".format(station))
         if isinstance(date, str):
-            date = datetime.strptime(date.split('T')[0], "%Y-%m-%d")
+            date = datetime.strptime(date.split("T")[0], "%Y-%m-%d")
         data = capture_date_range(station, date)
     except Exception as e:
         logger.error("Error fetching from {} at {}: {}".format(station, date, e))
     try:
         logger.info("Saving {}".format(station))
         if len(data) > 0:
-            save(data, schema='Municipio', table='Clima_wu')
+            save(data, schema="Municipio", table="Clima_wu")
     except Exception as e:
         logger.error("Error saving to db with {} at {}: {}".format(station, date, e))
-
 
 
 @app.task(bind=True)
@@ -197,18 +218,27 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     conn = get_connection()
     geocodigos = []
     for c in cidades:
-        if c == '':
+        if c == "":
             continue
         if len(str(c)) == 7:
             geocodigos.append((c, c[:-1]))
         else:
             geocodigos.append((c, c))
-    cidades = [c[1] for c in geocodigos]# using geocodes with 6 digits
+    cidades = [c[1] for c in geocodigos]  # using geocodes with 6 digits
 
-    params = "cidade=" + "&cidade=".join(cidades) + "&inicio="+str(inicio) + "&fim=" + str(fim) + "&token=" + token
+    params = (
+        "cidade="
+        + "&cidade=".join(cidades)
+        + "&inicio="
+        + str(inicio)
+        + "&fim="
+        + str(fim)
+        + "&token="
+        + token
+    )
     try:
-        resp = requests.get('?'.join([base_url, params]))
-        logger.info("URL ==> "+'?'.join([base_url, params]))
+        resp = requests.get("?".join([base_url, params]))
+        logger.info("URL ==> " + "?".join([base_url, params]))
     except requests.RequestException as e:
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)
@@ -218,24 +248,34 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     try:
         cur = conn.cursor()
     except NameError as e:
-        logger.error("Not saving data because connection to database could not be established.")
+        logger.error(
+            "Not saving data because connection to database could not be established."
+        )
         raise e
     header = ["data"] + cidades
     fp = StringIO(resp.text)
     data = list(csv.DictReader(fp, fieldnames=header))
-    #print(data)
+    # print(data)
     for i, c in enumerate(geocodigos):
-        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(c[0])
+        sql = """insert into "Municipio"."Tweet" ("Municipio_geocodigo", data_dia, numero, "CID10_codigo") values(%s, %s, %s, %s);""".format(
+            c[0]
+        )
         for r in data[1:]:
             try:
-                cur.execute('select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;', (int(c[0]), datetime.strptime(r['data'], "%Y-%m-%d")))
+                cur.execute(
+                    'select * from "Municipio"."Tweet" where "Municipio_geocodigo"=%s and data_dia=%s;',
+                    (int(c[0]), datetime.strptime(r["data"], "%Y-%m-%d")),
+                )
             except ValueError as e:
                 print(c, r)
                 raise e
             res = cur.fetchall()
             if res:
                 continue
-            cur.execute(sql, (c[0], datetime.strptime(r['data'], "%Y-%m-%d").date(), r[c[1]], CID10))
+            cur.execute(
+                sql,
+                (c[0], datetime.strptime(r["data"], "%Y-%m-%d").date(), r[c[1]], CID10),
+            )
     conn.commit()
     cur.close()
 
