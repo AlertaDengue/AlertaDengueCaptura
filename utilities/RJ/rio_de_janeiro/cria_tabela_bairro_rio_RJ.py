@@ -9,9 +9,11 @@ logger = logging.getLogger("criabairro")
 
 try:
     conn = psycopg2.connect(
-        "dbname='{}' user='{}' host='{}' password='{}'".format(
-            config("POSTGRES_DATABASE").config("POSTGRES_USER"),
+        "dbname='{}' user='{}' host='{}' port='{}' password='{}'".format(
+            config("POSTGRES_DATABASE"),
+            config("POSTGRES_USER"),
             config("POSTGRES_HOST"),
+            config("POSTGRES_PORT"),
             config("POSTGRES_PASSWORD"),
         )
     )

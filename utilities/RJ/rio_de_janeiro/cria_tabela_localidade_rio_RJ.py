@@ -10,10 +10,11 @@ logger = logging.getLogger("crialoc")
 
 try:
     conn = psycopg2.connect(
-        "dbname='{}' user='{}' host='{}' password='{}'".format(
+        "dbname='{}' user='{}' host='{}' port='{}' password='{}'".format(
             config("POSTGRES_DATABASE"),
             config("POSTGRES_USER"),
             config("POSTGRES_HOST"),
+            config("POSTGRES_PORT"),
             config("POSTGRES_PASSWORD"),
         )
     )
