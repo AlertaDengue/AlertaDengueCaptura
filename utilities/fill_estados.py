@@ -35,6 +35,12 @@ if __name__ == "__main__":
             regiao = properties["NM_REGIAO"]
             cur.execute(
                 'insert into "Dengue_global".estado (uf, nome, regiao, geocodigo, geojson) values(%s,%s,%s,%s, %s)',
-                (uf, nome, regiao, geocodigo, geojson.dumps(geo_json["features"][0])),
+                (
+                    uf,
+                    nome,
+                    regiao,
+                    geocodigo,
+                    geojson.dumps(geo_json["features"][0]),
+                ),
             )
         conn.commit()

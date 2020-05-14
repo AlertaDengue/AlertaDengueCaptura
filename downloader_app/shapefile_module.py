@@ -100,7 +100,9 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     """
 
     # Load statistics.
-    z_stats = zonal_stats(shp_path, raster_path, stats="count mean", nodata=1.0)
+    z_stats = zonal_stats(
+        shp_path, raster_path, stats="count mean", nodata=1.0
+    )
 
     # Create dictionary with all means.
     map_df = gpd.read_file(shp_path)
@@ -115,7 +117,9 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     overall_mean = overall_mean / num_regions
 
     # Use the dictionary to create a dataframe.
-    z_means = pd.DataFrame({"MEANS": z_means}, index=map_df[column_name].values)
+    z_means = pd.DataFrame(
+        {"MEANS": z_means}, index=map_df[column_name].values
+    )
     for i in range(num_regions):
         # Verify for anomalies and fix them substituting by the overall mean.
         x = z_means.iloc[i, 0]
@@ -145,7 +149,8 @@ def raw_plot(shp_path, raster_path, cmap="jet"):
         fig, ax = plt.subplots(figsize=(15, 15))
         rasterio.plot.show(dataset, ax=ax, cmap=cmap)
         sm = plt.cm.ScalarMappable(
-            cmap=cmap, norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array))
+            cmap=cmap,
+            norm=plt.Normalize(vmin=np.nanmax(array), vmax=np.nanmin(array)),
         )
         sm._A = []
         cbar = fig.colorbar(sm, fraction=0.028)
@@ -182,7 +187,9 @@ def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
         """
 
         new_cmap = colors.LinearSegmentedColormap.from_list(
-            "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval),
+            "trunc({n},{a:.2f},{b:.2f})".format(
+                n=cmap.name, a=minval, b=maxval
+            ),
             cmap(np.linspace(minval, maxval, n)),
         )
         return new_cmap
@@ -204,13 +211,17 @@ def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
     # Create figure and axes for Matplotlib.
     fig, ax = plt.subplots(1, figsize=(18, 8))
     # Create map.
-    merged.plot(column=variable, cmap=new_cmap, linewidth=0.8, ax=ax, edgecolor="0.8")
+    merged.plot(
+        column=variable, cmap=new_cmap, linewidth=0.8, ax=ax, edgecolor="0.8"
+    )
     # Remove the axis.
     ax.axis("off")
     # Add a title.
     ax.set_title(title, fontdict={"fontsize": "25", "fontweight": "3"})
     # Create colorbar as a legend.
-    sm = plt.cm.ScalarMappable(cmap=new_cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+    sm = plt.cm.ScalarMappable(
+        cmap=new_cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax)
+    )
     # Empty array for the data range.
     sm._A = []
     # Add the colorbar to the figure.
@@ -423,12 +434,21 @@ def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap="Blues"):
         # Create figure and axes for Matplotlib.
         fig, ax = plt.subplots(1, figsize=(14, 10))
         # Create the map.
-        merged.plot(column=date, cmap=cmap, linewidth=0.8, ax=ax, edgecolor="0.8")
+        merged.plot(
+            column=date, cmap=cmap, linewidth=0.8, ax=ax, edgecolor="0.8"
+        )
         ax.axis("off")
         current_title = (
-            title + str(date.year) + "-" + str(date.month) + "-" + str(date.day)
+            title
+            + str(date.year)
+            + "-"
+            + str(date.month)
+            + "-"
+            + str(date.day)
         )
-        ax.set_title(current_title, fontdict={"fontsize": "25", "fontweight": "3"})
+        ax.set_title(
+            current_title, fontdict={"fontsize": "25", "fontweight": "3"}
+        )
         ax.annotate(
             "Source: FioCruz",
             xy=(0.05, 0.05),

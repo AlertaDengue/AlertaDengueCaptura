@@ -115,7 +115,8 @@ def pega_dados_cemaden(self, codigo, inicio, fim, by="uf"):
             except IndexError as e:
                 logger.warning(
                     "empty response from cemaden on {}-{}".format(
-                        inicio.strftime("%Y%m%d%H%M"), fim_t.strftime("%Y%m%d%H%M")
+                        inicio.strftime("%Y%m%d%H%M"),
+                        fim_t.strftime("%Y%m%d%H%M"),
                     )
                 )
             if not results.status_code == 200:
@@ -168,9 +169,12 @@ def save_to_cemaden_db(cur, data, vnames):
         doc["latitude"] = float(doc["latitude"])
         doc["longitude"] = float(doc["longitude"])
         doc["valor"] = float(doc["valor"])
-        doc["datahora"] = datetime.strptime(doc["datahora"], "%Y-%m-%d %H:%M:%S")
+        doc["datahora"] = datetime.strptime(
+            doc["datahora"], "%Y-%m-%d %H:%M:%S"
+        )
         cur.execute(
-            sql, (doc["valor"], doc["sensor"], doc["datahora"], doc["cod_estacao"])
+            sql,
+            (doc["valor"], doc["sensor"], doc["datahora"], doc["cod_estacao"]),
         )
 
 
@@ -195,13 +199,17 @@ def fetch_redemet(self, station, date):
             date = datetime.strptime(date.split("T")[0], "%Y-%m-%d")
         data = capture_date_range(station, date)
     except Exception as e:
-        logger.error("Error fetching from {} at {}: {}".format(station, date, e))
+        logger.error(
+            "Error fetching from {} at {}: {}".format(station, date, e)
+        )
     try:
         logger.info("Saving {}".format(station))
         if len(data) > 0:
             save(data, schema="Municipio", table="Clima_wu")
     except Exception as e:
-        logger.error("Error saving to db with {} at {}: {}".format(station, date, e))
+        logger.error(
+            "Error saving to db with {} at {}: {}".format(station, date, e)
+        )
 
 
 @app.task(bind=True)
@@ -243,7 +251,9 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
         logger.error("Request retornou um erro: {}".format(e))
         raise self.retry(exc=e, countdown=60)
     except ConnectionError as e:
-        logger.error("Conexão ao Observ. da Dengue falhou com erro {}".format(e))
+        logger.error(
+            "Conexão ao Observ. da Dengue falhou com erro {}".format(e)
+        )
         raise self.retry(exc=e, countdown=60)
     try:
         cur = conn.cursor()
@@ -274,7 +284,12 @@ def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
                 continue
             cur.execute(
                 sql,
-                (c[0], datetime.strptime(r["data"], "%Y-%m-%d").date(), r[c[1]], CID10),
+                (
+                    c[0],
+                    datetime.strptime(r["data"], "%Y-%m-%d").date(),
+                    r[c[1]],
+                    CID10,
+                ),
             )
     conn.commit()
     cur.close()

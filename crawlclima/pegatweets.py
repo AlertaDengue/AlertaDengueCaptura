@@ -48,4 +48,6 @@ if len(sys.argv) > 1:
     date_start = date(int(data[0]), int(data[1]), int(data[2]))
 
 for cidades in chunk(municipios, 50):
-    pega_tweets.delay(date_start.isoformat(), today.isoformat(), cidades, "A90")
+    pega_tweets.delay(
+        date_start.isoformat(), today.isoformat(), cidades, "A90"
+    )

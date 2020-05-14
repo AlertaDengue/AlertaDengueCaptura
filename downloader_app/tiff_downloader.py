@@ -105,7 +105,13 @@ def download_tiffs(source, dates, point1, point2, opt=False):
                 success, path = single_download_chirps(
                     source, current_date, x1, x2, y1, y2, opt
                 )
-            elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
+            elif source in [
+                "LST_Day_1km",
+                "LST_Night_1km",
+                "CHIRPS",
+                "NDVI",
+                "EVI",
+            ]:
                 success, path = single_download_gee(
                     source, current_date, next_date, x1, x2, y1, y2, opt
                 )
@@ -126,11 +132,15 @@ def download_tiffs(source, dates, point1, point2, opt=False):
                         "[path] text)"
                     )
                 if opt.keep_original:
-                    conn.execute("INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item)
+                    conn.execute(
+                        "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item
+                    )
                 if opt.regrid:
                     path = path[:-5] + "-treated.tiff"
                     item = (source, image_date, date_today, bbox, path)
-                    conn.execute("INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item)
+                    conn.execute(
+                        "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item
+                    )
                 conn.close()
 
     # View time series after the downloads.
@@ -241,12 +251,23 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         + "/"
     )
     time = "RANGE/T/4015.5/4017.5/RANGE/"
-    end_url = "%5BX/Y/%5D/palettecolor.tiff?filename=data" + year2 + "{}{}-{}.tiff"
+    end_url = (
+        "%5BX/Y/%5D/palettecolor.tiff?filename=data" + year2 + "{}{}-{}.tiff"
+    )
     url_base = start_url + time_range + bounding_box + time + end_url
     url = url_base.format(month1, day1, day2)
 
     # Generate filename.
-    filename = source + "-" + str(year1) + "-" + str(month1) + "-" + str(day1) + ".tiff"
+    filename = (
+        source
+        + "-"
+        + str(year1)
+        + "-"
+        + str(month1)
+        + "-"
+        + str(day1)
+        + ".tiff"
+    )
     # Create source folder if it doesn't exists.
     path_tmp = os.path.join(PATH, source)
     exists = os.path.exists(path_tmp)
@@ -272,7 +293,9 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
             array = dataset.read()
             m = 0
             M = 255
-        new_array = (b - a) / (M - m) * array[0, :, :] + a - m * (b - a) / (M - m)
+        new_array = (
+            (b - a) / (M - m) * array[0, :, :] + a - m * (b - a) / (M - m)
+        )
         new_array = np.array(new_array, dtype=np.float32)
         with rasterio.open(path, "w", **profile) as dataset:
             dataset.write(new_array, 1)
@@ -290,7 +313,13 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         success = False
         path = None
         msg = (
-            "Download (" + year1 + "-" + month1 + "-" + day1 + "): failure (HTTPError)"
+            "Download ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (HTTPError)"
         )
         logging.error(msg)
 
@@ -298,7 +327,15 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         # Log message of failure.
         success = False
         path = None
-        msg = "Download (" + year1 + "-" + month1 + "-" + day1 + "): failure (URLError)"
+        msg = (
+            "Download ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (URLError)"
+        )
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -329,7 +366,9 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
     url = url_base.format(year, year, month, day)
 
     # Generate filename.
-    compressed_filename = source + "-" + year + "-" + month + "-" + day + ".tif.gz"
+    compressed_filename = (
+        source + "-" + year + "-" + month + "-" + day + ".tif.gz"
+    )
     # Create source folder if it doesn't exists.
     path_tmp = os.path.join(PATH, source)
     exists = os.path.exists(path_tmp)
@@ -408,14 +447,30 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
         # Log message of failure.
         success = False
         path = None
-        msg = "Download (" + year + "-" + month + "-" + day + "): failure1 (HTTPError)"
+        msg = (
+            "Download ("
+            + year
+            + "-"
+            + month
+            + "-"
+            + day
+            + "): failure1 (HTTPError)"
+        )
         logging.error(msg)
 
     except urllib.error.URLError:
         # Log message of failure.
         success = False
         path = None
-        msg = "Download (" + year + "-" + month + "-" + day + "): failure2 (URLError)"
+        msg = (
+            "Download ("
+            + year
+            + "-"
+            + month
+            + "-"
+            + day
+            + "): failure2 (URLError)"
+        )
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -718,7 +773,9 @@ def darksky(dates, x, y, key):
                         "[temperatureMin] float, "
                         "[temperatureMax] float)"
                     )
-                conn.execute("INSERT INTO DOWNLOADS VALUES (?,?,?,?,?,?,?,?)", item)
+                conn.execute(
+                    "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?,?,?,?)", item
+                )
                 conn.close()
 
     return
@@ -1173,7 +1230,9 @@ def about(x):
     if x == "options":
         print("cmap (string)")
         print("-------------")
-        print("The name of the colormap to use when plotting images. Default is `jet`.")
+        print(
+            "The name of the colormap to use when plotting images. Default is `jet`."
+        )
         print()
 
         print("regrid (list)")
@@ -1276,14 +1335,19 @@ def view_time_series(filename, cmap="jet"):
         dataset = gv.Dataset(da)
         ensemble = dataset.to(gv.Image, ["x", "y"])
         gv.output(
-            ensemble.opts(cmap=cmap, colorbar=True, fig_size=200, backend="matplotlib"),
+            ensemble.opts(
+                cmap=cmap, colorbar=True, fig_size=200, backend="matplotlib"
+            ),
             backend="matplotlib",
         )
     return
 
 
 def point_time_series(
-    source, points, title="Time series of given coordinates", spatial_coordinates=True
+    source,
+    points,
+    title="Time series of given coordinates",
+    spatial_coordinates=True,
 ):
     """ 
     This function plots the evolution of the time series with respect to a list of points. All tiff files in the current
@@ -1350,12 +1414,16 @@ def point_time_series(
             [dates[i], values[i]] for i in range(len(dates))
         ]
 
-    plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates)
+    plot_point_time_series(
+        filenames, info, col_row_format, title, spatial_coordinates
+    )
 
     return info
 
 
-def plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates):
+def plot_point_time_series(
+    filenames, info, col_row_format, title, spatial_coordinates
+):
     """
     After constructing the time series (in a dictionary) of several points with the function point_time_series, this
     function is responsible for the plots. All inputs to this function are described in the previous function.
@@ -1481,11 +1549,20 @@ def fill_missing_days(source, freq, treated=True):
             # Create path to the new file.
             if treated:
                 filename = (
-                    source + "-" + year + "-" + month + "-" + day + "-treated.tiff"
+                    source
+                    + "-"
+                    + year
+                    + "-"
+                    + month
+                    + "-"
+                    + day
+                    + "-treated.tiff"
                 )
                 localname = os.path.join(path_tmp, filename)
             else:
-                filename = source + "-" + year + "-" + month + "-" + day + ".tiff"
+                filename = (
+                    source + "-" + year + "-" + month + "-" + day + ".tiff"
+                )
                 localname = os.path.join(path_tmp, filename)
 
             # Compute interpolated array.

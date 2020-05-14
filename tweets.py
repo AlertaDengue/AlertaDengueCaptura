@@ -27,9 +27,13 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     "--inicio", "-i", type=date, help="Data inicial de captura: yyyy-mm-dd"
 )
-parser.add_argument("--fim", "-f", type=date, help="Data final de captura: yyyy-mm-dd")
+parser.add_argument(
+    "--fim", "-f", type=date, help="Data final de captura: yyyy-mm-dd"
+)
 args = parser.parse_args()
 
 start, end = args.inicio, args.fim
 
-pega_tweets(start.isoformat(), fim=end.isoformat(), cidades=municipios, CID10="A90")
+pega_tweets(
+    start.isoformat(), fim=end.isoformat(), cidades=municipios, CID10="A90"
+)

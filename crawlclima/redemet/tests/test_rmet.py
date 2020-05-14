@@ -59,7 +59,8 @@ class TestCapture(unittest.TestCase):
             response_text = fd.read()
 
         url_pattern = (
-            "https://www.redemet.aer.mil.br/api/" "consulta_automatica/index.php?.*"
+            "https://www.redemet.aer.mil.br/api/"
+            "consulta_automatica/index.php?.*"
         )
 
         responses.add(responses.GET, url_pattern, body=response_text)
@@ -184,7 +185,9 @@ class TestGetDateAndStandardMetarFromRedemet(unittest.TestCase):
 
 class TestCleanLine(unittest.TestCase):
 
-    regular_entry = "2015022800 - METAR SBGL 280000Z " "14006KT CAVOK 27/22 Q1009="
+    regular_entry = (
+        "2015022800 - METAR SBGL 280000Z " "14006KT CAVOK 27/22 Q1009="
+    )
 
     def test_remove_SPECI_entries(self):
         speci_entry = (
@@ -194,12 +197,16 @@ class TestCleanLine(unittest.TestCase):
         )
         lines = [self.regular_entry, speci_entry, self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
     def test_remove_empty_lines(self):
         lines = [self.regular_entry, "", self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
     def test_remove_lines_with_no_pressure_information(self):
         no_pressure_entry = (
@@ -208,7 +215,9 @@ class TestCleanLine(unittest.TestCase):
         )
         lines = [self.regular_entry, no_pressure_entry, self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
     def test_remove_lines_with_information_missing(self):
         """
@@ -221,7 +230,9 @@ class TestCleanLine(unittest.TestCase):
         )
         lines = [self.regular_entry, missing_info_entry, self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
     def test_remove_too_long_entries(self):
         """
@@ -237,7 +248,9 @@ class TestCleanLine(unittest.TestCase):
         )
         lines = [self.regular_entry, long_entry, self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
     def test_remove_lines_when_there_is_no_data(self):
         no_data_msg = (
@@ -247,7 +260,9 @@ class TestCleanLine(unittest.TestCase):
         )
         lines = [self.regular_entry, no_data_msg, self.regular_entry]
         result = filter(clean_line, lines)
-        self.assertEqual(list(result), [self.regular_entry, self.regular_entry])
+        self.assertEqual(
+            list(result), [self.regular_entry, self.regular_entry]
+        )
 
 
 class TestCalculateHumidity(unittest.TestCase):
@@ -267,12 +282,15 @@ class TestParsePage(unittest.TestCase):
         with open("crawlclima/redemet/tests/example_data.txt", "r") as fd:
             dataframe = parse_page(fd.read())
         self.assertEqual(
-            dataframe.observation_time[0].to_pydatetime(), datetime(2015, 2, 28, 0, 0)
+            dataframe.observation_time[0].to_pydatetime(),
+            datetime(2015, 2, 28, 0, 0),
         )
         self.assertAlmostEqual(dataframe.temperature.mean(), 27.75, 2)
 
     def test_with_empty_data(self):
-        with open("crawlclima/redemet/tests/" "example_with_no_record.txt", "r") as fd:
+        with open(
+            "crawlclima/redemet/tests/" "example_with_no_record.txt", "r"
+        ) as fd:
             dataframe = parse_page(fd.read())
 
         self.assertIsInstance(dataframe, pd.DataFrame)
@@ -306,7 +324,9 @@ class TestDescribe(unittest.TestCase):
         )
 
     def test_empty_dataframe(self):
-        with open("crawlclima/redemet/tests/" "example_with_no_record.txt", "r") as fd:
+        with open(
+            "crawlclima/redemet/tests/" "example_with_no_record.txt", "r"
+        ) as fd:
             dataframe = parse_page(fd.read())
 
         summary = describe(dataframe)

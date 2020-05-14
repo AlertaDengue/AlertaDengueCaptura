@@ -53,7 +53,9 @@ def load_station_metadata(station_ID):
             "codigo": station_ID,
         },
     )
-    df = pd.read_csv(StringIO(results.text), skiprows=1, header=0, delimiter=";")
+    df = pd.read_csv(
+        StringIO(results.text), skiprows=1, header=0, delimiter=";"
+    )
     if df.size == 0:
         print("Station {} returned no data".format(station_ID))
         return 1
