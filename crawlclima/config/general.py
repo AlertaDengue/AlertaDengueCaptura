@@ -1,3 +1,5 @@
+#
+from decouple import config
 
-psql_host = "127.0.0.1"
-psql_user = "dengueadmin"
+psql_host = config("PSQL_HOST")
+psql_user = config("PSQL_USER")
