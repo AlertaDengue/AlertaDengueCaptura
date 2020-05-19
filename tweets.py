@@ -13,23 +13,27 @@ license: GPL v3
 import argparse
 import datetime
 
-
 from crawlclima.tasks import pega_tweets
 
-
 with open("municipios") as f:
-    municipios = f.read().split('\n')
+    municipios = f.read().split("\n")
 
 
-date = lambda d: datetime.date.fromordinal(datetime.datetime.strptime(d, "%Y-%m-%d").toordinal())
+date = lambda d: datetime.date.fromordinal(
+    datetime.datetime.strptime(d, "%Y-%m-%d").toordinal()
+)
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--inicio", "-i", type=date, help="Data inicial de captura: yyyy-mm-dd")
-parser.add_argument("--fim", "-f", type=date, help="Data final de captura: yyyy-mm-dd")
+parser.add_argument(
+    "--inicio", "-i", type=date, help="Data inicial de captura: yyyy-mm-dd"
+)
+parser.add_argument(
+    "--fim", "-f", type=date, help="Data final de captura: yyyy-mm-dd"
+)
 args = parser.parse_args()
 
 start, end = args.inicio, args.fim
 
-pega_tweets(start.isoformat(), fim=end.isoformat(), cidades=municipios, CID10="A90")
-
-
+pega_tweets(
+    start.isoformat(), fim=end.isoformat(), cidades=municipios, CID10="A90"
+)

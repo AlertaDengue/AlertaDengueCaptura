@@ -1,33 +1,33 @@
-from configparser import ConfigParser
-import numpy as np
-import pandas as pd
-import time
-import matplotlib.pyplot as plt
-import urllib.request
-import requests
-import os
-import sys
+import datetime
 import glob
 import gzip
-import rasterio
-from rasterio.warp import reproject, Resampling
-import xarray as xr
-import geoviews as gv
 import logging
+import os
+import sys
+import time
+import urllib.request
+from configparser import ConfigParser
+
 import ee
+import geoviews as gv
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import rasterio
+import requests
+import xarray as xr
+from httplib2 import ServerNotFoundError
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+from rasterio.warp import Resampling, reproject
 from sqlalchemy import create_engine
-from httplib2 import ServerNotFoundError
-import datetime
-
 
 # instantiate
 config = ConfigParser()
 # parse existing file
-config.read('settings.ini')
-# read values 
-PATH = config.get('settings', 'path')
+config.read("settings.ini")
+# read values
+PATH = config.get("settings", "path")
 
 # Initialize Google Earth Engine.
 ee.Initialize()
@@ -40,7 +40,7 @@ gauth.LocalWebserverAuth()
 gauth.SaveCredentialsFile("mycreds.txt")
 drive = GoogleDrive(gauth)
 # Avoid displaying some log warnings. See https://github.com/googleapis/google-api-python-client/issues/299.
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
 
 def download_tiffs(source, dates, point1, point2, opt=False):
@@ -84,41 +84,63 @@ def download_tiffs(source, dates, point1, point2, opt=False):
         next_date = current_date + delta
         date_today = str(datetime.date.today())
         image_date = dates[l].strftime("%Y-%m-%d")
-        msg = 'Downloading ' + source + ',' + image_date
+        msg = "Downloading " + source + "," + image_date
         logging.info(msg)
 
         # Verify if the file has been already downloaded. In this case the program skips this download.
         skip = skip_download(source, image_date, bbox, opt)
 
         if not skip:
-            if source in ["LandDAAC-v5-day", "LandDAAC-v5-night",
-                          "LandDAAC-v6-EVI", "LandDAAC-v6-NDVI",
-                          "LandDAAC-v6-view_zenith_angle"]:
-                success, path = single_download_LandDAAC(source, current_date, next_date, x1, x2, y1, y2, opt)
+            if source in [
+                "LandDAAC-v5-day",
+                "LandDAAC-v5-night",
+                "LandDAAC-v6-EVI",
+                "LandDAAC-v6-NDVI",
+                "LandDAAC-v6-view_zenith_angle",
+            ]:
+                success, path = single_download_LandDAAC(
+                    source, current_date, next_date, x1, x2, y1, y2, opt
+                )
             elif source == "chirps-2.0":
-                success, path = single_download_chirps(source, current_date, x1, x2, y1, y2, opt)
-            elif source in ["LST_Day_1km", "LST_Night_1km", "CHIRPS", "NDVI", "EVI"]:
-                success, path = single_download_gee(source, current_date, next_date, x1, x2, y1, y2, opt)
+                success, path = single_download_chirps(
+                    source, current_date, x1, x2, y1, y2, opt
+                )
+            elif source in [
+                "LST_Day_1km",
+                "LST_Night_1km",
+                "CHIRPS",
+                "NDVI",
+                "EVI",
+            ]:
+                success, path = single_download_gee(
+                    source, current_date, next_date, x1, x2, y1, y2, opt
+                )
 
             # Save information about the downloads in a database.
             if success:
-                exists = os.path.exists('downloads.db')
-                engine = create_engine('sqlite:///downloads.db')
+                exists = os.path.exists("downloads.db")
+                engine = create_engine("sqlite:///downloads.db")
                 conn = engine.connect()
                 item = (source, image_date, date_today, bbox, path)
                 if not exists:
-                    conn.execute('CREATE TABLE DOWNLOADS ('
-                                 '[source] text, '
-                                 '[image_date] date, '
-                                 '[download_date] date, '
-                                 '[bounding_box] float, '
-                                 '[path] text)')
+                    conn.execute(
+                        "CREATE TABLE DOWNLOADS ("
+                        "[source] text, "
+                        "[image_date] date, "
+                        "[download_date] date, "
+                        "[bounding_box] float, "
+                        "[path] text)"
+                    )
                 if opt.keep_original:
-                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)', item)
+                    conn.execute(
+                        "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item
+                    )
                 if opt.regrid:
-                    path = path[:-5] + '-treated.tiff'
+                    path = path[:-5] + "-treated.tiff"
                     item = (source, image_date, date_today, bbox, path)
-                    conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)', item)
+                    conn.execute(
+                        "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?)", item
+                    )
                 conn.close()
 
     # View time series after the downloads.
@@ -141,30 +163,34 @@ def skip_download(source, image_date, bbox, opt):
     This function verifies if the requested download has been already requested before.
     """
 
-    exists = os.path.exists('downloads.db')
+    exists = os.path.exists("downloads.db")
     skip = False
 
     if exists:
         # Open database.
-        engine = create_engine('sqlite:///downloads.db')
-        data = pd.read_sql_query('select * from DOWNLOADS', con=engine)
+        engine = create_engine("sqlite:///downloads.db")
+        data = pd.read_sql_query("select * from DOWNLOADS", con=engine)
         L = len(data)
 
         # Verify, row by row, if the set of parameters was already used to make a download.
         for i in range(L):
-            row_source = data.iloc[i]['source']
-            row_date = data.iloc[i]['image_date']
-            row_bbox = data.iloc[i]['bounding_box']
-            row_regrid = data.iloc[i]['path'][-12:-5]
-            if (source == row_source) and (image_date == row_date) and (bbox == row_bbox):
-                if opt.keep_original and row_regrid != 'treated':
+            row_source = data.iloc[i]["source"]
+            row_date = data.iloc[i]["image_date"]
+            row_bbox = data.iloc[i]["bounding_box"]
+            row_regrid = data.iloc[i]["path"][-12:-5]
+            if (
+                (source == row_source)
+                and (image_date == row_date)
+                and (bbox == row_bbox)
+            ):
+                if opt.keep_original and row_regrid != "treated":
                     skip = True
-                    msg = 'Skipping download. Skipping request.'
+                    msg = "Skipping download. Skipping request."
                     logging.info(msg)
                     break
-                if opt.regrid and row_regrid == 'treated':
+                if opt.regrid and row_regrid == "treated":
                     skip = True
-                    msg = 'Skipping download. Skipping request.'
+                    msg = "Skipping download. Skipping request."
                     logging.info(msg)
                     break
 
@@ -176,17 +202,21 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     Function responsible for each satellite image download from the IRI dataset.
     """
 
-    # Convert numeric data values to string format. 
+    # Convert numeric data values to string format.
     year1 = str(date1.year)
     month1 = str(date1.month)
     day1 = str(date1.day)
     year2 = str(date2.year)
     month2 = str(date2.month)
     day2 = str(date2.day)
-    if len(month1) == 1:    month1 = '0' + month1
-    if len(day1) == 1:      day1 = '0' + day1
-    if len(month2) == 1:    month2 = '0' + month2
-    if len(day2) == 1:      day2 = '0' + day2
+    if len(month1) == 1:
+        month1 = "0" + month1
+    if len(day1) == 1:
+        day1 = "0" + day1
+    if len(month2) == 1:
+        month2 = "0" + month2
+    if len(day2) == 1:
+        day2 = "0" + day2
 
     # Converts numeric month to written month.
     month1_str = month_to_string(date1.month)
@@ -194,17 +224,50 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
 
     # Generate url with specifications.
     start_url = source_url(source)
-    time_range = "T/(" + day1 + "%20" + month1_str + "%20" + year2 + \
-                 ")/(" + day2 + "%20" + month2_str + "%20" + year2 + ")/"
-    bounding_box = "RANGE/X/" + str(float(x1)) + "/" + str(float(x2)) + \
-                   "/RANGE/Y/" + str(float(y1)) + "/" + str(float(y2)) + "/"
+    time_range = (
+        "T/("
+        + day1
+        + "%20"
+        + month1_str
+        + "%20"
+        + year2
+        + ")/("
+        + day2
+        + "%20"
+        + month2_str
+        + "%20"
+        + year2
+        + ")/"
+    )
+    bounding_box = (
+        "RANGE/X/"
+        + str(float(x1))
+        + "/"
+        + str(float(x2))
+        + "/RANGE/Y/"
+        + str(float(y1))
+        + "/"
+        + str(float(y2))
+        + "/"
+    )
     time = "RANGE/T/4015.5/4017.5/RANGE/"
-    end_url = "%5BX/Y/%5D/palettecolor.tiff?filename=data" + year2 + "{}{}-{}.tiff"
+    end_url = (
+        "%5BX/Y/%5D/palettecolor.tiff?filename=data" + year2 + "{}{}-{}.tiff"
+    )
     url_base = start_url + time_range + bounding_box + time + end_url
     url = url_base.format(month1, day1, day2)
 
     # Generate filename.
-    filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1) + '.tiff'
+    filename = (
+        source
+        + "-"
+        + str(year1)
+        + "-"
+        + str(month1)
+        + "-"
+        + str(day1)
+        + ".tiff"
+    )
     # Create source folder if it doesn't exists.
     path_tmp = os.path.join(PATH, source)
     exists = os.path.exists(path_tmp)
@@ -216,12 +279,12 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     # Download and save url content.
     try:
         # Download.
-        with urllib.request.urlopen(url) as response, open(path, 'wb') as file:
+        with urllib.request.urlopen(url) as response, open(path, "wb") as file:
             data = response.read()
             file.write(data)
 
         # Fix values scale (because the images are downloaded as uint8, not float).
-        url_dods = start_url + time_range + bounding_box + time + 'dods'
+        url_dods = start_url + time_range + bounding_box + time + "dods"
         remote_data = xr.open_dataset(url_dods, decode_times=False)
         a, b = scale_min_max(source, remote_data)
         with rasterio.open(path) as dataset:
@@ -230,9 +293,11 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
             array = dataset.read()
             m = 0
             M = 255
-        new_array = (b-a)/(M-m)*array[0, :, :] + a - m*(b-a)/(M-m)
+        new_array = (
+            (b - a) / (M - m) * array[0, :, :] + a - m * (b - a) / (M - m)
+        )
         new_array = np.array(new_array, dtype=np.float32)
-        with rasterio.open(path, 'w', **profile) as dataset:
+        with rasterio.open(path, "w", **profile) as dataset:
             dataset.write(new_array, 1)
 
         # After saving the image, the treatment process begins.
@@ -240,21 +305,37 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
 
         # Log message of success.
         success = True
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
+        msg = "Download (" + year1 + "-" + month1 + "-" + day1 + "): success"
         logging.info(msg)
 
     except urllib.error.HTTPError:
         # Log message of failure.
         success = False
         path = None
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (HTTPError)'
+        msg = (
+            "Download ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (HTTPError)"
+        )
         logging.error(msg)
 
     except urllib.error.URLError:
         # Log message of failure.
         success = False
         path = None
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (URLError)'
+        msg = (
+            "Download ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (URLError)"
+        )
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -275,15 +356,19 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
     year = str(date.year)
     month = str(date.month)
     day = str(date.day)
-    if len(month) == 1:    month = '0' + month
-    if len(day) == 1:      day = '0' + day
+    if len(month) == 1:
+        month = "0" + month
+    if len(day) == 1:
+        day = "0" + day
 
     # Generate url with specifications.
     url_base = "ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/{}/chirps-v2.0.{}.{}.{}.tif.gz"
     url = url_base.format(year, year, month, day)
 
     # Generate filename.
-    compressed_filename = source + '-' + year + '-' + month + '-' + day + '.tif.gz'
+    compressed_filename = (
+        source + "-" + year + "-" + month + "-" + day + ".tif.gz"
+    )
     # Create source folder if it doesn't exists.
     path_tmp = os.path.join(PATH, source)
     exists = os.path.exists(path_tmp)
@@ -300,12 +385,12 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
     # Download and save url content.
     try:
         # Download
-        with urllib.request.urlopen(url) as response, open(path, 'wb') as file:
+        with urllib.request.urlopen(url) as response, open(path, "wb") as file:
             data = response.read()
             file.write(data)
 
         # Create uncompressed file in the same folder where the compressed file is located.
-        filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
+        filename = "chirps-v2.0-" + year + "-" + month + "-" + day + ".tiff"
         path2 = os.path.join(path_tmp, filename)
         fp = open(path2, "wb")
         with gzip.open(path, "rb") as f:
@@ -323,7 +408,7 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
             array = dataset.read()
             array = array[0, :, :]
             array[array == -9999] = np.nan
-            new_array = array[p1[1]:p2[1], p1[0]:p2[0]]
+            new_array = array[p1[1] : p2[1], p1[0] : p2[0]]
             a = dataset.transform.a
             b = dataset.transform.b
             c = x1
@@ -332,19 +417,22 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
             f = y1
             new_transform = (a, b, c, d, e, f)
             new_profile = dataset.profile.copy()
-            new_profile.update({
-                'dtype': 'float32',
-                'height': new_array.shape[0],
-                'width': new_array.shape[1],
-                'transform': new_transform})
+            new_profile.update(
+                {
+                    "dtype": "float32",
+                    "height": new_array.shape[0],
+                    "width": new_array.shape[1],
+                    "transform": new_transform,
+                }
+            )
 
-        filename = 'chirps-v2.0-' + year + '-' + month + '-' + day + '.tiff'
+        filename = "chirps-v2.0-" + year + "-" + month + "-" + day + ".tiff"
         path = os.path.join(path_tmp, filename)
         exists = os.path.isfile(path)
         if exists:
             os.remove(path)
 
-        with rasterio.open(path, 'w', **new_profile) as new_dataset:
+        with rasterio.open(path, "w", **new_profile) as new_dataset:
             new_dataset.write_band(1, new_array)
 
         # After saving the image, the treatment process begins.
@@ -352,21 +440,37 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
 
         # Log message of success.
         success = True
-        msg = 'Download (' + year + '-' + month + '-' + day + ') :success'
+        msg = "Download (" + year + "-" + month + "-" + day + ") :success"
         logging.info(msg)
 
     except urllib.error.HTTPError:
         # Log message of failure.
         success = False
         path = None
-        msg = 'Download (' + year + '-' + month + '-' + day + '): failure1 (HTTPError)'
+        msg = (
+            "Download ("
+            + year
+            + "-"
+            + month
+            + "-"
+            + day
+            + "): failure1 (HTTPError)"
+        )
         logging.error(msg)
 
     except urllib.error.URLError:
         # Log message of failure.
         success = False
         path = None
-        msg = 'Download (' + year + '-' + month + '-' + day + '): failure2 (URLError)'
+        msg = (
+            "Download ("
+            + year
+            + "-"
+            + month
+            + "-"
+            + day
+            + "): failure2 (URLError)"
+        )
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -387,26 +491,30 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     year1 = str(date1.year)
     month1 = str(date1.month)
     day1 = str(date1.day)
-    if len(month1) == 1:    month1 = '0' + month1
-    if len(day1) == 1:      day1 = '0' + day1
+    if len(month1) == 1:
+        month1 = "0" + month1
+    if len(day1) == 1:
+        day1 = "0" + day1
 
     # Satellite parameters.
     bbox = str([[x1, y1], [x1, y2], [x2, y1], [x2, y2]])
 
-    if source in ['LST_Day_1km', 'LST_Night_1km']:
+    if source in ["LST_Day_1km", "LST_Night_1km"]:
         scale = 500
         mod11 = ee.ImageCollection("MODIS/006/MOD11A2")
-        img = mod11.filterDate(date1, date2) \
-            .sort('system:time_start', False) \
-            .select(source) \
-            .mean() \
-            .multiply(0.02) \
-            .subtract(273.15) \
-            .rename("Celsius") \
-            .set('date', date1) \
-            .set('system:time_start', date1)
+        img = (
+            mod11.filterDate(date1, date2)
+            .sort("system:time_start", False)
+            .select(source)
+            .mean()
+            .multiply(0.02)
+            .subtract(273.15)
+            .rename("Celsius")
+            .set("date", date1)
+            .set("system:time_start", date1)
+        )
 
-    elif source == 'CHIRPS':
+    elif source == "CHIRPS":
         scale = 5000
         CHIRPS = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
         img = CHIRPS.filterDate(date1, date2) \
@@ -439,8 +547,8 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
             .set('system:time_start', date1)
 
     # Prepare parameters.
-    filename = source + '-' + str(year1) + '-' + str(month1) + '-' + str(day1)
-    task_config = {'scale': scale, 'region': bbox}
+    filename = source + "-" + str(year1) + "-" + str(month1) + "-" + str(day1)
+    task_config = {"scale": scale, "region": bbox}
 
     # Export data to Google Drive.
     try:
@@ -449,13 +557,29 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     except ServerNotFoundError:
         success = False
         path = None
-        msg = 'Export to Drive (' + year1 + '-' + month1 + '-' + day1 + '): failure (ServerNotFoundError)'
+        msg = (
+            "Export to Drive ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (ServerNotFoundError)"
+        )
         logging.error(msg)
         return success, path
     except:
         success = False
         path = None
-        msg = 'Export to Drive (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+        msg = (
+            "Export to Drive ("
+            + year1
+            + "-"
+            + month1
+            + "-"
+            + day1
+            + "): failure (Unexpected Error)"
+        )
         logging.error(msg)
         return success, path
 
@@ -468,34 +592,60 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
 
         # Get file list within Driver.
         try:
-            file_list = drive.ListFile({'q': "'root' in parents and trashed=false"}).GetList()
+            file_list = drive.ListFile(
+                {"q": "'root' in parents and trashed=false"}
+            ).GetList()
         except ServerNotFoundError:
             success = False
             path = None
-            msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (ServerNotFoundError)'
+            msg = (
+                "Download ("
+                + year1
+                + "-"
+                + month1
+                + "-"
+                + day1
+                + "): failure (ServerNotFoundError)"
+            )
             logging.error(msg)
             return success, path
         except:
             success = False
             path = None
-            msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+            msg = (
+                "Download ("
+                + year1
+                + "-"
+                + month1
+                + "-"
+                + day1
+                + "): failure (Unexpected Error)"
+            )
             logging.error(msg)
             return success, path
 
         for file in file_list:
-            if file['title'] == filename + '.tif':
+            if file["title"] == filename + ".tif":
                 success = True
                 wait = False
                 try:
                     # Download file from Google Drive.
-                    file.GetContentFile(filename + '.tif')
+                    file.GetContentFile(filename + ".tif")
                     # Delete downloaded file from Google Drive.
                     file.Delete()
                     break
                 except:
                     success = False
                     path = None
-                    msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure (Unexpected Error)'
+                    msg = (
+                        "Download ("
+                        + year1
+                        + "-"
+                        + month1
+                        + "-"
+                        + day1
+                        + "): failure (Unexpected Error)"
+                    )
                     logging.error(msg)
                     return success, path
 
@@ -512,27 +662,27 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
         if not exists:
             os.mkdir(path_tmp)
         # Path to the file.
-        path = os.path.join(path_tmp, filename + '.tiff')
+        path = os.path.join(path_tmp, filename + ".tiff")
         with open(path, "wb") as fp:
-            with open(filename + '.tif', "rb") as f:
+            with open(filename + ".tif", "rb") as f:
                 d = f.read()
             fp.write(d)
 
         # Remove original tif file (we want the one with tiff format).
-        os.remove(filename + '.tif')
+        os.remove(filename + ".tif")
 
         # After saving the image, the treatment process begins.
-        regrid_image(source, filename + '.tiff', opt)
+        regrid_image(source, filename + ".tiff", opt)
 
     # Log message of success.
     if success:
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): success'
+        msg = "Download (" + year1 + "-" + month1 + "-" + day1 + "): success"
         logging.info(msg)
 
     else:
         # Log message of failure.
         path = None
-        msg = 'Download (' + year1 + '-' + month1 + '-' + day1 + '): failure'
+        msg = "Download (" + year1 + "-" + month1 + "-" + day1 + "): failure"
         logging.error(msg)
 
     # If the treated image is the only one required, the original image is deleted.
@@ -563,48 +713,63 @@ def darksky(dates, x, y, key):
 
     for date in dates:
         # Convert numeric data values to string format.
-        date = datetime.datetime.strftime(date, '%Y-%m-%d')
+        date = datetime.datetime.strftime(date, "%Y-%m-%d")
 
         # Verify if the file has been already downloaded. In this case the program skips this download.
         skip = skip_download_darksky(date, x, y)
 
         if not skip:
             # Perform single download.
-            time = date + 'T12:00:00'
-            url = 'https://api.darksky.net/forecast/' + key + '/' + x + ',' + y + ',' + time
+            time = date + "T12:00:00"
+            url = (
+                "https://api.darksky.net/forecast/"
+                + key
+                + "/"
+                + x
+                + ","
+                + y
+                + ","
+                + time
+            )
             try:
                 success = True
                 with requests.get(url) as r:
                     output = r.json()
             except:
                 success = False
-                msg = 'Download (' + date + '): failure (Unexpected Error)'
+                msg = "Download (" + date + "): failure (Unexpected Error)"
                 logging.error(msg)
 
                 # Save information about the downloads in a database.
             if success:
-                out = output['daily']['data'][0]
-                exists = os.path.exists('downloads_darksky.db')
-                engine = create_engine('sqlite:///downloads_darksky.db')
+                out = output["daily"]["data"][0]
+                exists = os.path.exists("downloads_darksky.db")
+                engine = create_engine("sqlite:///downloads_darksky.db")
                 conn = engine.connect()
-                item = (date,
-                        date_today,
-                        x,
-                        y,
-                        out['precipIntensity'],
-                        out['humidity'],
-                        out['temperatureMin'],
-                        out['temperatureMax'])
+                item = (
+                    date,
+                    date_today,
+                    x,
+                    y,
+                    out["precipIntensity"],
+                    out["humidity"],
+                    out["temperatureMin"],
+                    out["temperatureMax"],
+                )
                 if not exists:
-                    conn.execute('CREATE TABLE DOWNLOADS ('
-                                 '[date] date, [download_date] date, '
-                                 '[latitude] float, '
-                                 '[longitude] float, '
-                                 '[precipIntensity] float, '
-                                 '[humidity] float, '
-                                 '[temperatureMin] float, '
-                                 '[temperatureMax] float)')
-                conn.execute('INSERT INTO DOWNLOADS VALUES (?,?,?,?,?,?,?,?)', item)
+                    conn.execute(
+                        "CREATE TABLE DOWNLOADS ("
+                        "[date] date, [download_date] date, "
+                        "[latitude] float, "
+                        "[longitude] float, "
+                        "[precipIntensity] float, "
+                        "[humidity] float, "
+                        "[temperatureMin] float, "
+                        "[temperatureMax] float)"
+                    )
+                conn.execute(
+                    "INSERT INTO DOWNLOADS VALUES (?,?,?,?,?,?,?,?)", item
+                )
                 conn.close()
 
     return
@@ -615,23 +780,23 @@ def skip_download_darksky(date, x, y):
     This function verifies if the requested download has been already requested before.
     """
 
-    exists = os.path.exists('downloads_darksky.db')
+    exists = os.path.exists("downloads_darksky.db")
     skip = False
 
     if exists:
         # Open database.
-        engine = create_engine('sqlite:///downloads_darksky.db')
-        data = pd.read_sql_query('select * from DOWNLOADS', con=engine)
+        engine = create_engine("sqlite:///downloads_darksky.db")
+        data = pd.read_sql_query("select * from DOWNLOADS", con=engine)
         L = len(data)
 
         # Verify, row by row, if the set of parameters was already used to make a download.
         for i in range(L):
-            row_date = data.iloc[i]['date']
-            row_x = data.iloc[i]['latitude']
-            row_y = data.iloc[i]['longitude']
+            row_date = data.iloc[i]["date"]
+            row_x = data.iloc[i]["latitude"]
+            row_y = data.iloc[i]["longitude"]
             if (date == row_date) and (x == row_x) and (y == row_y):
                 skip = True
-                msg = 'Skipping download. Skipping request.'
+                msg = "Skipping download. Skipping request."
                 logging.info(msg)
                 break
 
@@ -658,12 +823,15 @@ def regrid_image(source, filename, opt):
             e = dataset.transform.e
             f = dataset.transform.f
             array = dataset.read()
-            new_array = np.ones((int(factor*array.shape[1]), int(factor*array.shape[2])), dtype=np.float32)
-            new_transform = (a/factor, b, c, d, e/factor, f)
+            new_array = np.ones(
+                (int(factor * array.shape[1]), int(factor * array.shape[2])),
+                dtype=np.float32,
+            )
+            new_transform = (a / factor, b, c, d, e / factor, f)
             dataset_crs = dataset.crs
             new_crs = dataset.crs
 
-            if method == 'nearest':
+            if method == "nearest":
                 reproject(
                     array,
                     new_array,
@@ -671,9 +839,10 @@ def regrid_image(source, filename, opt):
                     src_crs=dataset_crs,
                     dst_transform=new_transform,
                     dst_crs=new_crs,
-                    resampling=Resampling.nearest)
+                    resampling=Resampling.nearest,
+                )
 
-            if method == 'average':
+            if method == "average":
                 reproject(
                     array,
                     new_array,
@@ -681,9 +850,10 @@ def regrid_image(source, filename, opt):
                     src_crs=dataset_crs,
                     dst_transform=new_transform,
                     dst_crs=new_crs,
-                    resampling=Resampling.average)
+                    resampling=Resampling.average,
+                )
 
-            if method == 'bilinear':
+            if method == "bilinear":
                 reproject(
                     array,
                     new_array,
@@ -691,9 +861,10 @@ def regrid_image(source, filename, opt):
                     src_crs=dataset_crs,
                     dst_transform=new_transform,
                     dst_crs=new_crs,
-                    resampling=Resampling.bilinear)
+                    resampling=Resampling.bilinear,
+                )
 
-            if method == 'cubic':
+            if method == "cubic":
                 reproject(
                     array,
                     new_array,
@@ -701,42 +872,46 @@ def regrid_image(source, filename, opt):
                     src_crs=dataset_crs,
                     dst_transform=new_transform,
                     dst_crs=new_crs,
-                    resampling=Resampling.cubic)
+                    resampling=Resampling.cubic,
+                )
 
             new_profile = dataset.profile.copy()
-            new_profile.update({
-                'dtype': 'float32',
-                'height': new_array.shape[0],
-                'width': new_array.shape[1],
-                'transform': new_transform})
+            new_profile.update(
+                {
+                    "dtype": "float32",
+                    "height": new_array.shape[0],
+                    "width": new_array.shape[1],
+                    "transform": new_transform,
+                }
+            )
 
             if opt.plot:
-                plt.title(filename.replace('.tiff', ''))
+                plt.title(filename.replace(".tiff", ""))
                 plt.imshow(new_array, cmap=opt.cmap)
                 plt.colorbar(fraction=0.028)
-                plt.xlabel('Column #')
-                plt.ylabel('Row #')
+                plt.xlabel("Column #")
+                plt.ylabel("Row #")
                 plt.show()
 
         # Remove duplicates before saving new ones.
-        new_filename = filename[:-5] + '-treated.tiff'
+        new_filename = filename[:-5] + "-treated.tiff"
         new_path = os.path.join(path_tmp, new_filename)
         exists = os.path.isfile(new_path)
         if exists:
             os.remove(new_path)
 
-        with rasterio.open(new_path, 'w', **new_profile) as new_dataset:
+        with rasterio.open(new_path, "w", **new_profile) as new_dataset:
             new_dataset.write_band(1, new_array)
 
     else:
         with rasterio.open(path) as dataset:
             array = dataset.read()
         if opt.plot:
-            plt.title(filename.replace('.tiff', ''))
+            plt.title(filename.replace(".tiff", ""))
             plt.imshow(array[0, :, :], cmap=opt.cmap)
             plt.colorbar(fraction=0.028)
-            plt.xlabel('Column #')
-            plt.ylabel('Row #')
+            plt.xlabel("Column #")
+            plt.ylabel("Row #")
             plt.show()
 
     return
@@ -744,17 +919,17 @@ def regrid_image(source, filename, opt):
 
 def scale_min_max(source, remote_data):
     if source == "LandDAAC-v5-day" or source == "LandDAAC-v5-night":
-        a = remote_data['LST'].scale_min
-        b = remote_data['LST'].scale_max
+        a = remote_data["LST"].scale_min
+        b = remote_data["LST"].scale_max
     elif source == "LandDAAC-v6-EVI":
-        a = remote_data['EVI'].scale_min
-        b = remote_data['EVI'].scale_max
+        a = remote_data["EVI"].scale_min
+        b = remote_data["EVI"].scale_max
     elif source == "LandDAAC-v6-NDVI":
-        a = remote_data['NDVI'].scale_min
-        b = remote_data['NDVI'].scale_max
+        a = remote_data["NDVI"].scale_min
+        b = remote_data["NDVI"].scale_max
     elif source == "LandDAAC-v6-view_zenith_angle":
-        a = remote_data['view_zenith_angle'].scale_min
-        b = remote_data['view_zenith_angle'].scale_max
+        a = remote_data["view_zenith_angle"].scale_min
+        b = remote_data["view_zenith_angle"].scale_max
 
     return a, b
 
@@ -781,10 +956,23 @@ def month_to_string(month):
     Converts numeric month to string with abbreviated month name.
     """
 
-    months = ["Jan", "Fev", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    months = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
     for i in range(1, 13):
         if int(month) == i:
-            month_str = months[i-1]
+            month_str = months[i - 1]
 
     return month_str
 
@@ -816,12 +1004,13 @@ def create_options(Opt):
     """
 
     if not Opt:
+
         class OptOut:
             regrid = False
             plot = False
             keep_original = True
             time_series = False
-            cmap = 'jet'
+            cmap = "jet"
             close_browser = True
 
         return OptOut
@@ -831,23 +1020,23 @@ def create_options(Opt):
         plot = False
         keep_original = True
         time_series = False
-        cmap = 'jet'
+        cmap = "jet"
         close_browser = True
-        if 'regrid' in Opt:
-            if type(Opt['regrid']) == list and len(Opt['regrid']) == 2:
-                factor = Opt['regrid'][0]
-                method = Opt['regrid'][1]
+        if "regrid" in Opt:
+            if type(Opt["regrid"]) == list and len(Opt["regrid"]) == 2:
+                factor = Opt["regrid"][0]
+                method = Opt["regrid"][1]
                 regrid = [factor, method]
-        if 'plot' in Opt:
-            plot = Opt['plot']
-        if 'keep_original' in Opt:
-            keep_original = Opt['keep_original']
-        if 'time_series' in Opt:
-            time_series = Opt['time_series']
-        if 'cmap' in Opt:
-            cmap = Opt['cmap']
-        if 'close_browser' in Opt:
-            close_browser = Opt['close_browser']
+        if "plot" in Opt:
+            plot = Opt["plot"]
+        if "keep_original" in Opt:
+            keep_original = Opt["keep_original"]
+        if "time_series" in Opt:
+            time_series = Opt["time_series"]
+        if "cmap" in Opt:
+            cmap = Opt["cmap"]
+        if "close_browser" in Opt:
+            close_browser = Opt["close_browser"]
 
     return OptOut
 
@@ -857,144 +1046,224 @@ def about(x):
     Displays information from available sources for download (x = 'sources') or possible options (x = options).
     """
 
-    if x == 'sources':
-        print('LandDAAC-v5-day')
-        print('---------------')
-        print('Day LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface Temperature '
-              'of Southern South America.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... '
-              '(22-29 Mar 2017)] N= 785 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/'
-              '.SSA/.Day/.LST/')
+    if x == "sources":
+        print("LandDAAC-v5-day")
+        print("---------------")
+        print(
+            "Day LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface Temperature "
+            "of Southern South America."
+        )
+        print(
+            "Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... "
+            "(22-29 Mar 2017)] N= 785 pts :grid"
+        )
+        print(
+            "Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid"
+        )
+        print(
+            "Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid"
+        )
+        print(
+            "Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/"
+            ".SSA/.Day/.LST/"
+        )
         print()
 
-        print('LandDAAC-v5-night')
-        print('-----------------')
-        print('Night LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface '
-              'Temperature of Southern South America.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... '
-              '(22-29 Mar 2017)] N= 785 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/'
-              '.SSA/.Night/.LST/')
+        print("LandDAAC-v5-night")
+        print("-----------------")
+        print(
+            "Night LST from USGS LandDAAC MODIS 1km 8day version_005 Terra SSA: Day and Night Land Surface "
+            "Temperature of Southern South America."
+        )
+        print(
+            "Time: grid: /T (days since 2003-01-01) ordered [ (5-12 Mar 2000) (13-20 Mar 2000) (21-28 Mar 2000) ... "
+            "(22-29 Mar 2017)] N= 785 pts :grid"
+        )
+        print(
+            "Longitude: grid: /X (degree_east) ordered (77.99467W) to (40.002W) by 0.01064817 N= 3569 pts :grid"
+        )
+        print(
+            "Latitude: grid: /Y (degree_north) ordered (20.00532S) to (56.99707S) by 0.01064817 N= 3475 pts :grid"
+        )
+        print(
+            "Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.1km/.8day/.version_005/.Terra/"
+            ".SSA/.Night/.LST/"
+        )
         print()
 
-        print('LandDAAC-v6-EVI')
-        print('---------------')
-        print('LandDAAC MODIS version_006 SSA EVI from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
-              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.EVI/')
+        print("LandDAAC-v6-EVI")
+        print("---------------")
+        print(
+            "LandDAAC MODIS version_006 SSA EVI from USGS: United States Geological Survey."
+        )
+        print(
+            "Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) "
+            "(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid"
+        )
+        print(
+            "Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid"
+        )
+        print(
+            "Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid"
+        )
+        print(
+            "Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.EVI/"
+        )
         print()
 
-        print('LandDAAC-v6-NDVI')
-        print('----------------')
-        print('LandDAAC MODIS version_006 SSA NDVI from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
-              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.NDVI/')
+        print("LandDAAC-v6-NDVI")
+        print("----------------")
+        print(
+            "LandDAAC MODIS version_006 SSA NDVI from USGS: United States Geological Survey."
+        )
+        print(
+            "Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) "
+            "(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid"
+        )
+        print(
+            "Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid"
+        )
+        print(
+            "Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid"
+        )
+        print(
+            "Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.NDVI/"
+        )
         print()
 
-        print('LandDAAC-v6-view_zenith_angle')
-        print('-----------------------------')
-        print('LandDAAC MODIS version_006 SSA view_zenith_angle from USGS: United States Geological Survey.')
-        print('Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) '
-              '(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid')
-        print('Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid')
-        print('Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid')
-        print('Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.view_zenith'
-              '_angle/')
+        print("LandDAAC-v6-view_zenith_angle")
+        print("-----------------------------")
+        print(
+            "LandDAAC MODIS version_006 SSA view_zenith_angle from USGS: United States Geological Survey."
+        )
+        print(
+            "Time: grid: /T (days since 2003-01-01) ordered [ (22 Apr 2000 - 7 May 2000) (8-23 May 2000) "
+            "(24 May 2000 - 8 Jun 2000) ... (6-21 Mar 2019)] N= 435 pts :grid"
+        )
+        print(
+            "Longitude: grid: /X (degree_east) ordered (77.99867W) to (40.00067W) by 0.002662043 N= 14275 pts :grid"
+        )
+        print(
+            "Latitude: grid: /Y (degree_north) ordered (20.00133S) to (57.00107S) by 0.002662043 N= 13900 pts :grid"
+        )
+        print(
+            "Link: https://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/.SSA/.view_zenith"
+            "_angle/"
+        )
         print()
 
-        print('chirps-2.0')
-        print('------------------------------')
-        print('Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 35+ year quasi-global '
-              'rainfall data set. Spanning 50°S-50°N (and all longitudes) and ranging from 1981 to near-present, '
-              'CHIRPS incorporates our in-house climatology, CHPclim, 0.05° resolution satellite imagery, and in-situ '
-              'station data to create gridded rainfall time series for trend analysis and seasonal drought monitoring.')
-        print('Link: ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/')
+        print("chirps-2.0")
+        print("------------------------------")
+        print(
+            "Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 35+ year quasi-global "
+            "rainfall data set. Spanning 50°S-50°N (and all longitudes) and ranging from 1981 to near-present, "
+            "CHIRPS incorporates our in-house climatology, CHPclim, 0.05° resolution satellite imagery, and in-situ "
+            "station data to create gridded rainfall time series for trend analysis and seasonal drought monitoring."
+        )
+        print(
+            "Link: ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRPS-2.0/global_daily/tifs/p05/"
+        )
         print()
 
-        print('LST_Day_1km / LST_Night_1km')
-        print('------------------------------')
-        print('The MOD11A2 V6 product provides an average 8-day land surface temperature (LST) in a 1200 x 1200 '
-              'kilometer grid. Each pixel value in MOD11A2 is a simple average of all the corresponding MOD11A1 LST '
-              'pixels collected within that 8 day period. The 8 day compositing period was chosen because twice that '
-              'period is the exact ground track repeat period of the Terra and Aqua platforms. In this product, along '
-              'with both the day- and night-time surface temperature bands and their quality indicator (QC) layers, are'
-              ' also MODIS bands 31 and 32 and eight observation layers.')
-        print('Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MOD11A2')
+        print("LST_Day_1km / LST_Night_1km")
+        print("------------------------------")
+        print(
+            "The MOD11A2 V6 product provides an average 8-day land surface temperature (LST) in a 1200 x 1200 "
+            "kilometer grid. Each pixel value in MOD11A2 is a simple average of all the corresponding MOD11A1 LST "
+            "pixels collected within that 8 day period. The 8 day compositing period was chosen because twice that "
+            "period is the exact ground track repeat period of the Terra and Aqua platforms. In this product, along "
+            "with both the day- and night-time surface temperature bands and their quality indicator (QC) layers, are"
+            " also MODIS bands 31 and 32 and eight observation layers."
+        )
+        print(
+            "Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MOD11A2"
+        )
         print()
 
-        print('NDVI / EVI')
-        print('------------------------------')
-        print('The MYD13Q1 V6 product provides a Vegetation Index (VI) value at a per pixel basis. There are two '
-              'primary vegetation layers. The first is the Normalized Difference Vegetation Index (NDVI) which is '
-              'referred to as the continuity index to the existing National Oceanic and Atmospheric '
-              'Administration-Advanced Very High Resolution Radiometer (NOAA-AVHRR) derived NDVI. The second vegetation '
-              'layer is the Enhanced Vegetation Index (EVI) that minimizes canopy background variations and maintains '
-              'sensitivity over dense vegetation conditions. The EVI also uses the blue band to remove residual '
-              'atmosphere contamination caused by smoke and sub-pixel thin cloud clouds. The MODIS NDVI and EVI '
-              'products are computed from atmospherically corrected bi-directional surface reflectances that have been '
-              'masked for water, clouds, heavy aerosols, and cloud shadows.')
-        print('Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MYD13Q1')
+        print("NDVI / EVI")
+        print("------------------------------")
+        print(
+            "The MYD13Q1 V6 product provides a Vegetation Index (VI) value at a per pixel basis. There are two "
+            "primary vegetation layers. The first is the Normalized Difference Vegetation Index (NDVI) which is "
+            "referred to as the continuity index to the existing National Oceanic and Atmospheric "
+            "Administration-Advanced Very High Resolution Radiometer (NOAA-AVHRR) derived NDVI. The second vegetation "
+            "layer is the Enhanced Vegetation Index (EVI) that minimizes canopy background variations and maintains "
+            "sensitivity over dense vegetation conditions. The EVI also uses the blue band to remove residual "
+            "atmosphere contamination caused by smoke and sub-pixel thin cloud clouds. The MODIS NDVI and EVI "
+            "products are computed from atmospherically corrected bi-directional surface reflectances that have been "
+            "masked for water, clouds, heavy aerosols, and cloud shadows."
+        )
+        print(
+            "Link: https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MYD13Q1"
+        )
         print()
 
-        print('CHIRPS')
-        print('------------------------------')
-        print('Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 30+ year quasi-global '
-              'rainfall dataset. CHIRPS incorporates 0.05° resolution satellite imagery with in-situ station data to '
-              'create gridded rainfall time series for trend analysis and seasonal drought monitoring.')
-        print('Link: https://developers.google.com/earth-engine/datasets/catalog/UCSB-CHG_CHIRPS_PENTAD')
+        print("CHIRPS")
+        print("------------------------------")
+        print(
+            "Climate Hazards Group InfraRed Precipitation with Station data (CHIRPS) is a 30+ year quasi-global "
+            "rainfall dataset. CHIRPS incorporates 0.05° resolution satellite imagery with in-situ station data to "
+            "create gridded rainfall time series for trend analysis and seasonal drought monitoring."
+        )
+        print(
+            "Link: https://developers.google.com/earth-engine/datasets/catalog/UCSB-CHG_CHIRPS_PENTAD"
+        )
         print()
 
-    if x == 'options':
-        print('cmap (string)')
-        print('-------------')
-        print('The name of the colormap to use when plotting images. Default is `jet`.')
+    if x == "options":
+        print("cmap (string)")
+        print("-------------")
+        print(
+            "The name of the colormap to use when plotting images. Default is `jet`."
+        )
         print()
 
-        print('regrid (list)')
-        print('-------------')
-        print('When downloading the images you also have the option to make a downsampling or upsampling over all the '
-              'images and download these new pack of images. You should pass a list of two items. The first is a '
-              'positive float, the ratio of the regrid. For example, if the original image is 120x120 and regrid[0]=2, '
-              'them the program will create a image of shape 240x240. The second is the method of the resampling, which'
-              ' can be `nearest`, `average`, `bilinear` and `cubic`.')
-        print('Link: https://github.com/mapbox/rasterio/blob/master/rasterio/enums.py#L28')
+        print("regrid (list)")
+        print("-------------")
+        print(
+            "When downloading the images you also have the option to make a downsampling or upsampling over all the "
+            "images and download these new pack of images. You should pass a list of two items. The first is a "
+            "positive float, the ratio of the regrid. For example, if the original image is 120x120 and regrid[0]=2, "
+            "them the program will create a image of shape 240x240. The second is the method of the resampling, which"
+            " can be `nearest`, `average`, `bilinear` and `cubic`."
+        )
+        print(
+            "Link: https://github.com/mapbox/rasterio/blob/master/rasterio/enums.py#L28"
+        )
         print()
 
-        print('plot (bool)')
-        print('-----------')
-        print('When this option is set to True the program plots each one of the images downloaded. At the moment this '
-              'only works when some regrid is done. Default is False.')
+        print("plot (bool)")
+        print("-----------")
+        print(
+            "When this option is set to True the program plots each one of the images downloaded. At the moment this "
+            "only works when some regrid is done. Default is False."
+        )
         print()
 
-        print('keep_original (bool)')
-        print('--------------------')
-        print('When this option is set to True (default) the program stores the original files. When it is False, the '
-              'program only saves the treated data.')
+        print("keep_original (bool)")
+        print("--------------------")
+        print(
+            "When this option is set to True (default) the program stores the original files. When it is False, the "
+            "program only saves the treated data."
+        )
         print()
 
-        print('time_series (bool)')
-        print('--------------------')
-        print('When this option is set to True the program opens an interactive session with the data just downloaded. '
-              'Default is False.')
+        print("time_series (bool)")
+        print("--------------------")
+        print(
+            "When this option is set to True the program opens an interactive session with the data just downloaded. "
+            "Default is False."
+        )
         print()
 
-        print('close_browser (bool)')
-        print('--------------------')
-        print('When this option is set to True, every browser window is closed after the downloads. This measure is '
-              'necessary because Goggle Earth Engine opens a browser for each authentication it performs. If the '
-              'intention is to make many downloads without human intervention, this is recommended. Check the end of '
-              'the function download_tiffs and (un)comment the lines that fit your purposes. Default is True')
+        print("close_browser (bool)")
+        print("--------------------")
+        print(
+            "When this option is set to True, every browser window is closed after the downloads. This measure is "
+            "necessary because Goggle Earth Engine opens a browser for each authentication it performs. If the "
+            "intention is to make many downloads without human intervention, this is recommended. Check the end of "
+            "the function download_tiffs and (un)comment the lines that fit your purposes. Default is True"
+        )
         print()
 
     return
@@ -1008,7 +1277,7 @@ def construct_time_series(source, dates):
     netcdf file will be corrupted. 
     """
 
-    filename = 'time_series.nc'
+    filename = "time_series.nc"
     path_tmp = os.path.join(PATH, source)
     path = os.path.join(path_tmp, filename)
 
@@ -1018,39 +1287,51 @@ def construct_time_series(source, dates):
         os.remove(path)
 
     # Create list with all tiff filenames in chronological order.
-    path2 = os.path.join(path_tmp, '*.tiff')
+    path2 = os.path.join(path_tmp, "*.tiff")
     filenames = glob.glob(path2)
     filenames.sort()
 
-    # Extract sequence of dates and size of the images. 
-    time = xr.Variable('time', dates)
+    # Extract sequence of dates and size of the images.
+    time = xr.Variable("time", dates)
     with rasterio.open(filenames[0]) as dataset:
         dataset_array = dataset.read()
         width, height = dataset_array.shape[1], dataset_array.shape[2]
-        chunks = {'x': width, 'y': height, 'band': 1}
+        chunks = {"x": width, "y": height, "band": 1}
 
     # Create netcdf file containing the time series of all downloaded tiffs.
-    with xr.concat([xr.open_rasterio(f, chunks=chunks) for f in filenames], dim=time) as da:
+    with xr.concat(
+        [xr.open_rasterio(f, chunks=chunks) for f in filenames], dim=time
+    ) as da:
         da.to_netcdf(path)
 
     return
 
 
-def view_time_series(filename, cmap='jet'):
+def view_time_series(filename, cmap="jet"):
     """
     Visualize and interact with time series netcdf files.
     """
 
     # Open geoviews interactive session.
-    gv.extension('bokeh', 'matplotlib')
+    gv.extension("bokeh", "matplotlib")
     with xr.open_dataset(filename, decode_times=False) as da:
         dataset = gv.Dataset(da)
-        ensemble = dataset.to(gv.Image, ['x', 'y'])
-        gv.output(ensemble.opts(cmap=cmap, colorbar=True, fig_size=200, backend='matplotlib'), backend='matplotlib')
+        ensemble = dataset.to(gv.Image, ["x", "y"])
+        gv.output(
+            ensemble.opts(
+                cmap=cmap, colorbar=True, fig_size=200, backend="matplotlib"
+            ),
+            backend="matplotlib",
+        )
     return
 
 
-def point_time_series(source, points, title='Time series of given coordinates', spatial_coordinates=True):
+def point_time_series(
+    source,
+    points,
+    title="Time series of given coordinates",
+    spatial_coordinates=True,
+):
     """ 
     This function plots the evolution of the time series with respect to a list of points. All tiff files in the current
     folder are sorted and used to construct the time series. Therefore be sure you have the correct files there.
@@ -1073,7 +1354,7 @@ def point_time_series(source, points, title='Time series of given coordinates', 
 
     # Create list with all tiff filenames in chronological order.
     path_tmp = os.path.join(PATH, source)
-    path = os.path.join(path_tmp, '*.tiff')
+    path = os.path.join(path_tmp, "*.tiff")
     filenames = glob.glob(path)
     filenames.sort()
 
@@ -1105,21 +1386,27 @@ def point_time_series(source, points, title='Time series of given coordinates', 
             with rasterio.open(f) as dataset:
                 dataset_array = dataset.read()[0, :, :]
                 # Split in two cases, where the filename terminates in 'treated.tiff' and the other one.
-                if f[-6] == 'd':
+                if f[-6] == "d":
                     dates.append(f[-23:-13])
                 else:
                     dates.append(f[-15:-5])
                 values.append(dataset_array[row, col])
 
         # Update dictionary.
-        info[str(point[0]) + ', ' + str(point[1])] = [[dates[i], values[i]] for i in range(len(dates))]
+        info[str(point[0]) + ", " + str(point[1])] = [
+            [dates[i], values[i]] for i in range(len(dates))
+        ]
 
-    plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates)
+    plot_point_time_series(
+        filenames, info, col_row_format, title, spatial_coordinates
+    )
 
     return info
 
 
-def plot_point_time_series(filenames, info, col_row_format, title, spatial_coordinates):
+def plot_point_time_series(
+    filenames, info, col_row_format, title, spatial_coordinates
+):
     """
     After constructing the time series (in a dictionary) of several points with the function point_time_series, this
     function is responsible for the plots. All inputs to this function are described in the previous function.
@@ -1136,15 +1423,23 @@ def plot_point_time_series(filenames, info, col_row_format, title, spatial_coord
     i = 0
     for point in col_row_format:
         col, row = point
-        plt.plot(col, row, 's', label='(' + info_keys[i] + ')')
+        plt.plot(col, row, "s", label="(" + info_keys[i] + ")")
         i += 1
     # Prepare x and y ticks to plot.
     if spatial_coordinates:
         interval = np.linspace(0, 1, 5)
         interval_x = np.linspace(0, dataset.width, 5)
         interval_y = np.linspace(0, dataset.height, 5)
-        x = [np.round((1-t)*dataset.bounds.left, 2) + np.round(t*dataset.bounds.right, 2) for t in interval]
-        y = [np.round((1-t)*dataset.bounds.top, 2) + np.round(t*dataset.bounds.bottom, 2) for t in interval]
+        x = [
+            np.round((1 - t) * dataset.bounds.left, 2)
+            + np.round(t * dataset.bounds.right, 2)
+            for t in interval
+        ]
+        y = [
+            np.round((1 - t) * dataset.bounds.top, 2)
+            + np.round(t * dataset.bounds.bottom, 2)
+            for t in interval
+        ]
         plt.xticks(interval_x, x)
         plt.yticks(interval_y, y)
     plt.legend()
@@ -1157,7 +1452,7 @@ def plot_point_time_series(filenames, info, col_row_format, title, spatial_coord
         num_dates = len(info_val)
         dates = [info_val[i][0] for i in range(num_dates)]
         values = [info_val[i][1] for i in range(num_dates)]
-        plt.plot(dates, values, label='(' + info_keys[i] + ')')
+        plt.plot(dates, values, label="(" + info_keys[i] + ")")
         i += 1
     plt.title(title)
     plt.legend()
@@ -1194,22 +1489,22 @@ def fill_missing_days(source, freq, treated=True):
     path_tmp = os.path.join(PATH, source)
 
     # Create list with all tiff filenames in chronological order.
-    path = os.path.join(path_tmp, '*.tiff')
+    path = os.path.join(path_tmp, "*.tiff")
     filenames = glob.glob(path)
     filenames.sort()
 
     # Search for the missing days.
     length = len(filenames)
-    for i in range(length-1):
+    for i in range(length - 1):
         # Extract dates of two consecutive downloads and compute their difference.
         f1 = filenames[i]
-        f2 = filenames[i+1]
+        f2 = filenames[i + 1]
         if treated:
-            day1 = datetime.datetime.strptime(f1[-23:-13], '%Y-%m-%d')
-            day2 = datetime.datetime.strptime(f2[-23:-13], '%Y-%m-%d')
+            day1 = datetime.datetime.strptime(f1[-23:-13], "%Y-%m-%d")
+            day2 = datetime.datetime.strptime(f2[-23:-13], "%Y-%m-%d")
         else:
-            day1 = datetime.datetime.strptime(f1[-15:-5], '%Y-%m-%d')
-            day2 = datetime.datetime.strptime(f2[-15:-5], '%Y-%m-%d')
+            day1 = datetime.datetime.strptime(f1[-15:-5], "%Y-%m-%d")
+            day2 = datetime.datetime.strptime(f2[-15:-5], "%Y-%m-%d")
 
         # Generate missing timestamps in the interval.
         delta1 = datetime.timedelta(days=int(freq[0]))
@@ -1223,30 +1518,43 @@ def fill_missing_days(source, freq, treated=True):
         with rasterio.open(f2) as dataset:
             array2 = dataset.read()[0, :, :]
 
-        for j in range(1, num_dates+1):
+        for j in range(1, num_dates + 1):
             # Extract values from date.
-            date = dates[j-1]
+            date = dates[j - 1]
             year = str(date.year)
             month = str(date.month)
             day = str(date.day)
-            if len(month) == 1:    month = '0' + month
-            if len(day) == 1:      day = '0' + day
+            if len(month) == 1:
+                month = "0" + month
+            if len(day) == 1:
+                day = "0" + day
 
             # Create path to the new file.
             if treated:
-                filename = source + '-' + year + '-' + month + '-' + day + '-treated.tiff'
+                filename = (
+                    source
+                    + "-"
+                    + year
+                    + "-"
+                    + month
+                    + "-"
+                    + day
+                    + "-treated.tiff"
+                )
                 localname = os.path.join(path_tmp, filename)
             else:
-                filename = source + '-' + year + '-' + month + '-' + day + '.tiff'
+                filename = (
+                    source + "-" + year + "-" + month + "-" + day + ".tiff"
+                )
                 localname = os.path.join(path_tmp, filename)
 
             # Compute interpolated array.
-            new_array = 1/j * array1 + (1 - 1/j)*array2
+            new_array = 1 / j * array1 + (1 - 1 / j) * array2
 
             # Generate new raster data using f1 profile.
             with rasterio.open(f1) as dataset:
                 profile = dataset.profile.copy()
-                with rasterio.open(localname, 'w', **profile) as new_dataset:
+                with rasterio.open(localname, "w", **profile) as new_dataset:
                     new_dataset.write_band(1, new_array)
 
     return

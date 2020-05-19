@@ -1,19 +1,19 @@
 import csv
 import functools
-from os.path import abspath, dirname, join as join_path
-
-from decouple import config
-import geojson
 from multiprocessing.pool import Pool
+from os.path import abspath, dirname
+from os.path import join as join_path
 
+import geojson
+from decouple import config
 from initials import initials
 from models import save
 
 
 @functools.lru_cache(maxsize=None)
 def uf_geojson(uf):
-    path = config('GEOJSON_PATH')
-    filename = '{}-municipalities.json'.format(uf)
+    path = config("GEOJSON_PATH")
+    filename = "{}-municipalities.json".format(uf)
     return geojson.load(open(join_path(path, filename), "r"))
 
 
@@ -26,20 +26,22 @@ def county_polygon(uf, county_code):
 
 
 def to_row(county):
-    county_code = county['Cod Municipio Completo']
-    name = county['Nome_Município']
-    uf = county['Nome_UF']
+    county_code = county["Cod Municipio Completo"]
+    name = county["Nome_Município"]
+    uf = county["Nome_UF"]
     try:
         geojson = county_polygon(initials[uf], county_code)
         print(uf, name, county_code)
     except ValueError as e:
         print(e)
-        geojson = ''
-    return dict(county_code=county_code,
-                name=name,
-                geojson=geojson,
-                uf=initials[uf],
-                population=0)
+        geojson = ""
+    return dict(
+        county_code=county_code,
+        name=name,
+        geojson=geojson,
+        uf=initials[uf],
+        population=0,
+    )
 
 
 BASE_DIR = dirname(abspath(__file__))
