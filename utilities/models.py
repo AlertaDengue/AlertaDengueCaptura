@@ -1,12 +1,17 @@
+import os
+from os.path import dirname, join
+
 import psycopg2
-from decouple import config
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(dirname(dirname(__file__))), '.env')
+load_dotenv(dotenv_path)
 
 db_config = {
-    "database": config("POSTGRES_DATABASE"),
-    "user": config("POSTGRES_USER"),
-    "password": config("POSTGRES_PASSWORD"),
-    "host": config("POSTGRES_HOST"),
-    "port": config("POSTGRES_PORT"),
+    "database": os.getenv("POSTGRES_DATABASE"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST"),
 }
 
 field_names = {
