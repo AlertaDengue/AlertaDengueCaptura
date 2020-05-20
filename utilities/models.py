@@ -1,10 +1,9 @@
 import os
-from os.path import dirname, join
 
 import psycopg2
-from dotenv import load_dotenv
 
-dotenv_path = join(dirname(dirname(dirname(__file__))), '.env')
+from crawlclima.settings import dotenv_path, load_dotenv
+
 load_dotenv(dotenv_path)
 
 db_config = {
