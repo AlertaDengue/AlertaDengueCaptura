@@ -17,6 +17,8 @@ from crawlclima.config.tweets import (
     psql_user,
     token,
 )
+print("Hi Sandro Tasks")
+print(psql_host)
 from crawlclima.fetchapp import app
 from crawlclima.redemet.rmet import capture_date_range
 from utilities.models import save

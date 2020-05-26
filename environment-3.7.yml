@@ -13,6 +13,7 @@ dependencies:
 - pgcli
 - geojson
 - python-decouple
+- python-dotenv
 - dbfread
 - pandasql
 - celery

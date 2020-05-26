@@ -1,10 +1,7 @@
 import os
 
 import psycopg2
-
-from crawlclima.settings import dotenv_path, load_dotenv
-
-load_dotenv(dotenv_path)
+from dotenv import load_dotenv
 
 db_config = {
     "database": os.getenv("POSTGRES_DATABASE"),
@@ -12,6 +9,8 @@ db_config = {
     "password": os.getenv("POSTGRES_PASSWORD"),
     "host": os.getenv("POSTGRES_HOST"),
 }
+print("Hi Sandro Models")
+print(db_config)
 
 field_names = {
     "Municipio": {

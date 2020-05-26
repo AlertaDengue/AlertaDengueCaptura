@@ -1,10 +1,17 @@
 from celery import Celery
-from decouple import config
+import os
+
+from os.path import join, dirname
+
+from dotenv import load_dotenv
+dotenv_path = join(dirname(dirname(__file__)), '.env')
+load_dotenv(dotenv_path)
+
 
 app = Celery(
     "crawlclima",
-    broker=config("CELERY_BROKER_URL"),
-    backend=config("CELERY_BACKEND"),  #
+    broker=os.getenv("CELERY_BROKER_URL"),
+    backend=os.getenv("CELERY_BACKEND"),  #
     include=["crawlclima.tasks"],
 )
 

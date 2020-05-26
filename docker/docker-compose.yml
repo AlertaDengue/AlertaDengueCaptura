@@ -3,6 +3,10 @@ services:
     capture_rabbitmq:
       image: rabbitmq:3
       hostname: capture_rabbitmq
+      ports:
+        - 5671:5672
+      expose:
+        - 5671
       restart: always
 
     capture_celery-worker:
@@ -12,16 +16,16 @@ services:
         args:
           PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
       env_file:
-      - ../.env
+        - ../.env
       environment:
-      - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
-      - PSQL_HOST=192.168.2.5
-      - PSQL_PORT=5432
+        - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
+        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@192.168.2.5:5432/dengue
+        - PSQL_HOST=192.168.2.5
+        - PSQL_PORT=5432
       volumes:
-          - ..:/AlertaDengueCaptura
+        - ..:/AlertaDengueCaptura
       depends_on:
-      - capture_rabbitmq
+        - capture_rabbitmq
       restart: always
 
     capture_flower:
@@ -35,7 +39,6 @@ services:
       expose:
         - 35555
       depends_on:
-        - capture_rabbitmq
         - capture_celery-worker
       command: >
-        /bin/bash -c "sleep 10"
+        /bin/bash -c "sleep 15"
