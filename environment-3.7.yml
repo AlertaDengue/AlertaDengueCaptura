@@ -12,7 +12,6 @@ dependencies:
 - psycopg2
 - pgcli
 - geojson
-- python-decouple
 - python-dotenv
 - dbfread
 - pandasql

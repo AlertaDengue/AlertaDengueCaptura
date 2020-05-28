@@ -1,8 +1,8 @@
-# from decouple import config
 import os
 
 from dotenv import load_dotenv
 
+load_dotenv()
 
 # Broker settings.
 BROKER_URL = os.getenv("CELERY_BROKER_URL")
@@ -28,5 +28,3 @@ CELERYD_MAX_TASKS_PER_CHILD = 10
 CELERY_TIMEZONE = "America/Sao_Paulo"
 
 CELERY_ALWAYS_EAGER = os.getenv("CELERY_ALWAYS_EAGER", default=False)
-print("Hi Sandro CeleryConfig")
-print(BROKER_URL)

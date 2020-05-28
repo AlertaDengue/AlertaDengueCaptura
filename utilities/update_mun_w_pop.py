@@ -1,22 +1,25 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Atualiza tabela de municípios com dados da população estimada
 """
 import logging
+import os
 
 import pandas as pd
 import psycopg2
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger("update-pop")
 
 try:
     conn = psycopg2.connect(
         "dbname='{}' user='{}' host='{}' password='{}'".format(
-            config("POSTGRES_DATABASE"),
-            config("POSTGRES_USER"),
-            config("POSTGRES_HOST"),
-            config("POSTGRES_PASSWORD"),
+            os.getenv("POSTGRES_DATABASE"),
+            os.getenv("POSTGRES_USER"),
+            os.getenv("POSTGRES_HOST"),
+            os.getenv("POSTGRES_PASSWORD"),
         )
     )
     cur = conn.cursor()

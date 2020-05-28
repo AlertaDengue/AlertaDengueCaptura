@@ -1,20 +1,22 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import glob
 import os
 
 import geojson
 import psycopg2
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 db_config = {
-    "database": config("POSTGRES_DATABASE"),
-    "user": config("POSTGRES_USER"),
-    "password": config("POSTGRES_PASSWORD"),
-    "host": config("POSTGRES_HOST"),
-    "port": config("POSTGRES_PORT"),
+    "database": os.getenv("POSTGRES_DATABASE"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST"),
+    "port": os.getenv("POSTGRES_PORT"),
 }
 
-path = config("GEOJSON_PATH")
+path = os.getenv("GEOJSON_PATH")
 
 
 def load_geojson(fname):

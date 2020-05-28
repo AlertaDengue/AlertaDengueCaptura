@@ -3,20 +3,22 @@ Created on 29/09/16
 by fccoelho
 license: GPL V3 or Later
 """
-
+import os
 from io import StringIO
 
 import pandas as pd
 import psycopg2
 import requests
-from decouple import config
+from dotenv import load_dotenv
+
+load_dotenv()
 
 db_config = {
-    "database": config("POSTGRES_DATABASE"),
-    "user": config("POSTGRES_USER"),
-    "password": config("POSTGRES_PASSWORD"),
-    "host": config("POSTGRES_HOST"),
-    "port": config("POSTGRES_PORT"),
+    "database": os.getenv("POSTGRES_DATABASE"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST"),
+    "port": os.getenv("POSTGRES_PORT"),
 }
 
 base_url = "http://150.163.255.246:18383/dados_pcd"
