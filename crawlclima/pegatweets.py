@@ -15,6 +15,8 @@ from settings import project_root
 
 from crawlclima.tasks import pega_tweets
 
+sys.path.append(project_root)
+
 # Data inicial da captura
 
 today = date.fromordinal(date.today().toordinal())

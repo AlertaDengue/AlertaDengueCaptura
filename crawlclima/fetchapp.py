@@ -1,5 +1,4 @@
 import os
-from os.path import dirname, join
 
 from celery import Celery
 from dotenv import load_dotenv

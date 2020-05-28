@@ -50,7 +50,6 @@ def pega_dados_cemaden(self, codigo, inicio, fim, by="uf"):
     :param inicio: data-hora (UTC) de inicio da captura %Y%m%d%H%M
     :param fim: data-hora (UTC) de fim da captura %Y%m%d%H%M
     :param codigo: Código da estação de coleta do CEMADEN ou código de duas letras da uf: 'SP' ou 'RJ' ou...
-
     :param by: uf|estacao
     :return: Status code da tarefa
     """
@@ -216,7 +215,6 @@ def fetch_redemet(self, station, date):
 def pega_tweets(self, inicio, fim, cidades=None, CID10="A90"):
     """
     Tarefa para capturar dados do Observatorio da dengue para uma ou mais cidades
-
     :param CID10: código CID10 para a doença. default: dengue clássico
     :param inicio: data de início da captura: yyyy-mm-dd
     :param fim: data do fim da captura: yyyy-mm-dd
