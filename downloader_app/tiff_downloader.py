@@ -517,34 +517,40 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     elif source == "CHIRPS":
         scale = 5000
         CHIRPS = ee.ImageCollection("UCSB-CHG/CHIRPS/PENTAD")
-        img = CHIRPS.filterDate(date1, date2) \
-            .sort('system:time_start', False) \
-            .mean() \
-            .rename("Precipitation") \
-            .set('date', date1) \
+        img = (
+            CHIRPS.filterDate(date1, date2)
+            .sort('system:time_start', False)
+            .mean()
+            .rename("Precipitation")
+            .set('date', date1)
             .set('system:time_start', date1)
+        )
 
     elif source == 'NDVI':
         scale = 5000
         MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
-        img = MYD13Q1.filterDate(date1, date2) \
-            .sort('system:time_start', False) \
-            .select(source) \
-            .mean() \
-            .rename("NDVI") \
-            .set('date', date1) \
+        img = (
+            MYD13Q1.filterDate(date1, date2)
+            .sort('system:time_start', False)
+            .select(source)
+            .mean()
+            .rename("NDVI")
+            .set('date', date1)
             .set('system:time_start', date1)
+        )
 
     elif source == 'EVI':
         scale = 5000
         MYD13Q1 = ee.ImageCollection("MODIS/006/MYD13Q1")
-        img = MYD13Q1.filterDate(date1, date2) \
-            .sort('system:time_start', False) \
-            .select(source) \
-            .mean() \
-            .rename("EVI") \
-            .set('date', date1) \
+        img = (
+            MYD13Q1.filterDate(date1, date2)
+            .sort('system:time_start', False)
+            .select(source)
+            .mean()
+            .rename("EVI")
+            .set('date', date1)
             .set('system:time_start', date1)
+        )
 
     # Prepare parameters.
     filename = source + "-" + str(year1) + "-" + str(month1) + "-" + str(day1)
@@ -943,9 +949,20 @@ def source_freq(source):
         freq = 1
     elif source == "CHIRPS":
         freq = 5
-    elif source in ["LandDAAC-v5-day", "LandDAAC-v5-night", "LST_Day_1km", "LST_Night_1km"]:
+    elif source in [
+        "LandDAAC-v5-day",
+        "LandDAAC-v5-night",
+        "LST_Day_1km",
+        "LST_Night_1km",
+    ]:
         freq = 8
-    elif source in ["LandDAAC-v6-EVI", "LandDAAC-v6-NDVI", "LandDAAC-v6-view_zenith_angle", "NDVI", "EVI"]:
+    elif source in [
+        "LandDAAC-v6-EVI",
+        "LandDAAC-v6-NDVI",
+        "LandDAAC-v6-view_zenith_angle",
+        "NDVI",
+        "EVI",
+    ]:
         freq = 16
 
     return freq

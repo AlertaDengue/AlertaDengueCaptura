@@ -9,7 +9,7 @@ psycopg2
 sqlsoup
 odo
 geojson
-python-decouple
+python-dotenv
 dbfread
 pandasql
 python-metar

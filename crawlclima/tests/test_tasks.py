@@ -1,23 +1,27 @@
 import logging
+import os
 import sys
 import unittest
 from datetime import timedelta
 
 import psycopg2
-from decouple import config
+from dotenv import load_dotenv
 
 from crawlclima.fetchapp import app
 from crawlclima.tasks import pega_dados_cemaden, pega_tweets
+
+load_dotenv()
+
 
 logger = logging.getLogger(__name__)  # Verify where this logger comes from
 
 try:
     conn = psycopg2.connect(
         "dbname='{}' user='{}' host='{}' password='{}'".format(
-            config("POSTGRES_DATABASE"),
-            config("POSTGRES_USER"),
-            config("POSTGRES_HOST"),
-            config("POSTGRES_PASSWORD"),
+            os.getenv("POSTGRES_DATABASE"),
+            os.getenv("POSTGRES_USER"),
+            os.getenv("POSTGRES_HOST"),
+            os.getenv("POSTGRES_PASSWORD"),
         )
     )
 except Exception as e:

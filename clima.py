@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Este script captura series de clima do servidor da Weather Underground em um

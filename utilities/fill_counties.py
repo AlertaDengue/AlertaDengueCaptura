@@ -1,18 +1,21 @@
 import csv
 import functools
+import os
 from multiprocessing.pool import Pool
 from os.path import abspath, dirname
 from os.path import join as join_path
 
 import geojson
-from decouple import config
+from dotenv import load_dotenv
 from initials import initials
 from models import save
+
+load_dotenv()
 
 
 @functools.lru_cache(maxsize=None)
 def uf_geojson(uf):
-    path = config("GEOJSON_PATH")
+    path = os.getenv("GEOJSON_PATH")
     filename = "{}-municipalities.json".format(uf)
     return geojson.load(open(join_path(path, filename), "r"))
 

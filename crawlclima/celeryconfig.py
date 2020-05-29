@@ -1,13 +1,17 @@
-from decouple import config
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Broker settings.
-BROKER_URL = config("CELERY_BROKER_URL")
+BROKER_URL = os.getenv("CELERY_BROKER_URL")
 
 # List of modules to import when celery starts.
 CELERY_IMPORTS = ("crawlclima.tasks",)
 
 # Using the database to store task state and results.
-CELERY_RESULT_BACKEND = config("CELERY_BACKEND")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_BACKEND")
 # CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hours.
 
 # CELERY_ROUTES = {
@@ -23,4 +27,4 @@ CELERYD_MAX_TASKS_PER_CHILD = 10
 
 CELERY_TIMEZONE = "America/Sao_Paulo"
 
-CELERY_ALWAYS_EAGER = config("CELERY_ALWAYS_EAGER", default=False)
+CELERY_ALWAYS_EAGER = os.getenv("CELERY_ALWAYS_EAGER", default=False)

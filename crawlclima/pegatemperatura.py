@@ -13,6 +13,9 @@ from settings import project_root  # noqa
 from crawlclima.tasks import fetch_redemet
 from utilities.models import find_all
 
+sys.path.append(project_root)
+
+
 user_date = None
 if len(sys.argv) > 1:
     user_date = datetime.strptime(sys.argv[1], "%Y-%m-%d")
