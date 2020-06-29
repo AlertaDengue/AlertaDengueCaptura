@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-
+import os
+import re
 import unittest
 from datetime import datetime, timedelta
 from unittest import mock
 
 import pandas as pd
 import responses
+from dotenv import load_dotenv
 
 from crawlclima.redemet.rmet import (
     capture,
@@ -19,6 +21,8 @@ from crawlclima.redemet.rmet import (
     parse_page,
     redemet_url,
 )
+
+load_dotenv()
 
 
 class TestFahrenheitToCelsius(unittest.TestCase):
@@ -36,64 +40,87 @@ class TestCapture(unittest.TestCase):
     @responses.activate
     @mock.patch("crawlclima.redemet.rmet.time.sleep")
     def test_capture_return_type(self, mocked_sleep):
-        with open("crawlclima/redemet/tests/example_data.txt", "r") as fd:
+        with open(
+            "crawlclima/redemet/tests/test_example_data.json", "r"
+        ) as fd:
             response_text = fd.read()
+
+        api_key = os.getenv("API_KEY")
+        station_code = "SBAF"
+        date = datetime(2020, 6, 25)
 
         responses.add(
             responses.GET,
-            "https://www.redemet.aer.mil.br/api/consulta_automatica/"
-            "index.php?local=SBAF&msg=metar"
-            "&data_ini=2015022800&data_fim=2015022823",
+            "https://api-redemet.decea.gov.br/mensagens/metar/{}?"
+            "api_key={}"
+            "&data_ini=2020062500&data_fim=2020062523".format(
+                station_code, api_key
+            ),
             body=response_text,
         )
 
-        station_code = "SBAF"
-        date = datetime(2015, 2, 28)
         data = capture(station_code, date)
         self.assertIsInstance(data, dict)
 
     @responses.activate
     @mock.patch("crawlclima.redemet.rmet.time.sleep")
     def test_capture_range(self, mocked_sleep):
-        with open("crawlclima/redemet/tests/example_data.txt", "r") as fd:
+        with open(
+            "crawlclima/redemet/tests/test_example_data.json", "r"
+        ) as fd:
             response_text = fd.read()
 
-        url_pattern = (
-            "https://www.redemet.aer.mil.br/api/"
-            "consulta_automatica/index.php?.*"
+        station_code = "SBSR"
+        date = datetime.today() - timedelta(3)
+
+        url_pattern = re.compile(
+            r'https://api-redemet\.decea\.gov\.br/mensagens/metar/'
+            r'SBSR\?api_key=.*data_ini=.*data_fim=.*'
         )
 
-        responses.add(responses.GET, url_pattern, body=response_text)
+        responses.add(
+            method=responses.GET, url=url_pattern, body=response_text
+        )
 
-        station_code = "SBAF"
-        date = datetime.today() - timedelta(3)
         data = capture_date_range(station_code, date)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(responses.calls), 4)
+        self.assertEqual(len(responses.calls), 2)
 
     def test_check_day(self):
         pass
 
 
 class TestREDEMETUrl(unittest.TestCase):
-    def test_SBGL_20150228(self):
+    def test_SBGL_20200625(self):
+        api_key = os.getenv("API_KEY")
         station_code = "SBGL"
-        date = datetime(2015, 2, 28)
+        date = datetime(2020, 6, 25)
+        formatted_ini = date.strftime("%Y%m%d")
+        formatted_fim = date.strftime("%Y%m%d")
+
         url = (
-            "https://www.redemet.aer.mil.br/api/consulta_automatica/"
-            "index.php?local=SBGL&msg=metar"
-            "&data_ini=2015022800&data_fim=2015022823"
+            "https://api-redemet.decea.gov.br/mensagens/metar/{}?"
+            "api_key={}"
+            "&data_ini={}00&data_fim={}23".format(
+                station_code, api_key, formatted_ini, formatted_fim
+            )
         )
 
         self.assertEqual(redemet_url(station_code, date), url)
 
-    def test_SBJR_20150131(self):
+    def test_SBJR_20200625(self):
+        api_key = os.getenv("API_KEY")
         station_code = "SBRJ"
-        date = datetime(2015, 1, 31)
+        date = datetime(2020, 6, 25)
+        formatted_ini = date.strftime("%Y%m%d")
+        formatted_fim = date.strftime("%Y%m%d")
+
         url = (
-            "https://www.redemet.aer.mil.br/api/consulta_automatica/"
-            "index.php?local=SBRJ&msg=metar"
-            "&data_ini=2015013100&data_fim=2015013123"
+            "https://api-redemet.decea.gov.br/mensagens/metar/{}?"
+            "api_key={}"
+            "&data_ini={}00&data_fim={}23".format(
+                station_code, api_key, formatted_ini, formatted_fim
+            )
         )
 
         self.assertEqual(redemet_url(station_code, date), url)

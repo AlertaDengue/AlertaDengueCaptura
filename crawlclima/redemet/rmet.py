@@ -1,14 +1,18 @@
 import datetime
 import math
+import os
 import time
 
 import pandas as pd
 import psycopg2
 import requests
 from celery.utils.log import get_task_logger
+from dotenv import load_dotenv
 from metar.Metar import Metar, ParserError
 
 from utilities.models import db_config
+
+load_dotenv()
 
 logger = get_task_logger("redemet")
 
@@ -55,6 +59,7 @@ def parse_page(page):
         "pressure": [],
         "humidity": [],
     }
+
     for observation_time, raw_metar in records:
         try:
             m = Metar(raw_metar)
@@ -89,13 +94,16 @@ def date_generator(start, end=None):
 
 
 def redemet_url(station, date):
+    api_key = os.getenv("API_KEY")
     url_pattern = (
-        "https://www.redemet.aer.mil.br/api/consulta_automatica/"
-        "index.php?local={}&msg=metar"
+        "https://api-redemet.decea.gov.br/mensagens/metar/{}?"
+        "api_key={}"
         "&data_ini={formatted_date}00&data_fim={formatted_date}23"
     )
 
-    return url_pattern.format(station, formatted_date=date.strftime("%Y%m%d"))
+    return url_pattern.format(
+        station, api_key, formatted_date=date.strftime("%Y%m%d")
+    )
 
 
 def check_day(day, estacao):
@@ -154,6 +162,21 @@ def capture_date_range(station, date):
 
 
 def capture(station, date):
+    """
+    Capture climate data for the given date and station.
+
+    Parameters
+    ----------
+    station : str
+    date : str
+
+    Returns
+    -------
+    climate_data : dict
+        The climate data contains the follow keys: date, station, temperature_{min, mean, max},
+        humidity_{min, mean, max} and pressure_{min, mean, max}
+
+    """
     url = redemet_url(station, date)
     status = 0
     wait = 1
@@ -162,9 +185,20 @@ def capture(station, date):
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-    page = resp.text
-    dataframe = parse_page(page)
+    resp_data = resp.json()
 
+    page = ''
+    for dados in resp_data["data"]["data"]:
+        mensagem = dados['mens']
+        date_receive = dados['recebimento']
+        # format date
+        date_time_str = datetime.datetime.strptime(
+            date_receive, '%Y-%m-%d %H:%M:%S'
+        )
+        formated_date = date_time_str.strftime('%Y%m%d%H')
+        page += '{} - {}\n'.format(formated_date, mensagem)
+
+    dataframe = parse_page(page)
     data = describe(dataframe)
     if len(data) == 0:
         logger.warning("Empty data for %s", date)
