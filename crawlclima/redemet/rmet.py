@@ -50,7 +50,7 @@ def clean_line(line):
 
 
 def parse_page(page):
-    lines = filter(clean_line, page.split("\n"))  # < verify this
+    lines = filter(clean_line, page.split("\n"))
     records = map(get_date_and_standard_metar, lines)
     data = {
         "observation_time": [],
@@ -162,11 +162,21 @@ def capture_date_range(station, date):
 
 
 def capture(station, date):
-    '''
-    page: str
-    r_data: json
+    """
+    Capture climate data for the given date and station.
 
-    '''
+    Parameters
+    ----------
+    station : str
+    date : str
+
+    Returns
+    -------
+    climate_data : dict
+        The climate data contains the follow keys: date, station, temperature_{min, mean, max},
+        humidity_{min, mean, max} and pressure_{min, mean, max}
+
+    """
     url = redemet_url(station, date)
     status = 0
     wait = 1
@@ -175,27 +185,25 @@ def capture(station, date):
         status = resp.status_code
         time.sleep(wait)
         wait *= 2
-    # page = resp.text
-    r_data = resp.json()
+    resp_data = resp.json()
 
-    for dados in r_data["data"]["data"]:
+    page = ''
+    for dados in resp_data["data"]["data"]:
         mensagem = dados['mens']
         date_receive = dados['recebimento']
-
         # format date
         date_time_str = datetime.datetime.strptime(
             date_receive, '%Y-%m-%d %H:%M:%S'
         )
         formated_date = date_time_str.strftime('%Y%m%d%H')
+        page += '{} - {}\n'.format(formated_date, mensagem)
 
-        page = formated_date + " - " + mensagem
+    dataframe = parse_page(page)
+    data = describe(dataframe)
+    if len(data) == 0:
+        logger.warning("Empty data for %s", date)
+        return {}
+    data["date"] = date
+    data["station"] = station
 
-        dataframe = parse_page(page)
-        data = describe(dataframe)
-        if len(data) == 0:
-            logger.warning("Empty data for %s", date)
-            return {}
-        data["date"] = date
-        data["station"] = station
-
-        return data
+    return data

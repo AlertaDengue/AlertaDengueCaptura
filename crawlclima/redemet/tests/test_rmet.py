@@ -24,11 +24,6 @@ from crawlclima.redemet.rmet import (
 
 load_dotenv()
 
-'''
-The meteorological data contained in the example_data.txt files are the same
-obtained from the key in the dictionary of the json file "
-'''
-
 
 class TestFahrenheitToCelsius(unittest.TestCase):
     def test_32(self):
@@ -89,7 +84,7 @@ class TestCapture(unittest.TestCase):
 
         data = capture_date_range(station_code, date)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(responses.calls), 0)
+        self.assertEqual(len(responses.calls), 2)
 
     def test_check_day(self):
         pass
