@@ -15,3 +15,17 @@ deploy: build
 
 stop:
 	$(compose_cmd) stop
+
+install:
+	pip install -e .['develop']
+
+test:
+	pytest crawlclima/ -v
+
+clean:
+	@find ./ -name '*.pyc' -exec rm -f {} \;
+	@find ./ -name '*~' -exec rm -f {} \;
+	rm -rf .cache
+	rm -rf build
+	rm -rf dist
+	rm -rf *.egg-info

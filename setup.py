@@ -1,9 +1,14 @@
-import setuptools
+from setuptools import find_packages, setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+
+def read(filename):
+    return [req.strip() for req in open(filename).readlines()]
+
+
+setup(
     name="crawlclima",
     version="0.1.0",
     author="fccoelho",
@@ -12,11 +17,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/AlertaDengue/AlertaDengueCaptura.git",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GPL V3 License",
         "Operating System :: Linux",
     ],
     python_requires='>=3.7',
+    install_requires=read("requirements.txt"),
+    extras_require={'develop': read("requirements-dev.txt")},
 )
