@@ -1,4 +1,6 @@
 import csv
+import os
+import sys
 import time
 from datetime import datetime, timedelta
 from io import StringIO
@@ -22,6 +24,10 @@ from crawlclima.redemet.rmet import capture_date_range
 from utilities.models import save
 
 logger = get_task_logger("Captura")
+
+work_dir = os.getcwd()
+route_abs = os.path.dirname(os.path.abspath(work_dir))
+sys.path.insert(0, route_abs)
 
 
 def get_connection():
@@ -199,12 +205,17 @@ def fetch_redemet(self, station, date):
         data = capture_date_range(station, date)
     except Exception as e:
         logger.error(
-            "Error fetching from {} at {}: {}".format(station, date, e)
+            "Error fetching from {} at {} data is {}: error: {}".format(
+                station, date, data, e
+            )
         )
+        return
     try:
-        logger.info("Saving {}".format(station))
         if len(data) > 0:
             save(data, schema="Municipio", table="Clima_wu")
+            logger.info("Saving {}".format(station))
+        else:
+            logger.info("No data found {}".format(station))
     except Exception as e:
         logger.error(
             "Error saving to db with {} at {}: {}".format(station, date, e)

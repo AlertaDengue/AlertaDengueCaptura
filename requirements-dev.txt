@@ -1,9 +1,11 @@
--r requirements.txt
+# -r requirements.txt
 nose==1.3.7
 responses
 pgcli
 black
-flake8==3.5.0
+flake8==3.7.9
 isort==4.3.19
 pre-commit==2.4.0
-
+pandas
+pytest
+pyflakes==2.1.0

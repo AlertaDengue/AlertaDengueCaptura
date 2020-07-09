@@ -1,6 +1,7 @@
 import datetime
 import math
 import os
+import re
 import time
 
 import pandas as pd
@@ -148,16 +149,18 @@ def describe(dataframe):
     return data
 
 
-def capture_date_range(station, date):
+def capture_date_range(station, date_start, date_end=None):
     """
     Baixa dados da estação específica a partir da data especificada até a data de hoje
     :param station: código da estação
-    :param date: data de início da captura
+    :param date_start: data de início da captura
+    :param date_end: data final captura
     :return:
     """
-    today = datetime.datetime.today()
+    if date_end is None:
+        date_end = datetime.datetime.today()
     check_day_station = lambda d: check_day(d, station)
-    dates = filter(check_day_station, date_generator(today, date))
+    dates = filter(check_day_station, date_generator(date_end, date_start))
     return list(filter(len, map(lambda d: capture(station, d), dates)))
 
 
@@ -179,17 +182,26 @@ def capture(station, date):
     """
     url = redemet_url(station, date)
     status = 0
-    wait = 1
+    wait = 3
     while status != 200 and wait <= 16:
         resp = requests.get(url)
         status = resp.status_code
         time.sleep(wait)
-        wait *= 2
+        wait *= 3
     resp_data = resp.json()
+
+    with open('logs/capture-rmet.log', 'a') as f:
+        f.write("{}".format(resp_data['data']["data"]))
 
     page = ''
     for dados in resp_data["data"]["data"]:
         mensagem = dados['mens']
+        # check if there is more cases that pattern should treat(#53)
+        pattern = re.compile(r' [WSNE][0-9]{1,2}/[WSNE][0-9]{1,2}')
+        result = pattern.findall(mensagem)
+        for r in result:
+            mensagem = mensagem.replace(r, '')
+
         date_receive = dados['recebimento']
         # format date
         date_time_str = datetime.datetime.strptime(
@@ -200,9 +212,11 @@ def capture(station, date):
 
     dataframe = parse_page(page)
     data = describe(dataframe)
+
     if len(data) == 0:
-        logger.warning("Empty data for %s", date)
+        logger.warning("Empty data for %s in %s", station, date)
         return {}
+
     data["date"] = date
     data["station"] = station
 
