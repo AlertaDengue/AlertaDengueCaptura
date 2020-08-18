@@ -22,25 +22,24 @@ RUN conda config --add channels conda-forge \
 
 # Copy environment file to tmp/
 ARG PYTHON_VERSION
-# Pin the python version to tests
-COPY environment-3.7.yml /tmp/environment.yml
+COPY /environment-3.7.yml /tmp/environment.yml
+COPY /environment-downloader.yml  /tmp/environment-downloader.yml
 
 # Use environment to update the env base
 RUN conda env update --file /tmp/environment.yml --name base \
+  && conda env update --file /tmp/environment-downloader.yml --name base \
   && conda clean -afy
 
 # Files
-COPY requirements.txt tweets.py clima.py setup.py README.md \
-     requirements-dev.txt example_env_file /AlertaDengueCaptura/
-
+COPY /requirements.txt /tweets.py /clima.py /AlertaDengueCaptura/
 # Paste credentials validation in command line and copy to container
-COPY credentials /root/.config/earthengine/credentials
+COPY /credentials /root/.config/earthengine/credentials
 
 # Prepare cron tasks
 COPY docker/cron_tasks /etc/cron.d/cron_tasks
-RUN chmod 0644 /etc/cron.d/cron_tasks \
-  && touch /var/log/cron.log \
-  && crontab /etc/cron.d/cron_tasks
+RUN chmod 0644 /etc/cron.d/cron_tasks
+RUN touch /var/log/cron.log
+RUN crontab /etc/cron.d/cron_tasks
 
 # Copy the script file to initialize cron and celery
 COPY docker/start_script_celery.sh /start_script_celery.sh

@@ -22,23 +22,41 @@ from pydrive.drive import GoogleDrive
 from rasterio.warp import Resampling, reproject
 from sqlalchemy import create_engine
 
+from downloader_app.settings import BASE_DIR
+
 # instantiate
 config = ConfigParser()
 # parse existing file
-config.read("settings.ini")
+config.read(os.path.join(BASE_DIR, "downloader_app", "settings.ini"))
 # read values
-PATH = config.get("settings", "path")
+PATH = config.get('settings', 'path')
 
 # Initialize Google Earth Engine.
 ee.Initialize()
-# Iinitialize (authenticate) Google Driver.
+
+# Initialize (authenticate) Google Driver.
 gauth = GoogleAuth()
 # Try to load saved client credentials
-gauth.LoadCredentialsFile("mycreds.txt")
-gauth.LocalWebserverAuth()
+gauth.LoadCredentialsFile("downloader_app/mycreds.txt")
+if gauth.credentials is None:
+    # Authenticate if they're not there
+    gauth.GetFlow()
+    gauth.flow.params.update({'access_type': 'offline'})
+    gauth.flow.params.update({'approval_prompt': 'force'})
+
+    gauth.LocalWebserverAuth()
+elif gauth.access_token_expired:
+    # Refresh them if expired
+    print("Google Drive Token Expired, Refreshing")
+    gauth.Refresh()
+else:
+    # Initialize the saved creds
+    gauth.Authorize()
 # Save the current credentials to a file
-gauth.SaveCredentialsFile("mycreds.txt")
+gauth.SaveCredentialsFile("downloader_app/mycreds.txt")
+
 drive = GoogleDrive(gauth)
+
 # Avoid displaying some log warnings. See https://github.com/googleapis/google-api-python-client/issues/299.
 logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
@@ -115,7 +133,6 @@ def download_tiffs(source, dates, point1, point2, opt=False):
                 success, path = single_download_gee(
                     source, current_date, next_date, x1, x2, y1, y2, opt
                 )
-
             # Save information about the downloads in a database.
             if success:
                 exists = os.path.exists("downloads.db")
@@ -272,7 +289,7 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
     path_tmp = os.path.join(PATH, source)
     exists = os.path.exists(path_tmp)
     if not exists:
-        os.mkdir(path_tmp)
+        os.makedirs(path_tmp, mode=0o775, exist_ok=True)
     # Path to the file.
     path = os.path.join(path_tmp, filename)
 
@@ -306,6 +323,7 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         # Log message of success.
         success = True
         msg = "Download (" + year1 + "-" + month1 + "-" + day1 + "): success"
+        print(msg)
         logging.info(msg)
 
     except urllib.error.HTTPError:

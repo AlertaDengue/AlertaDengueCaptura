@@ -32,7 +32,7 @@ If you are using conda, I recommend to create an env for this package. The follo
 
 1) Create your env with some packages.
 
-        conda create -n satelite rasterio pandas geopandas imageio shapely xarray netCDF4 cartopy geoviews
+        conda create -n satelite rasterio pandas geopandas imageio shapely xarray netCDF4 cartopy geoviews python=3.7.7
 
 2) Within this env, install the extra packages.
 

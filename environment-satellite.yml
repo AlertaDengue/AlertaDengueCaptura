@@ -1,0 +1,25 @@
+name: satellite
+channels:
+  - conda-forge
+dependencies:
+  - descartes
+  - earthengine-api
+  - geopandas
+  - geoviews
+  - imageio
+  - netcdf4
+  - pandas
+  - pip
+  - pydrive
+  - rasterio
+  - rasterstats
+  - shapely
+  - xarray
+
+  - pip:
+    - celery
+    - geojson
+    - odo
+    - python-dotenv
+    - sqlalchemy
+    - docker-compose

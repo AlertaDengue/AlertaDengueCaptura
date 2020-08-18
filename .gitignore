@@ -72,3 +72,6 @@ settings.ini
 /docker/dev_dumps/
 *.gz
 .vscode
+
+# EarthEngine
+DownloadedFiles/*
