@@ -66,9 +66,14 @@ target/
 
 settings.ini
 .env
+.env_downloader
 .idea/
 *.ini
 
 /docker/dev_dumps/
 *.gz
 .vscode
+
+# EarthEngine
+DownloadedFiles/*
+*credentials*

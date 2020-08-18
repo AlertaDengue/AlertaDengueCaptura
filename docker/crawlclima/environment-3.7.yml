@@ -9,6 +9,7 @@ dependencies:
   - flower
   - folium
   - bokeh
+  - psycopg2
   - pgcli
   - geojson
   - python-dotenv
@@ -18,10 +19,10 @@ dependencies:
   - tornado
 
   - pip:
-      - odo
-      - pymongo
-      - python-metar
-      - sqlsoup
-      - bearcart
-      - psycopg2
+    - odo
+    - pymongo
+    - python-metar
+    - sqlsoup
+    - bearcart
+    - responses
     
