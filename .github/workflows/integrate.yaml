@@ -19,7 +19,7 @@ jobs:
         python-version: [3.7]
 
     env:
-      COMPOSE_FILE: crawlclima/docker-compose.yml
+      COMPOSE_FILE: docker/crawlclima/docker-compose.yml
       PYTHON_VERSION: ${{ matrix.python-version }}
 
     steps:
@@ -30,7 +30,7 @@ jobs:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         activate-environment: alertacapture
-        environment-file: crawlclima/environment-3.7.yml
+        environment-file: docker/crawlclima/environment-3.7.yml
         channels: conda-forge
 
     - name: Install dependencies
