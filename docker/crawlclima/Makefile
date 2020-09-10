@@ -4,7 +4,7 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -f crawlclima/docker-compose.yml --env-file crawlclima/.env
+compose_cmd = docker-compose -f docker/crawlclima/docker-compose.yml --env-file docker/crawlclima/.env
 
 
 build_crawlclima:
@@ -19,8 +19,9 @@ stop_crawlclima:
 install_crawlclima:
 	pip install -e .['develop']
 
-test:
-	pytest crawlclima/ -v
+test_crawlclima:
+	# Ignore tests in database, reason issue#56
+	pytest -v crawlclima --ignore=crawlclima/tests/test_tasks.py
 
 clean:
 	@find ./ -name '*.pyc' -exec rm -f {} \;

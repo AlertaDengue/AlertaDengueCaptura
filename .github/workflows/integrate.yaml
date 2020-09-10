@@ -10,11 +10,14 @@ on:
     pull_request:
       branches: [ master ]
 
+defaults:
+    run:
+      working-directory: ./AlertaDengueCaptura/
+
 jobs:
   crawlclima:
 
     runs-on: ubuntu-latest
-    working-directory: ./AlertaDengueCaptura/docker
     strategy:
       matrix:
         python-version: [3.7]
@@ -37,7 +40,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        make install_crawlclima
+        make -f docker/crawlclima/Makefile install_crawlclima
 
     - name: Lint with flake8
       shell: bash -l {0}
@@ -50,4 +53,4 @@ jobs:
     - name: Tests Crawclima
       shell: bash -l {0}
       run: |
-        make test_crawlclima
+        make -f docker/crawlclima/Makefile test_crawlclima
