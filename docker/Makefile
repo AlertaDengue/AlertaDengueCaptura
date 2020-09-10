@@ -4,19 +4,19 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -f docker-compose.yml --env-file .env
+compose_cmd = docker-compose -f crawlclima/docker-compose.yml --env-file crawlclima/.env
 
 
-build:
+build_crawlclima:
 	$(compose_cmd) build
 
-deploy: build
+deploy_crawlclima: build_crawlclima
 	$(compose_cmd) up
 
-stop:
+stop_crawlclima:
 	$(compose_cmd) stop
 
-install:
+install_crawlclima:
 	pip install -e .['develop']
 
 test:

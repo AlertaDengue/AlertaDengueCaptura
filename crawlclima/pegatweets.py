@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from itertools import islice
 
 # Remove this from the abspath
-from settings import project_root
+from crawlclima.settings import project_root
 
 from crawlclima.tasks import pega_tweets
 

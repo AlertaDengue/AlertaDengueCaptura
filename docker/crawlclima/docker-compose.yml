@@ -1,37 +1,37 @@
 version: '3'
 services:
-    rabbitmq:
-      image: rabbitmq:3
-      hostname: rabbitmq
-      ports:
-        - 25672:5672
-      restart: always
+  rabbitmq:
+    image: rabbitmq:3
+    hostname: rabbitmq
+    ports:
+      - 25672:5672
+    restart: always
 
-    worker:
-      build:
-        context: ".."
-        dockerfile: "crawlclima/Dockerfile-celery"
-        args:
-          PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
-      env_file:
-        - .env
-      environment:
-        - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
-        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
-        - PSQL_PORT=${PSQL_PORT}
-        - PSQL_HOST=${PSQL_HOST}
-      volumes:
-        - ../../:/AlertaDengueCaptura
-      depends_on:
-        - rabbitmq
-      restart: always
+  worker:
+    build:
+      context: ".."
+      dockerfile: "crawlclima/Dockerfile-celery"
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+      - PSQL_PORT=${PSQL_PORT}
+      - PSQL_HOST=${PSQL_HOST}
+    volumes:
+      - ../../:/AlertaDengueCaptura
+    depends_on:
+      - rabbitmq
+    restart: always
 
-    flower: 
-      image: mher/flower
-      command: ["flower", "--broker=amqp://guest:guest@rabbit:5672", "--port=15555"]
-      ports:
-        - 15555:5555
-      depends_on:
-        - worker
-      expose:
-        - 15555
+  flower:
+    image: mher/flower
+    command: ["flower", "--broker=amqp://guest:guest@rabbit:25672", "--port=15555"]
+    ports:
+      - 15555:5555
+    depends_on:
+      - worker
+    expose:
+      - 15555

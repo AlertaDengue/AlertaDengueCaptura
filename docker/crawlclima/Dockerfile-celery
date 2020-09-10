@@ -33,9 +33,9 @@ RUN conda env update --file /tmp/environment.yml --name base \
 
 # Prepare cron tasks
 COPY crawlclima/cron_tasks /etc/cron.d/cron_tasks
-RUN chmod 0644 /etc/cron.d/cron_tasks
-RUN touch /var/log/cron.log
-RUN crontab /etc/cron.d/cron_tasks
+RUN chmod 0644 /etc/cron.d/cron_tasks \
+&&  touch /var/log/cron.log\
+&&  crontab /etc/cron.d/cron_tasks
 
 # Copy the script file to initialize cron and celery
 COPY crawlclima/start_cron_celery.sh /start_cron_celery.sh
