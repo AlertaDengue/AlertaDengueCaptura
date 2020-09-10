@@ -28,8 +28,9 @@ COPY crawlclima/environment-${PYTHON_VERSION}.yml /tmp/environment.yml
 RUN conda env update --file /tmp/environment.yml --name base \
   && conda clean -afy
 
+
 # Files
-# COPY /tweets.py ../../clima.py /AlertaDengueCaptura/
+# COPY /AlertaDengueCaptura/requirements.txt /AlertaDengueCaptura/tweets.py /AlertaDengueCaptura/clima.py /AlertaDengueCaptura/
 
 # Prepare cron tasks
 COPY crawlclima/cron_tasks /etc/cron.d/cron_tasks

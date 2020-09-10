@@ -10,13 +10,9 @@ on:
     pull_request:
       branches: [ master ]
 
-defaults:
-    run:
-      working-directory: ./AlertaDengueCaptura/
 
 jobs:
   crawlclima:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,7 +46,3 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Tests Crawclima
-      shell: bash -l {0}
-      run: |
-        make -f docker/crawlclima/Makefile test_crawlclima
