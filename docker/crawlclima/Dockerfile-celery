@@ -22,7 +22,7 @@ RUN conda config --add channels conda-forge \
 
 # Copy environment file to tmp/
 ARG PYTHON_VERSION
-COPY /environment-${PYTHON_VERSION}.yml /tmp/environment.yml
+COPY docker/crawlclima/environment-${PYTHON_VERSION}.yml /tmp/environment.yml
 
 # Use environment to update the env base
 RUN conda env update --file /tmp/environment.yml --name base \
@@ -32,13 +32,13 @@ RUN conda env update --file /tmp/environment.yml --name base \
 COPY /requirements.txt /tweets.py /clima.py /AlertaDengueCaptura/
 
 # Prepare cron tasks
-COPY docker/cron_tasks /etc/cron.d/cron_tasks
+COPY docker/crawlclima/cron_tasks /etc/cron.d/cron_tasks
 RUN chmod 0644 /etc/cron.d/cron_tasks
 RUN touch /var/log/cron.log
 RUN crontab /etc/cron.d/cron_tasks
 
 # Copy the script file to initialize cron and celery
-COPY docker/start_cron_celery.sh /start_cron_celery.sh
+COPY docker/crawlclima/start_cron_celery.sh /start_cron_celery.sh
 RUN chmod +x /start_cron_celery.sh
 
 # Create script activate environment

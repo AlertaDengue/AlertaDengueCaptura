@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Remove this from the abspath
-from settings import project_root  # noqa
+from crawlclima.settings import project_root  # noqa
 
 from crawlclima.tasks import fetch_redemet
 from utilities.models import find_all

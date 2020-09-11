@@ -13,3 +13,4 @@ python-dotenv
 dbfread
 pandasql
 python-metar
+pytest

@@ -4,23 +4,25 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -p alerta -f docker/docker-compose.yml --env-file .env
+compose_cmd = docker-compose -f docker/crawlclima/docker-compose.yml --env-file .env
 
 
-build:
+build_crawlclima:
 	$(compose_cmd) build
 
-deploy: build
+deploy_crawlclima: build_crawlclima
 	$(compose_cmd) up
 
-stop:
+stop_crawlclima:
 	$(compose_cmd) stop
 
-install:
-	pip install -e .['develop']
+test_crawlclima:
+	# Ignore tests in database, reason issue#56
+	pytest -v crawlclima --ignore=crawlclima/tests/test_tasks.py
 
-test:
-	pytest crawlclima/ -v
+
+install_alertadenguecaptura:
+	pip install -e .['develop']
 
 clean:
 	@find ./ -name '*.pyc' -exec rm -f {} \;

@@ -7,29 +7,29 @@ services:
         - 25672:5672
       restart: always
 
-    capture_celery-worker:
+    capture_worker:
       build:
-        context: ".."
-        dockerfile: "docker/Dockerfile-celery"
+        context: "../../"
+        dockerfile: "docker/crawlclima/Dockerfile-celery"
         args:
           PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
       env_file:
-        - ../.env
+        - .env
       environment:
         - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
         - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
         - PSQL_PORT=${PSQL_PORT}
         - PSQL_HOST=${PSQL_HOST}
       volumes:
-        - ..:/AlertaDengueCaptura
+        - ../../:/AlertaDengueCaptura
       depends_on:
         - capture_rabbitmq
       restart: always
 
     capture_flower:
       build:
-        context: ".."
-        dockerfile: "docker/Dockerfile-flower"
+        context: "../../"
+        dockerfile: "docker/crawlclima/Dockerfile-flower"
       environment:
         - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:25672
       ports:
@@ -37,6 +37,6 @@ services:
       expose:
         - 35555
       depends_on:
-        - capture_celery-worker
+        - capture_worker
       command: >
         /bin/bash -c "sleep 15"
