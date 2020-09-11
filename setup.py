@@ -9,8 +9,8 @@ def read(filename):
 
 
 setup(
-    name="crawlclima",
-    version="0.1.0",
+    name="AlertaDengueCaptura",
+    version="0.2.0",
     author="fccoelho",
     author_email="fccoelho@gmail.com",
     description="Rotinas para captura de dados climáticos",

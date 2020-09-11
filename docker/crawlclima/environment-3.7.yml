@@ -3,25 +3,25 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-- pip
-- pandas
-- requests
-- flower
-- folium
-- bokeh
-- psycopg2
-- pgcli
-- geojson
-- python-dotenv
-- dbfread
-- pandasql
-- celery
-- tornado
+  - pip
+  - pandas
+  - requests
+  - flower
+  - folium
+  - bokeh
+  - pgcli
+  - geojson
+  - python-dotenv
+  - dbfread
+  - pandasql
+  - celery
+  - tornado
 
-- pip:
-    - odo
-    - pymongo
-    - python-metar
-    - sqlsoup
-    - bearcart
+  - pip:
+      - odo
+      - pymongo
+      - python-metar
+      - sqlsoup
+      - bearcart
+      - psycopg2
     

@@ -36,7 +36,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        make -f docker/crawlclima/Makefile install_crawlclima
+        make -f docker/crawlclima/Makefile install_alertadenguecaptura
 
     - name: Lint with flake8
       shell: bash -l {0}
