@@ -32,6 +32,7 @@ except Exception as e:
 app.conf.update(CELERY_ALWAYS_EAGER=True)
 
 
+@unittest.skip("reason='Enable base_demo for testing'")
 class TestTasks(unittest.TestCase):
     def setUp(self):
         self.cur = conn.cursor()
@@ -61,7 +62,7 @@ class TestTasks(unittest.TestCase):
         res = pega_tweets("2015-01-01", "2015-08-07", ["3304557", "3303302"])
         self.cur.execute('select * from "Municipio"."Tweet";')
         resp = self.cur.fetchall()
-        self.assertEquals(res, 200)
+        self.assertEqual(res, 200)
         self.assertGreater(len(resp), 0)
 
 

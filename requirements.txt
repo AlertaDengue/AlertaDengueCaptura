@@ -14,3 +14,6 @@ dbfread
 pandasql
 python-metar
 pytest
+PyYAML
+psycopg2
+sqlalchemy

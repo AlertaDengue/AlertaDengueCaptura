@@ -1,0 +1,44 @@
+version: '3.3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3
+    hostname: rabbitmq
+    ports:
+      - 5672:5672
+    expose:
+      - 5672
+
+  worker:
+    build:
+      context: "../../"
+      dockerfile: "docker/downloader/Dockerfile-downloader"
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
+    env_file:
+      - .env
+    environment:
+        - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    hostname: celery_worker
+    # command: celery worker -A downloader_app.celeryapp -l info.
+
+    volumes:
+      - ../../:/AlertaDengueCaptura
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+
+  capture_flower:
+    image: mher/flower
+    # command: ["flower", "--broker=amqp://guest:guest@rabbitmq:5672", "--port=5555"]
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - 5555:5555
+    depends_on:
+      - worker
+    command: >
+      /bin/bash -c "sleep 15"
+    expose:
+      - 5555
