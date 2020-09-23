@@ -22,31 +22,32 @@ RUN conda config --add channels conda-forge \
 
 # Copy environment file to tmp/
 ARG PYTHON_VERSION
-COPY docker/downloader/environment-3.7.yml /tmp/environment.yml
+COPY docker/satellite/environment-${PYTHON_VERSION}.yml /tmp/environment.yml
 
 # Use environment to update the env base
 RUN conda env update --file /tmp/environment.yml --name base \
   && conda clean -afy
 
-COPY /requirements.txt /README.md /requirements-dev.txt docker/downloader/env_sample /AlertaDengueCaptura/
+#Files
+COPY /requirements.txt /README.md /requirements-dev.txt /AlertaDengueCaptura/
 
 # Paste credentials validation in command line and copy to container
 COPY /credentials /root/.config/earthengine/credentials
 
-# Prepare cron tasks
-COPY docker/downloader/cron_tasks /etc/cron.d/cron_tasks
-RUN chmod 0644 /etc/cron.d/cron_tasks
-RUN touch /var/log/cron.log
-RUN crontab /etc/cron.d/cron_tasks
-
-# Copy the script file to initialize cron and celery
-COPY docker/downloader/start_script_downloader.sh /start_script_downloader.sh
-RUN chmod +x /start_script_downloader.sh
-
 # Create script activate environment
 RUN echo 'source /opt/conda/bin/activate base && exec "$@"' > activate.sh
 RUN chmod +x /activate.sh
+
+# Prepare cron tasks
+COPY docker/satellite/cron_tasks /etc/cron.d/cron_tasks
+RUN chmod 0644 /etc/cron.d/cron_tasks
+RUN crontab -u root /etc/cron.d/cron_tasks
+
+# Copy the script file to initialize cron and celery
+COPY docker/satellite/start_cron_celery.sh /start_cron_celery.sh
+RUN chmod +x /start_cron_celery.sh
+
 WORKDIR /AlertaDengueCaptura/
 
 ENTRYPOINT ["bash", "/activate.sh"]
-CMD ["/start_script_downloader.sh"]
+CMD ["/start_cron_celery.sh"]

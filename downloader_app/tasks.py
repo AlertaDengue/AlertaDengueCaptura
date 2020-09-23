@@ -2,18 +2,16 @@ import os
 import sys
 
 from celery.utils.log import get_task_logger
-from dotenv import load_dotenv
 
-from downloader_app import tiff_downloader as td
 from downloader_app.celeryapp import app
-from downloader_app.settings import BASE_DIR
+from downloader_app.tiff_downloader import download_tiffs as td
 
-# LOCAL = os.path.join(BASE_DIR, "downloader_app")
-# sys.path.insert(0, LOCAL)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORK_DIR = os.path.join(BASE_DIR, "downloader_app")
+sys.path.insert(0, WORK_DIR)
 
-load_dotenv()
 
-logger = get_task_logger("Downloader_app")
+logger = get_task_logger("downloader_app")
 
 
 @app.task
@@ -23,12 +21,12 @@ def download_source(source, dates, point1, point2, opt=False):
     """
 
     try:
-        logger.info("Capturando {} {}".format(source, dates))
-        td.download_tiffs(source, dates, point1, point2, opt)
+        logger.info("Fetch {} {}".format(source, dates))
+        td(source, dates, point1, point2, opt)
 
     except Exception as e:
         logger.error(
-            "Error capturando from {} at {} error: {}".format(source, dates, e)
+            "[EE] fetching from {} at {} error: {}".format(source, dates, e)
         )
         return
 

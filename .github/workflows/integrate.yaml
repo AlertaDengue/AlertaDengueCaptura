@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: goanpeca/setup-miniconda@v1
+    - uses: conda-incubator/setup-miniconda@v1
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
@@ -55,34 +55,35 @@ jobs:
         python-version: [3.7]
 
     env:
-      COMPOSE_FILE: docker/downloader/downloader-compose.yml
+      COMPOSE_FILE: docker/satellite/downloader-compose.yml
       PYTHON_VERSION: ${{ matrix.python-version }}
 
     steps:
     - uses: actions/checkout@v2
 
-    - uses: goanpeca/setup-miniconda@v1
+    - uses: conda-incubator/setup-miniconda@v1
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
         activate-environment: satellite
-        environment-file: docker/downloader/environment-3.7.yml
+        environment-file: docker/satellite/environment-3.7.yml
         channels: conda-forge
 
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        make -f docker/downloader/Makefile install_alertadenguecaptura
+        make -f docker/satellite/Makefile install_alertadenguecaptura
 
     - name: Copy env_file as env
       shell: bash -l {0}
       run: |
-        cp docker/downloader/env_sample docker/downloader/.env
+        cp docker/satellite/env_sample downloader_app/.env
+        cp docker/satellite/env_sample docker/satellite/.env
 
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        make -f docker/downloader/Makefile flake8_downloader_app
+        make -f docker/satellite/Makefile flake8_downloader_app
 
     - name: Configure credentials to downloader_app
       shell: bash -l {0}
@@ -93,15 +94,22 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
       run: |
-        make -f docker/downloader/Makefile configure_ci_downloader_app
+        make -f docker/satellite/Makefile configure_ci_downloader_app
         mkdir -p /home/runner/.config/earthengine/
         cp credentials /home/runner/.config/earthengine/credentials
         cat credentials
         echo $CLIENT_SECRET
         cat downloader_app/mycreds.txt
 
-    - name: Tests Downloader_app
+    - name: Make deploy downloader_app
       shell: bash -l {0}
       run: |
-        ls -la
-        make -f docker/downloader/Makefile test_downloader_app
+        make -f docker/satellite/Makefile deploy_downloader_app
+
+    - name: Tests downloader_app
+      shell: bash -l {0}
+      run: |
+        pwd
+        ls -la /AlertaDengueCaptura/downloader_app/shapefiles/
+        ls -la downloader_app/tests/data/shapefiles
+        make -f docker/satellite/Makefile test_downloader_app SERVICES_SATELLITE=capture_worker

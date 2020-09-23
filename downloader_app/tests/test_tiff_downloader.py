@@ -2,20 +2,25 @@ import os
 import sys
 
 import pandas as pd
-import pytest
 import requests
 from netCDF4 import Dataset
 
 from downloader_app import shapefile_module as shpm
 from downloader_app import tiff_downloader as td
-from downloader_app.settings import BASE_DIR
 
-LOCAL = os.path.join(BASE_DIR, "downloader_app")
-sys.path.insert(0, LOCAL)
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+WORK_DIR = os.path.join(BASE_DIR, "downloader_app")
+sys.path.insert(0, WORK_DIR)
 
 # Set the filepath and load in a shapefile.
-SHP_PATH = os.path.join(LOCAL, "RJ_Mun97_region/RJ_Mun97_region.shp")
-DOWNLOADFILES_PATH = os.path.join(LOCAL, "DownloadedFiles")
+# TODO: A function will be created to handle the data of the regions #60
+DOWNLOADFILES_PATH = os.path.join(WORK_DIR, "DownloadedFiles")
+
+SHP_PATH = os.path.join(
+    WORK_DIR, "shapefiles/RJ_Mun97_region/RJ_Mun97_region.shp"
+)
 
 # url responsible for identifying the source.
 source_url = {
@@ -28,6 +33,7 @@ source_url = {
     'LandDAAC-v6-view_zenith_angle': "http://iridl.ldeo.columbia.edu/SOURCES/.USGS/.LandDAAC/.MODIS/.version_006/"
     ".SSA/.view_zenith_angle/",
 }
+
 
 # Get source_url status code.
 def test_get_url():
@@ -47,7 +53,11 @@ def test_downloader_tiff():
     point1, point2 = shpm.extract_shp_boundingbox(SHP_PATH)
     source = 'LandDAAC-v5-day'
     print(os.getcwd())
-    dates = pd.date_range('2016-07-20', '2016-08-05', freq='8D')
+    dates = (
+        pd.date_range('2016-07-20', '2016-08-05', freq='8D')
+        .strftime("%Y-%m-%d")
+        .tolist()
+    )
     options = {
         'plot': False,
         'keep_original': True,
@@ -73,7 +83,11 @@ def test_downloader_tiff():
 # Download more raster files and test the creation of the netcdf file.
 def test_LandDAAC_v5_night():
     source = 'LandDAAC-v5-night'
-    dates = pd.date_range('2016-07-20', '2016-08-05', freq='8D')
+    dates = (
+        pd.date_range('2016-07-20', '2016-08-05', freq='8D')
+        .strftime("%Y-%m-%d")
+        .tolist()
+    )
     point1, point2 = shpm.extract_shp_boundingbox(SHP_PATH)
     # Allow time_series to create a netcdf file
     options = {
@@ -93,7 +107,7 @@ def test_LandDAAC_v5_night():
         # Open the netCDF file and read it.
         nc = Dataset(nc_filename, 'r')
     except OSError:
-        print('{} failed in process {}'.format(nc_filename, i))
+        print('{} failed in process {}'.format(nc_filename))
 
     nc_model = nc.data_model
     assert nc_model == "NETCDF4", "The {} format is not correct".format(

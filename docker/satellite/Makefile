@@ -4,14 +4,17 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -f docker/downloader/downloader-compose.yml --env-file docker/downloader/.env
+compose_cmd = docker-compose -f docker/satellite/downloader-compose.yml --env-file downloader_app/.env
+
+
+SERVICES_SATELLITE :=
 
 
 build_downloader_app:
-	$(compose_cmd) build
+	$(compose_cmd) build ${SERVICES_SATELLITE}
 
 deploy_downloader_app: build_downloader_app
-	$(compose_cmd) up
+	$(compose_cmd) up -d
 
 stop_downloader_app:
 	$(compose_cmd) stop
@@ -21,7 +24,10 @@ install_alertadenguecaptura:
 
 configure_ci_downloader_app:
 	bash .github/scripts/update_credentials_environ.sh
-	python downloader_app/ci/config.py
+	python downloader_app/ci/create_credentials.py
+
+exec_downloader_app:
+	$(compose_cmd) exec capture_worker bash
 
 # TESTS
 
@@ -33,6 +39,7 @@ test_downloader_app:
 
 clean:
 	@find ./ -name '*.pyc' -exec rm -f {} \;
+	@find ./ -name '*.pyo' -exec rm -f {} \;
 	@find ./ -name '*~' -exec rm -f {} \;
 	rm -rf .cache
 	rm -rf build
