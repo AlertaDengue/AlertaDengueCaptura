@@ -78,7 +78,6 @@ jobs:
       shell: bash -l {0}
       run: |
         cp docker/satellite/env_sample downloader_app/.env
-        cp docker/satellite/env_sample docker/satellite/.env
 
     - name: Lint with flake8
       shell: bash -l {0}
@@ -109,7 +108,4 @@ jobs:
     - name: Tests downloader_app
       shell: bash -l {0}
       run: |
-        pwd
-        ls -la /AlertaDengueCaptura/downloader_app/shapefiles/
-        ls -la downloader_app/tests/data/shapefiles
-        make -f docker/satellite/Makefile test_downloader_app SERVICES_SATELLITE=capture_worker
+        make -f docker/satellite/Makefile test_downloader_app

@@ -4,20 +4,35 @@
 include $(ENVFILE)
 export
 
-compose_cmd = docker-compose -f docker/satellite/downloader-compose.yml --env-file downloader_app/.env
 
+# docker specific
+ENV_FILE := downloader_app/.env
+COMPOSE_FILE := docker/satellite/downloader-compose.yml
+DOCKER := PYTHON_VERSION=$(PYTHON_VERSION) docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
+DOCKER_UP := $(DOCKER) up  --remove-orphans -d --no-build
+DOCKER_RUN := $(DOCKER) run --rm
+DOCKER_BUILD := $(DOCKER) build
+DOCKER_STOP := $(DOCKER) rm --force --stop
+DOCKER_EXEC := $(DOCKER) exec
+SERVICES := capture_worker
 
-SERVICES_SATELLITE :=
+MAKE = make -f docker/satellite/Makefile
 
 
 build_downloader_app:
-	$(compose_cmd) build ${SERVICES_SATELLITE}
+	$(DOCKER_BUILD)
 
 deploy_downloader_app: build_downloader_app
-	$(compose_cmd) up -d
+	$(DOCKER_UP)
+
+exec_downloader_app: deploy_downloader_app
+	$(DOCKER_EXEC) $(SERVICES) bash
 
 stop_downloader_app:
-	$(compose_cmd) stop
+	$(DOCKER_STOP) 
+
+restart_downloader_app: stop_downloader_app
+	$(MAKE) deploy_downloader_app
 
 install_alertadenguecaptura:
 	pip install -e .['develop']
@@ -26,16 +41,13 @@ configure_ci_downloader_app:
 	bash .github/scripts/update_credentials_environ.sh
 	python downloader_app/ci/create_credentials.py
 
-exec_downloader_app:
-	$(compose_cmd) exec capture_worker bash
 
 # TESTS
-
 flake8_downloader_app:
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
 test_downloader_app:
-	pytest downloader_app/ -vv
+	$(DOCKER_EXEC) -T $(SERVICES) pytest downloader_app/ -vv
 
 clean:
 	@find ./ -name '*.pyc' -exec rm -f {} \;
