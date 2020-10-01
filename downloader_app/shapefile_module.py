@@ -82,7 +82,7 @@ def zonal_means(shp_path, raster_path, col_pos=1):
     original shapefile must have a column with the region names. Additionally, the polygons with means
     equal to None receive the overall mean with respect to the other polygons.
 
-    By default this function uses the second column of the shapefile to extract the region names. 
+    By default this function uses the second column of the shapefile to extract the region names.
 
     Inputs
     ------
@@ -160,12 +160,11 @@ def raw_plot(shp_path, raster_path, cmap="jet"):
 
 def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
     """
-    Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and 
+    Given a shapefile path shp_path and dataframe z_means, this function merges the map with the information given and
     makes a plot. The image is saved to the disk with the name 'map_image.png'.
 
-    By default this function uses the second column of the shapefile to make the join between the datasets. Be sure 
+    By default this function uses the second column of the shapefile to make the join between the datasets. Be sure
     that this is the adequate column to perform this operation.
-    
     Inputs
     ------
     shp_path: str
@@ -175,7 +174,7 @@ def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
     title: str
         Title of the image.
     cmap: str
-        String for the colormap.   
+        String for the colormap.
     col_pos: int
         Number of the column with the region names. Default is 1 (the second column).
     """
@@ -234,7 +233,7 @@ def zonal_plot(shp_path, z_means, title, cmap="jet", col_pos=1):
 
 def time_series(shp_path, raster_filename_list, region, plot=False, col_pos=1):
     """
-    Given a shapefile, a list of raster files and a name (with respect to the second column of the shapefile 
+    Given a shapefile, a list of raster files and a name (with respect to the second column of the shapefile
     by default), this function plots the time series of the raster data relative to the specific name given.
 
     Inputs
@@ -300,9 +299,8 @@ def time_series_curve(
     col_pos=1,
 ):
     """
-    This function creates an animated gif with the time series plots based on the many raster 
-    data over time.     
-    
+    This function creates an animated gif with the time series plots based on the many raster
+    data over time.
     Inputs
     ------
     shp_path: str
@@ -392,12 +390,11 @@ def time_series_curve(
 
 def time_series_map(map_df, df, save_path, title, framerate=0.5, cmap="Blues"):
     """
-    This function creates an animated gif with the colored shapefile evolution based on 
+    This function creates an animated gif with the colored shapefile evolution based on
     the given dataframe with the region values over time.
     To use this function properly, the index of the shapefile 'shp' and the dataframe 'df'
     must agree. Usually the indexes are the names of the regions of interest. The columns labels
     of df are supposed to be the dates (as timestamps) and the rows are the regions.
-    
     Inputs
     ------
     map_df: shapefile

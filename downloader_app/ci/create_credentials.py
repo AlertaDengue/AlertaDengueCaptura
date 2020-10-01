@@ -1,30 +1,29 @@
 import json
 import os
-import sys
 
 import yaml
 from dotenv import load_dotenv
 
-from downloader_app.settings import BASE_DIR
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 load_dotenv()
 
-'''
-EE_CREDENTIAL_FILE = os.path.join(
-    BASE_DIR, 'downloader_app', 'alertadenguecaptura-7ec421287640.json'
-)
+# App Path
+DOWNLOADER_PATH = os.path.join(BASE_DIR, 'downloader_app')
 
-EE_SERVICE_ACCOUNT = (
-    'alertadengue-898@alertadenguecaptura.iam.gserviceaccount.com'
-)
-'''
-DOWNLADER_PATH = os.path.join(BASE_DIR, 'downloader_app')
-
-SETTINGS_PATH = os.path.join(DOWNLADER_PATH, 'settings.yaml')
-MYCREDS_PATH = os.path.join(DOWNLADER_PATH, 'mycreds.txt')
-SECRETS_PATH = os.path.join(DOWNLADER_PATH, 'client_secrets.json')
+CREDENTIALS_PATH = os.path.join(DOWNLOADER_PATH, "credentials.json")
+SETTINGS_PATH = os.path.join(DOWNLOADER_PATH, 'settings.yaml')
+MYCREDS_PATH = os.path.join(DOWNLOADER_PATH, 'mycreds.txt')
+SECRETS_PATH = os.path.join(DOWNLOADER_PATH, 'client_secrets.json')
 TOKEN_PATH = os.path.join(BASE_DIR, 'credentials')
 
+
+# Create the file if it does not exist
+if not os.path.exists(CREDENTIALS_PATH):
+    open(CREDENTIALS_PATH, 'w').close()
+    print("The credentials.json file has been created!")
 
 # create yaml file
 if not os.path.exists(SETTINGS_PATH):
@@ -82,7 +81,7 @@ if not os.path.exists(MYCREDS_PATH):
         "client_id": os.getenv("CLIENT_ID"),
         "client_secret": os.getenv("CLIENT_SECRET"),
         "refresh_token": os.getenv("REFRESH_TOKEN"),
-        "token_expiry": "2020-12-31T23:36:20Z",
+        "token_expiry": "2021-12-31T23:36:20Z",
         "token_uri": "https://oauth2.googleapis.com/token",
         "user_agent": "null",
         "revoke_uri": "https://oauth2.googleapis.com/revoke",

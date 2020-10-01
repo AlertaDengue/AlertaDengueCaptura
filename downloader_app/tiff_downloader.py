@@ -4,9 +4,11 @@ import gzip
 import logging
 import os
 import sys
+
+# import datetime
 import time
 import urllib.request
-from configparser import ConfigParser
+from datetime import datetime as dt
 
 import ee
 import geoviews as gv
@@ -22,14 +24,13 @@ from pydrive.drive import GoogleDrive
 from rasterio.warp import Resampling, reproject
 from sqlalchemy import create_engine
 
-from downloader_app.settings import BASE_DIR
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORK_DIR = os.path.join(BASE_DIR, "downloader_app")
+sys.path.insert(0, WORK_DIR)
 
-# instantiate
-config = ConfigParser()
-# parse existing file
-config.read(os.path.join(BASE_DIR, "downloader_app", "settings.ini"))
-# read values
-PATH = config.get('settings', 'path')
+
+# Path to source data files
+DOWNLOADFILES_PATH = os.path.join(WORK_DIR, "DownloadedFiles")
 
 # Initialize Google Earth Engine.
 ee.Initialize()
@@ -62,25 +63,26 @@ logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
 
 def download_tiffs(source, dates, point1, point2, opt=False):
-    """ 
-    Function responsible for the main calls. 
-    
+    """
+    Download tiff files according to the given parameters.
     Inputs
     ------
     source: string
-        It is the name of the source from which we will take the captured images. 
+        It is the name of the source from which we will take the captured images.
         For example 'LandDAAC-v5-day' is a valid name. Other possible names may
         be seen with the command about('sources').
     dates: collection of timestamps
         The days of interest to download data.
     point1, point2: tuple
-        point1 is a tuple (x, y) corresponding to the upper left point of the image, 
+        point1 is a tuple (x, y) corresponding to the upper left point of the image,
         while point2 corresponds to the lower right point.
     opt: classe
-        All possible extra options are passed as variables of this class. If no class 
-        is passed, the default(False) is assumed, which means that no extra options 
-        will be executed in the program.       
+        All possible extra options are passed as variables of this class. If no class
+        is passed, the default(False) is assumed, which means that no extra options
+        will be executed in the program.
     """
+
+    dates = [dt.strptime(d, '%Y-%m-%d') for d in dates]
 
     # Extracts input information.
     x1, y1 = point1
@@ -93,7 +95,6 @@ def download_tiffs(source, dates, point1, point2, opt=False):
     # Obtains the frequency of source.
     freq = source_freq(source)
     delta = datetime.timedelta(days=freq)
-
     # Download maps by date.
     length = len(dates)
     for l in range(length):
@@ -286,7 +287,7 @@ def single_download_LandDAAC(source, date1, date2, x1, x2, y1, y2, opt):
         + ".tiff"
     )
     # Create source folder if it doesn't exists.
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
     exists = os.path.exists(path_tmp)
     if not exists:
         os.makedirs(path_tmp, mode=0o775, exist_ok=True)
@@ -388,7 +389,7 @@ def single_download_chirps(source, date, x1, x2, y1, y2, opt):
         source + "-" + year + "-" + month + "-" + day + ".tif.gz"
     )
     # Create source folder if it doesn't exists.
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
     exists = os.path.exists(path_tmp)
     if not exists:
         os.mkdir(path_tmp)
@@ -592,7 +593,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
         )
         logging.error(msg)
         return success, path
-    except:
+    else:
         success = False
         path = None
         msg = (
@@ -633,7 +634,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
             )
             logging.error(msg)
             return success, path
-        except:
+        else:
             success = False
             path = None
             msg = (
@@ -658,7 +659,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
                     # Delete downloaded file from Google Drive.
                     file.Delete()
                     break
-                except:
+                except Exception:
                     success = False
                     path = None
                     msg = (
@@ -681,7 +682,7 @@ def single_download_gee(source, date1, date2, x1, x2, y1, y2, opt):
     # Save file locally.
     if success:
         # Create source folder if it doesn't exists.
-        path_tmp = os.path.join(PATH, source)
+        path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
         exists = os.path.exists(path_tmp)
         if not exists:
             os.mkdir(path_tmp)
@@ -759,7 +760,7 @@ def darksky(dates, x, y, key):
                 success = True
                 with requests.get(url) as r:
                     output = r.json()
-            except:
+            except Exception:
                 success = False
                 msg = "Download (" + date + "): failure (Unexpected Error)"
                 logging.error(msg)
@@ -832,7 +833,7 @@ def regrid_image(source, filename, opt):
     This function is responsible for upsampling or downsampling the images using some precribed method.
     """
 
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
     path = os.path.join(path_tmp, filename)
 
     if opt.regrid:
@@ -1305,15 +1306,15 @@ def about(x):
 
 
 def construct_time_series(source, dates):
-    """ 
+    """
     This function creates a netcdf file from the downladed tiffs (as a time series) and open an interactive session
     to explore this time series. To enable this function you must pass the option time_series as True to the function
     download_tiffs. The folder (where the just downloaded tiffs are) must not contain any other tiffs, otherwise the
-    netcdf file will be corrupted. 
+    netcdf file will be corrupted.
     """
 
     filename = "time_series.nc"
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
     path = os.path.join(path_tmp, filename)
 
     # Remove possible duplicate.
@@ -1367,19 +1368,17 @@ def point_time_series(
     title="Time series of given coordinates",
     spatial_coordinates=True,
 ):
-    """ 
+    """
     This function plots the evolution of the time series with respect to a list of points. All tiff files in the current
     folder are sorted and used to construct the time series. Therefore be sure you have the correct files there.
     Additionaly, the values to construct the time series are returned by the function in the form of two lists.
- 
     Inputs
     ------
     points: list of tuples
         Each element of points is a tuple (col, row) or (x, y) corresponding to some coordinate of the image.
     spatial_coordinates: bool
-        It is set to True, then we interpret the tuple as a spatial coordinate (x, y), otherwise we 
+        It is set to True, then we interpret the tuple as a spatial coordinate (x, y), otherwise we
         interpret it as a pixel (col, row) represented by a value in an array.
-        
     Outputs
     -------
     info: dict
@@ -1388,7 +1387,7 @@ def point_time_series(
     """
 
     # Create list with all tiff filenames in chronological order.
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
     path = os.path.join(path_tmp, "*.tiff")
     filenames = glob.glob(path)
     filenames.sort()
@@ -1500,20 +1499,19 @@ def plot_point_time_series(
 
 def fill_missing_days(source, freq, treated=True):
     """
-    Given the source and two dates, the program searches for the missing days (following 
+    Given the source and two dates, the program searches for the missing days (following
     the corresponding frequency of the source) and fill the gaps with linear interpolation,
     using the first day before the missing days and the first day after the missing days.
     Therefore, it is necessary that the range of days doesn't start or finish with missing
     data.
-    Warning: the interpolation method assumes that all raster files has the same size. If 
+    Warning: the interpolation method assumes that all raster files has the same size. If
     this condition is not met an error occur.
-    
     Inputs
     ------
     source: string
         It is the name of the source from which we will take the captured images.
     freq: string
-        Desired frequency, in days, to generate new data. Should be something like '7D' for example. 
+        Desired frequency, in days, to generate new data. Should be something like '7D' for example.
     treated: bool
         If True (default), then the program only considers the treated data. Otherwise it only
         considers the original data. The folder must contain only one type between these two
@@ -1521,7 +1519,7 @@ def fill_missing_days(source, freq, treated=True):
     """
 
     # Path to folder.
-    path_tmp = os.path.join(PATH, source)
+    path_tmp = os.path.join(DOWNLOADFILES_PATH, source)
 
     # Create list with all tiff filenames in chronological order.
     path = os.path.join(path_tmp, "*.tiff")
