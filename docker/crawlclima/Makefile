@@ -43,7 +43,8 @@ flake8_crawlclima:
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
 test_crawlclima:
-	$(DOCKER_EXEC) -T $(SERVICES) pytest crawlclima/ -vv
+	# Ignore tests in database, reason issue#56
+	pytest -v crawlclima --ignore=crawlclima/tests/test_tasks.py
 
 clean:
 	@find ./ -name '*.pyc' -exec rm -f {} \;

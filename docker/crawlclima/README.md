@@ -58,5 +58,5 @@ $ vim docker/crawlclima/cron_tasks
 <i><b> Clean containers </b></i></br>
 ``` $ make -f docker/crawlclima/Makefile clean ```</br>
 <i><b> Run tests into container </b></i></br>
-``` $ make -f docker/satellite/Makefile flake8_downloader_app ```</br>
-``` $ make -f docker/satellite/Makefile test_downloader_app ```</br>
+``` $ make -f docker/crawlclima/Makefile flake8_crawlclima ```</br>
+``` $ make -f docker/crawlclima/Makefile test_crawlclima ```</br>

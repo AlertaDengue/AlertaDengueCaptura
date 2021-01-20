@@ -35,6 +35,11 @@ jobs:
       run: |
         make -f docker/crawlclima/Makefile install_alertadenguecaptura
 
+    - name: Copy env_file as env
+      shell: bash -l {0}
+      run: |
+        cp docker/crawlclima/env_sample docker/crawlclima/.env
+
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
