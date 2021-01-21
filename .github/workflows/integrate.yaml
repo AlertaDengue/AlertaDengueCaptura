@@ -79,12 +79,7 @@ jobs:
     - name: Copy env_file as env
       shell: bash -l {0}
       run: |
-        cp docker/satellite/env_sample downloader_app/.env
-
-    - name: Lint with flake8
-      shell: bash -l {0}
-      run: |
-        make -f docker/satellite/Makefile flake8_downloader_app
+        cp docker/satellite/env_sample docker/satellite/.env
 
     - name: Configure credentials to downloader_app
       shell: bash -l {0}
@@ -98,14 +93,16 @@ jobs:
         make -f docker/satellite/Makefile configure_ci_downloader_app
         mkdir -p /home/runner/.config/earthengine/
         cp credentials /home/runner/.config/earthengine/credentials
-        cat credentials
-        echo $CLIENT_SECRET
-        cat downloader_app/mycreds.txt
 
     - name: Make deploy downloader_app
       shell: bash -l {0}
       run: |
         make -f docker/satellite/Makefile deploy_downloader_app
+
+    - name: Lint with flake8
+      shell: bash -l {0}
+      run: |
+        make -f docker/satellite/Makefile flake8_downloader_app
 
     - name: Tests downloader_app
       shell: bash -l {0}

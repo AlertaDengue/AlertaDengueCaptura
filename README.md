@@ -3,7 +3,7 @@ Rotinas para captura de dados
 
 Este repo contém o código para a capturas automáticas de dados em dois diferentes aplicativos;<br>
 1-Crawlclima<br>
-2-Downloader_app
+2-Downloader App
 
 > No diretório notebooks há alguns notebooks experimentais para testar os acessos e visualizar os dados.
 > Este repo contém uma framework para capturar dados de forma distribuída. Esta framework usa a bilbioteca Celery.
@@ -37,13 +37,18 @@ Iniciando o Celery. dentro do diretório Crawlclima:
 $ celery -A crawlclima.fetchapp worker --loglevel=info
 
 ```
-### Executar a app Crawlclima em container(Docker)
+### Executar a app Crawlclima App em container(Docker)
 Para build e deploy via docker consulte o [README](https://github.com/AlertaDengue/AlertaDengueCaptura/docker/crawlclima/README.md) dentro do diretório docker/crawlclima.
 
-## Downloader_app
+## Downloader App
 
-Captura e tratamento de imagens de satélite de Google Earth.
+As rotinas disponíveis neste pacote são projetadas para capturar e processar imagens de satélite de forma fácil e conveniente. Além disso, existem rotinas para combinar dados raster com camadas de shapefiles para imagens mais informativas... [mais detalhes](https://github.com/AlertaDengue/AlertaDengueCaptura/docker/satellite/README.md)
 
 ### Requisitos
-O Downloader_app é executado apenas em container(docker) consulte o [README](https://github.com/AlertaDengue/AlertaDengueCaptura/docker/satellite/README.md) dentro do diretório docker/satellite.
+
+Para configurar o ambiente e instalar a app veja o [README](https://github.com/AlertaDengue/AlertaDengueCaptura/blob/master/downloader_app/README.md) em downloader_app.
+
+### Executar o Downloader App em container(Docker)
+Consulte o [README](https://github.com/AlertaDengue/AlertaDengueCaptura/blob/master/docker/satellite/README.md) no diretório docker/satellite.
+
 > Esta app encontra-se em fase de desenvolvimento.
