@@ -6,7 +6,7 @@ export
 
 
 # docker specific
-ENV_FILE := docker/crawlclima/.env
+ENV_FILE := .env
 COMPOSE_FILE := docker/crawlclima/docker-compose.yml
 DOCKER := PYTHON_VERSION=$(PYTHON_VERSION) docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
 DOCKER_UP := $(DOCKER) up  --remove-orphans -d --no-build
@@ -25,7 +25,7 @@ build_crawlclima:
 deploy_crawlclima: build_crawlclima
 	$(DOCKER_UP)
 
-exec_crawlclima: #deploy_crawlclima
+exec_crawlclima:
 	$(DOCKER_EXEC) $(SERVICES) bash
 
 stop_crawlclima:
@@ -35,6 +35,9 @@ restart_crawlclima: stop_crawlclima
 	$(MAKE) deploy_crawlclima
 
 install_alertadenguecaptura:
+	pip install -e .
+
+install_dev_alertadenguecaptura: # CI
 	pip install -e .['develop']
 
 

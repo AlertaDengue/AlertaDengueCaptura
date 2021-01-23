@@ -10,16 +10,17 @@ Download the Data project to run the apps as the data from the demo databes.<br>
 See: https://github.com/AlertaDengue/Data
 
 #### Configure environment
-Copy the example_env file by renaming it to .env into the docker / crawlclima directory:
+Copy the env_sample file by renaming it to .env into the docker/crawlclima directory:
 ```bash
-cp example_env_file /docker/crawclima/.env
+cp /docker/crawclima/env_sample /docker/crawclima/.env
 ```
 Modify the variables of file system and database connection according to needs.
 
 #### Update and install essentials
 ```bash
-$ sudo apt update && sudo apt -y upgrade \
-  build-essential git make wget vim
+$ sudo apt update -y \
+&& sudo apt install build-essential libpq-dev \
+&& git make wget vim
 ```
 ####  Get Docker
 *https://docs.docker.com/engine/install/ubuntu/*
@@ -30,7 +31,6 @@ $ sudo apt update && sudo apt -y upgrade \
 > Use the make command within the root directory AlertDengueCapture/:<br>
 ```bash
 $ make -f docker/crawlclima/Makefile install_alertadenguecaptura
-$ make -f docker/crawlclima/Makefile configure_ci_downloader_app
 $ make -f docker/crawlclima/Makefile build_crawlclima
 $ make -f docker/crawlclima/Makefile deploy_crawlclima
 ```

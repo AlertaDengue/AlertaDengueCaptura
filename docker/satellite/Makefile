@@ -35,6 +35,9 @@ restart_downloader_app: stop_downloader_app
 	$(MAKE) deploy_downloader_app
 
 install_alertadenguecaptura:
+	pip install -e .
+
+install_dev_alertadenguecaptura: # CI
 	pip install -e .['develop']
 
 configure_ci_downloader_app:

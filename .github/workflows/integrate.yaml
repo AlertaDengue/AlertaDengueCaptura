@@ -33,7 +33,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        make -f docker/crawlclima/Makefile install_alertadenguecaptura
+        make -f docker/crawlclima/Makefile install_dev_alertadenguecaptura
 
     - name: Copy env_file as env
       shell: bash -l {0}
@@ -43,7 +43,7 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        make -f docker/crawlclima/Makefile  flake8_crawlclima
+        make -f docker/crawlclima/Makefile flake8_crawlclima
 
     - name: Tests Crawclima
       shell: bash -l {0}
@@ -74,7 +74,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        make -f docker/satellite/Makefile install_alertadenguecaptura
+        make -f docker/satellite/Makefile install_dev_alertadenguecaptura
 
     - name: Copy env_file as env
       shell: bash -l {0}

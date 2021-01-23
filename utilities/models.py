@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 db_config = {
-    "database": os.getenv("POSTGRES_DATABASE"),
-    "user": os.getenv("POSTGRES_USER"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
-    "host": os.getenv("POSTGRES_HOST"),
+    "database": os.getenv("PSQL_DB"),
+    "user": os.getenv("PSQL_USER"),
+    "password": os.getenv("PSQL_PASSWORD"),
+    "host": os.getenv("PSQL_HOST"),
 }
 
 
