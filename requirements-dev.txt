@@ -9,5 +9,5 @@ pandas
 pytest
 pyflakes
 jupyterlab
-psycopg2
 sqlsoup
+psycopg2-binary

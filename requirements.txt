@@ -1,11 +1,8 @@
 celery
 pymongo>=3
-requests
-flower
 folium
 bearcart
 bokeh
-psycopg2
 sqlsoup
 odo
 geojson
@@ -15,5 +12,9 @@ pandasql
 python-metar
 pytest
 PyYAML
-psycopg2
+psycopg2-binary
 sqlalchemy
+make
+requests==2.25.1
+urllib3==1.26.2
+rabbitmq
