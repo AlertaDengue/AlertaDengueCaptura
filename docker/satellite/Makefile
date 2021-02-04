@@ -6,7 +6,7 @@ export
 
 
 # docker specific
-ENV_FILE := downloader_app/.env
+ENV_FILE := docker/satellite/.env
 COMPOSE_FILE := docker/satellite/downloader-compose.yml
 DOCKER := PYTHON_VERSION=$(PYTHON_VERSION) docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
 DOCKER_UP := $(DOCKER) up  --remove-orphans -d --no-build
@@ -14,7 +14,7 @@ DOCKER_RUN := $(DOCKER) run --rm
 DOCKER_BUILD := $(DOCKER) build
 DOCKER_STOP := $(DOCKER) rm --force --stop
 DOCKER_EXEC := $(DOCKER) exec
-SERVICES := capture_worker
+SERVICES := downloader_worker
 
 MAKE = make -f docker/satellite/Makefile
 
@@ -35,6 +35,9 @@ restart_downloader_app: stop_downloader_app
 	$(MAKE) deploy_downloader_app
 
 install_alertadenguecaptura:
+	pip install -e .
+
+install_dev_alertadenguecaptura: # CI
 	pip install -e .['develop']
 
 configure_ci_downloader_app:

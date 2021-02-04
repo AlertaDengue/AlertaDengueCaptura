@@ -23,7 +23,7 @@ setup(
         "License :: OSI Approved :: GPL V3 License",
         "Operating System :: Linux",
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.7.*',
     install_requires=read("requirements.txt"),
     extras_require={'develop': read("requirements-dev.txt")},
 )

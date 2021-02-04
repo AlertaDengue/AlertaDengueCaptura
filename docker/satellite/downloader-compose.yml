@@ -1,31 +1,30 @@
-version: '3.4'
+version: "3.4"
 services:
-    capture_rabbitmq:
-      image: rabbitmq:3
-      hostname: capture_rabbitmq
-      ports:
-        - 25672:5672
-      restart: always
+  downloader_rabbitmq:
+    image: rabbitmq:3
+    hostname: downloader_rabbitmq
+    ports:
+      - 15672:5672
+    restart: always
 
-    capture_worker:
-      build:
-        context: "../../"
-        dockerfile: "docker/satellite/Dockerfile-downloader"
-        args:
-          PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
-      env_file:
-        - ../../downloader_app/.env
-      environment:
-        - CELERY_BROKER_URL=amqp://guest:guest@capture_rabbitmq:5672
-        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
-        - PSQL_PORT=${PSQL_PORT}
-        - PSQL_HOST=${PSQL_HOST}
-      volumes:
-        - ../../:/AlertaDengueCaptura
-        - ../../logs:/var/log/
-        - ${TIFFS_DIR}/:/AlertaDengueCaptura/downloader_app/DownloadedFiles:rw
-        - ${SHAPEFILES_DIR}/:/AlertaDengueCaptura/downloader_app/shapefiles:rw
-      depends_on:
-        - capture_rabbitmq
-      restart: always
-
+  downloader_worker:
+    build:
+      context: "../../"
+      dockerfile: "docker/satellite/Dockerfile-downloader"
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.7}
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@downloader_rabbitmq:5672
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+      - PSQL_PORT=${PSQL_PORT}
+      - PSQL_HOST=${PSQL_HOST}
+    volumes:
+      - ../../:/AlertaDengueCaptura
+      - ../../logs:/var/log/
+      - ${TIFFS_DIR}/:/AlertaDengueCaptura/downloader_app/DownloadedFiles:rw
+      - ${SHAPEFILES_DIR}/:/AlertaDengueCaptura/downloader_app/shapefiles:rw
+    depends_on:
+      - downloader_rabbitmq
+    restart: always

@@ -70,12 +70,12 @@ def test_downloader_tiff():
     # Checks at source if tiff files were generated.
     files_dir = os.listdir(os.path.join(DOWNLOADFILES_PATH, 'LandDAAC-v5-day'))
     tiff_files_list = [
+        'LandDAAC-v5-day-2016-07-20-treated.tiff',
         'LandDAAC-v5-day-2016-07-20.tiff',
+        'LandDAAC-v5-day-2016-07-28-treated.tiff',
+        'LandDAAC-v5-day-2016-07-28.tiff',
         'LandDAAC-v5-day-2016-08-05-treated.tiff',
         'LandDAAC-v5-day-2016-08-05.tiff',
-        'LandDAAC-v5-day-2016-07-28-treated.tiff',
-        'LandDAAC-v5-day-2016-07-20-treated.tiff',
-        'LandDAAC-v5-day-2016-07-28.tiff',
     ]
     assert set(files_dir) == set(tiff_files_list)
 
