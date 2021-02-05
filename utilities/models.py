@@ -10,6 +10,7 @@ db_config = {
     "user": os.getenv("PSQL_USER"),
     "password": os.getenv("PSQL_PASSWORD"),
     "host": os.getenv("PSQL_HOST"),
+    "port": os.getenv("PSQL_PORT"),
 }
 
 

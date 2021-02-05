@@ -1,6 +1,7 @@
 import csv
 import functools
 import os
+import warnings
 from multiprocessing.pool import Pool
 from os.path import abspath, dirname
 from os.path import join as join_path
@@ -21,11 +22,12 @@ def uf_geojson(uf):
 
 
 # TODO: We should improve the complexity of this function
-def county_polygon(uf, county_code):
+def county_polygon(uf: str, county_code: str):
     for feature in uf_geojson(uf)["features"]:
         if feature["properties"].get("CD_GEOCODM") == county_code:
             return geojson.dumps(feature)
-    raise ValueError("{} is not in this geojson: {}.".format(county_code, uf))
+    warnings.warn("{} is not in this geojson: {}.".format(county_code, uf))
+    return " "
 
 
 def to_row(county):
@@ -34,10 +36,11 @@ def to_row(county):
     uf = county["Nome_UF"]
     try:
         geojson = county_polygon(initials[uf], county_code)
-        print(uf, name, county_code)
+        print(county_code, name, uf)
     except ValueError as e:
         print(e)
         geojson = ""
+
     return dict(
         county_code=county_code,
         name=name,
@@ -50,5 +53,4 @@ def to_row(county):
 BASE_DIR = dirname(abspath(__file__))
 path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
 rows = Pool().map(to_row, csv.DictReader(open(path)))
-
 save(rows, schema="Dengue_global", table="Municipio")
