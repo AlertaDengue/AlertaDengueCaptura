@@ -56,12 +56,9 @@ def to_row(county):
     county_code = county["Cod Municipio Completo"]
     name = county["Nome_Município"]
     uf = county["Nome_UF"]
-    try:
-        geojson = county_polygon(initials[uf], county_code)
-        print(county_code, name, uf)
-    except ValueError as e:
-        print(e)
-        geojson = ""
+
+    geojson = county_polygon(initials[uf], county_code)
+    print(county_code, name, uf)
 
     return dict(
         county_code=county_code,
