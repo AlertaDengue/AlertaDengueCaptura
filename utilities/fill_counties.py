@@ -1,17 +1,35 @@
 import csv
 import functools
 import os
+import time
 import warnings
 from multiprocessing.pool import Pool
 from os.path import abspath, dirname
 from os.path import join as join_path
 
 import geojson
-from dotenv import load_dotenv
+import requests
 from initials import initials
 from models import save
 
-load_dotenv()
+
+# Get geojson from geocode
+def get_api(geocodigo):
+    return f"https://servicodados.ibge.gov.br/api/v3/malhas/municipios/{geocodigo}?formato=application/vnd.geo+json"
+
+
+# Return data from API
+def read_json(geocodigo):
+    url = get_api(geocodigo)
+    status = 0
+    wait = 3
+    while status != 200 and wait <= 16:
+        resp = requests.get(url)
+        status = resp.status_code
+        time.sleep(wait)
+        wait *= 3
+    resp_data = resp.json()
+    return resp_data
 
 
 @functools.lru_cache(maxsize=None)
@@ -21,13 +39,17 @@ def uf_geojson(uf):
     return geojson.load(open(join_path(path, filename), "r"))
 
 
-# TODO: We should improve the complexity of this function
-def county_polygon(uf: str, county_code: str):
-    for feature in uf_geojson(uf)["features"]:
-        if feature["properties"].get("CD_GEOCODM") == county_code:
-            return geojson.dumps(feature)
-    warnings.warn("{} is not in this geojson: {}.".format(county_code, uf))
-    return " "
+def county_polygon(uf, county_code):
+    if uf == 0:
+        for feature in read_json(county_code)['features']:
+            if feature["properties"].get("codarea") == county_code:
+                return geojson.dumps(feature)
+    else:
+        for feature in uf_geojson(uf)["features"]:
+            if feature["properties"].get("CD_GEOCODM") == county_code:
+                return geojson.dumps(feature)
+    warnings.warn("is not in this geojson: {}.".format(county_code))
+    return
 
 
 def to_row(county):
@@ -51,6 +73,6 @@ def to_row(county):
 
 
 BASE_DIR = dirname(abspath(__file__))
-path = join_path(BASE_DIR, "DTB_2014_Municipio.csv")
+path = join_path(BASE_DIR, "DTB_Only_Municipio_faltantes.csv")
 rows = Pool().map(to_row, csv.DictReader(open(path)))
 save(rows, schema="Dengue_global", table="Municipio")

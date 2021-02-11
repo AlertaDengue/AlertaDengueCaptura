@@ -23,6 +23,7 @@ dependencies:
   - libgdal=3.0.2
   - libxml2=2.9.9
   - netcdf4=1.4.2
+  - numpy=1.19.5
   - pip=20.2.2
   - poppler=0.65.0
   - poppler-data=0.4.9
