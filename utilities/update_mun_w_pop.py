@@ -28,7 +28,7 @@ except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
 
 df = pd.read_csv(
-    "utilities/estimativa_pop_municipios_2016.csv.gz", header=0, sep=","
+    "utilities/estimativa_pop_municipios_2020.csv.gz", header=0, sep=","
 )
 
 sql = 'UPDATE "Dengue_global"."Municipio" SET populacao=%s WHERE geocodigo=%s;'
