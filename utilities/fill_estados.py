@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 db_config = {
-    "database": os.getenv("POSTGRES_DATABASE"),
-    "user": os.getenv("POSTGRES_USER"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
-    "host": os.getenv("POSTGRES_HOST"),
-    "port": os.getenv("POSTGRES_PORT"),
+    "database": os.getenv("PSQL_DB"),
+    "user": os.getenv("PSQL_USER"),
+    "password": os.getenv("PSQL_PASSWORD"),
+    "host": os.getenv("PSQL_HOST"),
+    "port": os.getenv("PSQL_PORT"),
 }
 
 path = os.getenv("GEOJSON_PATH")
@@ -36,7 +36,7 @@ if __name__ == "__main__":
             geocodigo = properties["CD_GEOCODU"]
             regiao = properties["NM_REGIAO"]
             cur.execute(
-                'insert into "Dengue_global".estado (uf, nome, regiao, geocodigo, geojson) values(%s,%s,%s,%s, %s)',
+                'INSERT INTO "Dengue_global".estado (uf, nome, regiao, geocodigo, geojson) VALUES (%s,%s,%s,%s, %s)',
                 (
                     uf,
                     nome,

@@ -10,6 +10,7 @@ db_config = {
     "user": os.getenv("PSQL_USER"),
     "password": os.getenv("PSQL_PASSWORD"),
     "host": os.getenv("PSQL_HOST"),
+    "port": os.getenv("PSQL_PORT"),
 }
 
 
@@ -91,3 +92,40 @@ def save(data, schema="Dengue_global", table="Municipio"):
             curr.executemany(sql, rows)
 
     conn.close()  # Context doesn't close connection
+
+
+def counties_save(data, schema="Dengue_global", table="Municipio"):
+    with psycopg2.connect(**db_config) as conn:
+        with conn.cursor() as cur:
+            for city in data:
+                sql = f'''SELECT COUNT(geocodigo) FROM "{schema}"."{table}" WHERE geocodigo={city['county_code']};'''
+
+                cur.execute(sql)
+                result = cur.fetchone()
+
+                if len(result) and result[0] == 1:
+                    # county_code is stored in the table
+                    sql = f'''
+                        UPDATE "{schema}"."{table}"
+                        SET
+                            nome='{city["name"].replace("'", "''")}',
+                            geojson='{city["geojson"].replace("'", "''")}',
+                            populacao={city["population"]},
+                            uf='{city["uf"]}'
+                        WHERE
+                            geocodigo={city['county_code']}
+                    '''
+                    cur.execute(sql)
+                else:
+                    sql = f'''
+                        INSERT INTO "{schema}"."{table}"
+                        (nome, geocodigo, geojson, populacao, uf)
+                        VALUES(
+                            '{city["name"].replace("'", "''")}',
+                            '{city["geocodigo"]}',
+                            '{city["geojson"].replace("'", "''")}',
+                            {city["population"]},
+                            '{city["uf"]}'
+                        )'''
+
+                    cur.execute(sql)

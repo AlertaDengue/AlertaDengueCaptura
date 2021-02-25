@@ -3,6 +3,8 @@
 ### IPythonNotebook template
 # Temporary data
 .ipynb_checkpoints/
+notebooks_tmp/
+downloader_app/tests/
 
 
 ### Python template
@@ -65,7 +67,7 @@ target/
 
 
 settings.ini
-.env
+*.env
 .env_downloader
 .idea/
 *.ini
@@ -77,3 +79,7 @@ settings.ini
 # EarthEngine
 DownloadedFiles/*
 *credentials*
+downloads.db
+*client_secrets.json
+*mycreds.txt
+*settings.yaml

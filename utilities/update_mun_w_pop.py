@@ -15,21 +15,23 @@ logger = logging.getLogger("update-pop")
 
 try:
     conn = psycopg2.connect(
-        "dbname='{}' user='{}' host='{}' password='{}'".format(
-            os.getenv("POSTGRES_DATABASE"),
-            os.getenv("POSTGRES_USER"),
-            os.getenv("POSTGRES_HOST"),
-            os.getenv("POSTGRES_PASSWORD"),
+        "host='{}' port='{}' dbname='{}' user='{}' password='{}'".format(
+            os.getenv("PSQL_HOST"),
+            os.getenv("PSQL_PORT"),
+            os.getenv("PSQL_DB"),
+            os.getenv("PSQL_USER"),
+            os.getenv("PSQL_PASSWORD"),
         )
     )
     cur = conn.cursor()
 except Exception as e:
     logger.error("Unable to connect to Postgresql: {}".format(e))
 
+df = pd.read_csv(
+    "utilities/estimativa_pop_municipios_2020.csv.gz", header=0, sep=","
+)
 
-df = pd.read_csv("estimativa_pop_municipios_2016.csv.gz", header=0, sep=",")
-
-sql = 'update "Dengue_global"."Municipio" set populacao=%s WHERE geocodigo=%s;'
+sql = 'UPDATE "Dengue_global"."Municipio" SET populacao=%s WHERE geocodigo=%s;'
 for i, row in df.iterrows():
     cur.execute(sql, (row.pop_est, row.geocodigo))
 
