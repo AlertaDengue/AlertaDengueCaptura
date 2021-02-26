@@ -1,0 +1,10 @@
+{
+    "subscription_type": "free",
+    "language": "pt",
+    "connection": {
+        "use_ssl": false,
+        "verify_ssl_certs": false,
+        "use_proxy": false,
+        "timeout_secs": 15
+    }
+}
