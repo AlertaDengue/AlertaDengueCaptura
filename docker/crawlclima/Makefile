@@ -9,7 +9,7 @@ export
 ENV_FILE := .env
 COMPOSE_FILE := docker/crawlclima/docker-compose.yml
 DOCKER := PYTHON_VERSION=$(PYTHON_VERSION) docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
-DOCKER_UP := $(DOCKER) up  --remove-orphans -d --no-build
+DOCKER_UP := $(DOCKER) up --remove-orphans -d --no-build
 DOCKER_RUN := $(DOCKER) run --rm
 DOCKER_BUILD := $(DOCKER) build
 DOCKER_STOP := $(DOCKER) rm --force --stop
