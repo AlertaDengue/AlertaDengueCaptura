@@ -1,4 +1,4 @@
-name: satellite
+name: env-satellite
 channels:
   - conda-forge
   - defaults
@@ -7,7 +7,8 @@ dependencies:
   - cartopy=0.18.0
   - celery
   - descartes=1.1.0
-  - earthengine-api
+  - earthengine-api=0.1.244
+  - google-api-python-client=1.12.8
   - fiona=1.8.13.post1
   - gdal=3.0.2
   - geopandas=0.8.1

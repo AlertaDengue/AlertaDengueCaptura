@@ -1,8 +1,7 @@
 # note: --env-file requires docker-compose>=1.25
 #       ref: https://github.com/docker/compose/pull/6535
 
-include $(ENVFILE)
-export
+include .env
 
 
 # docker specific
@@ -25,7 +24,7 @@ build_downloader_app:
 deploy_downloader_app: build_downloader_app
 	$(DOCKER_UP)
 
-exec_downloader_app: deploy_downloader_app
+exec_downloader_app:
 	$(DOCKER_EXEC) $(SERVICES) bash
 
 stop_downloader_app:

@@ -5,6 +5,7 @@
 .ipynb_checkpoints/
 notebooks_tmp/
 downloader_app/tests/
+*utilities/geo_json/
 
 
 ### Python template

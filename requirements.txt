@@ -19,3 +19,4 @@ requests
 sqlalchemy
 sqlsoup
 urllib3
+geobr
