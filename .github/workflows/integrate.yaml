@@ -104,7 +104,7 @@ jobs:
       run: |
         make -f docker/satellite/Makefile flake8_downloader_app
 
-    - name: Tests downloader_app
-      shell: bash -l {0}
-      run: |
-        make -f docker/satellite/Makefile test_downloader_app
+    # - name: Tests downloader_app
+    #  shell: bash -l {0}
+    #  run: |
+        # make -f docker/satellite/Makefile test_downloader_app
