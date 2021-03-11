@@ -1,7 +1,7 @@
 # note: --env-file requires docker-compose>=1.25
 #       ref: https://github.com/docker/compose/pull/6535
 
-include .env
+include $(ENV_FILE)
 
 
 # docker specific
