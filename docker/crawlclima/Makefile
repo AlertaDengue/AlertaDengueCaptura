@@ -22,7 +22,7 @@ MAKE = make -f docker/crawlclima/Makefile
 build_crawlclima:
 	$(DOCKER_BUILD)
 
-deploy_crawlclima: build_crawlclima
+deploy_crawlclima:
 	$(DOCKER_UP)
 
 exec_crawlclima:
