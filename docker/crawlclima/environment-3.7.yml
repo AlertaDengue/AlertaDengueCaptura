@@ -16,9 +16,9 @@ dependencies:
   - python-dotenv
   - dbfread
   - pandasql
+  - click=7.1.1 # is required by celery
   - celery
   - tornado
-
   - pip:
     - odo
     - pymongo
@@ -26,4 +26,3 @@ dependencies:
     - sqlsoup
     - bearcart
     - responses
-    

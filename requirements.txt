@@ -1,5 +1,6 @@
 bearcart
 bokeh
+click==7.1.1
 celery
 dbfread
 docker-compose
@@ -8,8 +9,7 @@ geojson
 make
 odo
 pandasql
-psycopg2-binary
-pymongo>=3
+psycopg2
 pytest
 python-dotenv
 python-metar
