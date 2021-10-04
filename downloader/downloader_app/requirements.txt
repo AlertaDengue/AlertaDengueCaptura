@@ -1,0 +1,16 @@
+cartopy
+celery
+earthengine-api
+flower
+geopandas
+geoviews>=1.6.2
+glob
+gzip
+netCDF4
+pandas
+pydrive
+rabbitmq-server
+rasterio
+rasterstats
+shapely
+xarray

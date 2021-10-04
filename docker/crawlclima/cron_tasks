@@ -1,5 +1,0 @@
-# these paths reflect current deploy server organization. In the future this can be automated by a deploy routine
-# m h  dom mon dow   command
-# * * * * * root bash /activate.sh /AlertaDengueCaptura/crawlclima/capturachuva.py >> /var/log/cron.log 2>&1
-0 21 * * * bash /activate.sh /AlertaDengueCaptura/crawlclima/pegatweets.py >> /var/log/cron.log 2>&1
-0 22 * * * bash /activate.sh /AlertaDengueCaptura/crawlclima/pegatemperatura.py >> /var/log/cron.log 2>&1

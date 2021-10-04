@@ -1,0 +1,169 @@
+[{
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 10:00:00",
+        "mens": "METAR SBAF 211000Z 00000KT 9999 SCT014 OVC035 18/16 Q1019=",
+        "recebimento": "2021-10-21 09:50:25"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 11:00:00",
+        "mens": "METAR SBAF 211100Z 10004KT 9999 SCT015 OVC030 19/15 Q1019=",
+        "recebimento": "2021-10-21 10:53:22"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 12:00:00",
+        "mens": "METAR SBAF 211200Z 11004KT 9999 SCT015 BKN050 20/15 Q1019=",
+        "recebimento": "2021-10-21 11:51:48"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 13:00:00",
+        "mens": "METAR SBAF 211300Z 13004KT 9999 SCT020 BKN040 21/15 Q1019=",
+        "recebimento": "2021-10-21 12:52:39"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 14:00:00",
+        "mens": "METAR SBAF 211400Z 13003KT 9999 BKN020 BKN060 22/14 Q1018=",
+        "recebimento": "2021-10-21 13:56:23"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 15:00:00",
+        "mens": "METAR SBAF 211500Z 15003KT 9999 BKN030 BKN070 23/15 Q1018=",
+        "recebimento": "2021-10-21 14:48:04"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 16:00:00",
+        "mens": "METAR SBAF 211600Z 26006KT 9999 BKN035 23/16 Q1017=",
+        "recebimento": "2021-10-21 15:47:05"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 17:00:00",
+        "mens": "METAR SBAF 211700Z 22005KT 9999 FEW020 BKN035 22/15 Q1017=",
+        "recebimento": "2021-10-21 16:48:19"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 18:00:00",
+        "mens": "METAR SBAF 211800Z 23007KT 9999 BKN035 22/14 Q1016=",
+        "recebimento": "2021-10-21 17:48:55"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 19:00:00",
+        "mens": "METAR SBAF 211900Z 15008KT 120V180 9999 BKN035 BKN050 23/14 Q1016=",
+        "recebimento": "2021-10-21 18:49:24"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 20:00:00",
+        "mens": "METAR SBAF 212000Z 15008KT 9999 BKN035 BKN050 21/14 Q1016=",
+        "recebimento": "2021-10-21 19:47:39"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 21:00:00",
+        "mens": "METAR SBAF 212100Z 14007KT 9999 FEW015 BKN035 21/15 Q1016=",
+        "recebimento": "2021-10-21 20:48:30"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 22:00:00",
+        "mens": "METAR SBAF 212200Z 16006KT 9999 OVC035 20/15 Q1016=",
+        "recebimento": "2021-10-21 21:46:47"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-21 23:00:00",
+        "mens": "METAR SBAF 212300Z 16008KT 130V190 9999 OVC023 20/14 Q1017=",
+        "recebimento": "2021-10-21 22:50:48"
+    }
+][{
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 10:00:00",
+        "mens": "METAR SBAF 201000Z 14004KT 4000 -RA BR BKN008 OVC046 16/// Q1020=",
+        "recebimento": "2021-10-20 09:57:11"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 11:00:00",
+        "mens": "METAR SBAF 201100Z 12003KT 080V150 3000 -RA BR BKN008 OVC026 17/// Q1020=",
+        "recebimento": "2021-10-20 10:49:02"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 12:00:00",
+        "mens": "METAR SBAF 201200Z VRB02KT 6000 -RA BKN007 OVC023 17/15 Q1021=",
+        "recebimento": "2021-10-20 11:53:59"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 13:00:00",
+        "mens": "METAR SBAF 201300Z 13003KT 050V200 5000 -RA BR BKN010 OVC026 17/15 Q1021=",
+        "recebimento": "2021-10-20 12:50:56"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 14:00:00",
+        "mens": "METAR SBAF 201400Z 13005KT 100V170 8000 BKN011 OVC060 18/16 Q1020=",
+        "recebimento": "2021-10-20 13:50:33"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 15:00:00",
+        "mens": "METAR SBAF 201500Z 14006KT 090V170 8000 SCT011 OVC060 19/15 Q1020=",
+        "recebimento": "2021-10-20 14:50:45"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 16:00:00",
+        "mens": "METAR SBAF 201600Z 12005KT 070V150 9999 SCT026 OVC060 18/15 Q1019=",
+        "recebimento": "2021-10-20 15:50:05"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 17:00:00",
+        "mens": "METAR COR SBAF 201700Z VRB02KT 9999 SCT017 OVC060 19/15 Q1019=",
+        "recebimento": "2021-10-20 16:50:09"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 18:00:00",
+        "mens": "METAR SBAF 201800Z 24004KT 9999 SCT017 OVC060 19/15 Q1018=",
+        "recebimento": "2021-10-20 17:47:17"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 19:00:00",
+        "mens": "METAR SBAF 201900Z 18003KT 9999 FEW018 OVC060 19/15 Q1018=",
+        "recebimento": "2021-10-20 18:46:12"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 20:00:00",
+        "mens": "METAR SBAF 202000Z 15005KT 9999 FEW018 OVC060 19/14 Q1019=",
+        "recebimento": "2021-10-20 19:48:44"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 21:00:00",
+        "mens": "METAR SBAF 202100Z 15005KT 9999 SCT020 OVC060 19/14 Q1019=",
+        "recebimento": "2021-10-20 20:46:13"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 22:00:00",
+        "mens": "METAR SBAF 202200Z 16004KT 9999 FEW020 OVC060 18/15 Q1019=",
+        "recebimento": "2021-10-20 21:46:22"
+    },
+    {
+        "id_localidade": "SBAF",
+        "validade_inicial": "2021-10-20 23:00:00",
+        "mens": "METAR SBAF 202300Z 15005KT 9999 FEW020 OVC070 18/14 Q1020=",
+        "recebimento": "2021-10-20 22:46:38"
+    }
+]

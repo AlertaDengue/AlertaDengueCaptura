@@ -1,0 +1,21 @@
+include CONTRIBUTORS.rst
+include CONTRIBUTING.rst
+include HISTORY.rst
+include LICENSE
+include pyproject.toml
+
+recursive-include requirements
+recursive-include * municipios
+
+recursive-exclude crawlclima/tests
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * downloader_app/
+recursive-exclude crawlclima/docker/
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+
+include *.txt
+recursive-include crawlclima *.txt *.py
+prune crawlclima/docker
+prune crawlclima/tests

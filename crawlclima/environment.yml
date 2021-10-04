@@ -1,0 +1,25 @@
+name: captura-crawlclima
+channels:
+  - conda-forge
+dependencies:
+  - celery
+  - click=7.1.1 # is required by celery
+  - geojson
+  - python <=3.9
+  - pandas
+  - python-dotenv
+  - psycopg2-binary
+  - psycopg2
+  - requests
+  # dev
+  - coverage
+  - flake8
+  - git
+  - pip <21.3
+  - pytest
+  - pytest-cov
+  - pre-commit
+  - pip:
+    - python-metar
+    - responses
+    - docker-compose
