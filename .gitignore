@@ -23,6 +23,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+utilities/geo_json/
 eggs/
 .eggs/
 lib/
@@ -33,6 +34,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*.idea
+bkp
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -43,6 +46,7 @@ var/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+*_version.py
 
 # Unit test / coverage reports
 htmlcov/
@@ -52,6 +56,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+downloader/downloader_app/tests/data/tiffs/
 
 # Translations
 *.mo
@@ -65,16 +70,10 @@ docs/_build/
 
 # PyBuilder
 target/
-
-
-settings.ini
 *.env
 .env_downloader
 .idea/
 *.ini
-
-/docker/dev_dumps/
-*.gz
 .vscode
 
 # EarthEngine
@@ -84,3 +83,9 @@ downloads.db
 *client_secrets.json
 *mycreds.txt
 *settings.yaml
+*.tiff
+
+# dumps
+*docker/dbschemas/
+*/docker/dev_dumps/
+*.gz

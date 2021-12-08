@@ -1,5 +1,0 @@
-# these paths reflect current deploy server organization. In the future this can be automated by a deploy routine
-# m h  dom mon dow   command
-# * * * * * cd /AlertaDengueCaptura && crawlclima/capturachuva.py
-# * * * * * cd /AlertaDengueCaptura && crawlclima/pegatweets.py
-# * * * * * cd /AlertaDengueCaptura && crawlclima/pegatemperatura.py

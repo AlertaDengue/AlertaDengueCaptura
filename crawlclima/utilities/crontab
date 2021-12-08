@@ -1,0 +1,5 @@
+# these paths reflect current deploy server organization. In the future this can be automated by a deploy routine
+# m h  dom mon dow   command
+# * * * * * cd /AlertaDengueCaptura && crawlclima/crawlclima/capturachuva.py >> crawlclima/logs/cron-crawlclima.log 2>&1
+# * * * * * cd /AlertaDengueCaptura && crawlclima/crawlclima/pegatweets.py >> crawlclima/logs/cron-crawlclima.log 2>&1
+# * * * * * cd /AlertaDengueCaptura && crawlclima/crawlclima/pegatemperatura.py >> crawlclima/logs/cron-crawlclima.log 2>&1

@@ -1,0 +1,23 @@
+name: env-geos
+channels:
+  - conda-forge
+dependencies:
+  - fiona
+  - gdal
+  - geopandas
+  - geos
+  - geotiff
+  - pandas
+  - pip
+  - python
+  - wheel
+  - pip:
+    - docker-compose
+    - folium
+    - geobr
+    - make
+    - pandasql
+    - pyshp
+    - python-dotenv
+    - shapely
+    - sqlalchemy
