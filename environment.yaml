@@ -1,8 +1,0 @@
-name: alertacaptura
-channels:
-  - nodefaults
-  - conda-forge
-dependencies:
-  - make
-  - docker-compose
-  - pre-commit

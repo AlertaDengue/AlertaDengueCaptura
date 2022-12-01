@@ -1,3 +1,0 @@
-# these paths reflect current deploy server organization. In the future this can be automated by a deploy routine
-# m h  dom mon dow   command
-0 23 * * * root bash /activate.sh /AlertaDengueCaptura/downloader_app/run_downloader_tasks.py >> /var/log/cron.log
