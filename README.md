@@ -31,3 +31,27 @@ Consulte o [README](https://github.com/AlertaDengue/AlertaDengueCaptura/blob/mas
 
 > Esta app encontra-se em fase de desenvolvimento, [contribua](https://github.com/AlertaDengue/AlertaDengueCaptura/tree/main/downloader_app)...
 ---
+
+### To update the CrawlClima submodule within the AlertaDengueCaptura repository:
+```
+$ cd CrawlClima/
+$ git submodule update
+$ git checkout --recurse-submodules main
+$ git pull --recurse-submodules
+```
+and then, update from the main repo AlertaDengueCaptura:
+```
+$ cd ..
+$ git status
+On branch refactor-structure
+Your branch is up to date with 'origin/refactore-structure'.
+
+Changes not staged for commit:
+   (use "git add <file>..." to update what will be committed)
+   (use "git restore <file>..." to discard changes in working directory)
+         modified: CrawlClima (new commits)
+$ git add -u
+$ git status
+$ git commit -m "Update CrawlClima submodule"
+$ git push
+```
