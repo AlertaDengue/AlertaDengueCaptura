@@ -4,3 +4,6 @@
 [submodule "satellite-weather-downloader"]
 	path = satellite-weather-downloader
 	url = https://github.com/osl-incubator/satellite-weather-downloader
+[submodule "downloader-app"]
+	path = downloader-app
+	url = https://github.com/osl-incubator/downloader-app
