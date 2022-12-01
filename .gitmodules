@@ -1,3 +1,6 @@
 [submodule "CrawlClima"]
 	path = CrawlClima
 	url = https://github.com/osl-incubator/CrawlClima
+[submodule "satellite-weather-downloader"]
+	path = satellite-weather-downloader
+	url = https://github.com/osl-incubator/satellite-weather-downloader
