@@ -1,0 +1,3 @@
+[submodule "CrawlClima"]
+	path = CrawlClima
+	url = https://github.com/osl-incubator/CrawlClima
